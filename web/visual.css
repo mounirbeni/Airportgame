@@ -82,6 +82,12 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   box-shadow: inset 0 0 0 1px #e9ad7244;
 }
 .card.route-focus .hero { box-shadow: 0 0 0 1px #ffc387aa; }
+.tower-scene {
+  flex: 0 0 auto;
+  height: clamp(62px, 13vh, 114px);
+  object-position: 50% 57%;
+  border: 1px solid #c4ae8959;
+}
 .airport-home { padding: 0; overflow: hidden; }
 .airport-home .hero { border-radius: 0; aspect-ratio: 16 / 7; }
 .airport-home .t { padding: 2px 12px 10px; }
@@ -150,7 +156,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .map-legend .map-locked::before { border-top: 1px dashed #c2ccac; }
 
+@media (max-height: 500px) { .tower-scene { height: 62px; } }
 @media (orientation: portrait) {
+  .tower-scene { height: 72px; }
   #side, #side.collapsed { bottom: calc(8px + var(--safe-b)); }
   #side:not(.collapsed) { height: min(45svh, 396px); }
   #sel, #tip { bottom: calc(min(45svh, 396px) + 16px + var(--safe-b)); }

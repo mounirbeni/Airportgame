@@ -100,26 +100,50 @@ export class Terrain {
     const uv = new Float32Array((n + 1) * (n + 1) * 2);
     for (let iz = 0, k2 = 0; iz <= n; iz++) for (let ix = 0; ix <= n; ix++, k2 += 2) { uv[k2] = ix * step / 120; uv[k2 + 1] = iz * step / 120; }
     geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-    loadTex('tex_desert').then(tex => {
+    Promise.all([loadTex('tex_desert'), low ? null : loadTex('atlas_rock_detail')]).then(([tex, rock]) => {
       if (!tex) return;
       const cv = document.createElement('canvas'); cv.width = cv.height = 16;
-      const g = cv.getContext('2d'); g.drawImage(tex.image, 0, 0, 16, 16);
-      const px = g.getImageData(0, 0, 16, 16).data; let r = 0, gg = 0, b = 0;
-      for (let i = 0; i < px.length; i += 4) { r += px[i]; gg += px[i + 1]; b += px[i + 2]; }
-      const cnt = px.length / 4, lin = v => Math.pow(v / cnt / 255, 2.2);
-      const avg = [lin(r), lin(gg), lin(b)];
+      const g = cv.getContext('2d');
+      function meanColor(texture) {
+        g.drawImage(texture.image, 0, 0, 16, 16);
+        const px = g.getImageData(0, 0, 16, 16).data;
+        const sums = [0, 0, 0];
+        for (let i = 0; i < px.length; i += 4) {
+          for (let channel = 0; channel < sums.length; channel++) sums[channel] += px[i + channel];
+        }
+        return sums.map(v => Math.max(Math.pow(v / (px.length / 4) / 255, 2.2), 0.001));
+      }
+      const avg = meanColor(tex);
       const avgL = 0.3 * avg[0] + 0.59 * avg[1] + 0.11 * avg[2];
+      const rockAverage = rock ? meanColor(rock).map(v => v.toFixed(4)).join(', ') : '';
       mat.map = tex;
-      // Anti-tiling: blend the texture with a rotated, larger-scale copy of itself.
+      // Blend detail at two scales to break visible repetition. At higher elevations,
+      // move from soil to mountain scree while preserving painted snow at the peaks.
       mat.onBeforeCompile = sh => {
+        if (rock) {
+          sh.uniforms.atlasRockMap = { value: rock };
+          sh.vertexShader = 'varying float vAtlasHeight;\n' + sh.vertexShader.replace(
+            '#include <begin_vertex>', '#include <begin_vertex>\n vAtlasHeight = position.y;',
+          );
+          sh.fragmentShader = 'uniform sampler2D atlasRockMap; varying float vAtlasHeight;\n' + sh.fragmentShader;
+        }
         sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `
           vec2 uvB = mat2(0.8, -0.6, 0.6, 0.8) * vMapUv * 0.27 + vec2(0.31, 0.17);
           vec4 tA = texture2D(map, vMapUv), tB = texture2D(map, uvB);
           float k = smoothstep(0.25, 0.75, texture2D(map, vMapUv * 0.043).g);
           vec3 t = mix(tA.rgb, tB.rgb, 0.35 + 0.3 * k);
           float l = dot(t, vec3(0.3, 0.59, 0.11)) / ${avgL.toFixed(4)};
-          vec3 tint = t / vec3(${avg.map(v => v.toFixed(4)).join(', ')});
-          diffuseColor.rgb *= mix(vec3(l), tint, 0.25);`);
+          vec3 tint = mix(vec3(l), t / vec3(${avg.map(v => v.toFixed(4)).join(', ')}), 0.25);
+          ${rock ? `
+          float slopeBand = smoothstep(120.0, 450.0, vAtlasHeight)
+                          * (1.0 - smoothstep(1250.0, 1800.0, vAtlasHeight));
+          if (slopeBand > 0.02) {
+            vec3 scree = texture2D(atlasRockMap, vMapUv * 2.9).rgb * 0.64
+                       + texture2D(atlasRockMap, uvB * 3.9).rgb * 0.36;
+            tint = mix(tint, clamp(scree / vec3(${rockAverage}), 0.62, 1.38), slopeBand * 0.76);
+          }
+          ` : ''}
+          diffuseColor.rgb *= tint;`);
       };
       mat.needsUpdate = true;
     });

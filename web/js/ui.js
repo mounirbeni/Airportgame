@@ -110,6 +110,7 @@ export class UI {
     return b;
   }
   tower(body) {
+    body.append(hero('tower_operations', 'hero tower-scene'));
     const list = [...S.fleet].sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state));
     for (const a of list) {
       const c = el('div', 'card' + (NEEDS_ORDER[a.state] ? ' attn' : ''));
