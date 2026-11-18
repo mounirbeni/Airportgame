@@ -88,6 +88,24 @@ function nacelle(len, r) {
   return geo;
 }
 
+function fanBlades() {
+  const vertices = [];
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const phase = i * Math.PI * 2 / count;
+    const blade = [[0.22, 0.02, 0.01], [0.93, 0.17, 0.07], [0.88, 0.30, 0.12], [0.22, 0.32, 0.035]];
+    for (const index of [0, 1, 2, 0, 2, 3]) {
+      const [r, angle, z] = blade[index];
+      vertices.push(Math.cos(phase + angle) * r, Math.sin(phase + angle) * r, z);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  g.computeVertexNormals();
+  return g;
+}
+let fanGeometry;
+
 function star8(r) {
   const sh = new THREE.Shape();
   for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, rr = i % 2 ? r * 0.55 : r; const x = Math.cos(a) * rr, y = Math.sin(a) * rr; i ? sh.lineTo(x, y) : sh.moveTo(x, y); }
@@ -104,6 +122,7 @@ export function buildAircraftModel(kind = 'jet') {
   const copper = Mt({ color: C.copper, roughness: 0.3, metalness: 0.85 });
   const grey = Mt({ color: 0x8d9196, roughness: 0.45, metalness: 0.6 });
   const dark = Mt({ color: 0x15191c, roughness: 0.6 });
+  const fanMetal = Mt({ color: 0x586269, roughness: 0.52, metalness: 0.56, side: THREE.DoubleSide });
   const add = (geo, m, p = [0, 0, 0], r = [0, 0, 0], parent = inner, sc) => {
     const o = new THREE.Mesh(geo, m); o.position.set(...p); o.rotation.set(...r, 'YXZ'); if (sc) o.scale.set(...sc);
     o.castShadow = true; o.receiveShadow = true; parent.add(o); return o;
@@ -142,17 +161,22 @@ export function buildAircraftModel(kind = 'jet') {
   for (const sx of [1, -1]) {
     if (s.engines === 'wing') {
       const ex = sx * 6.1, ez = s.wingZ + Math.tan(s.sweep * D2R) * 6.1 - 4.2, ey = s.wingY - 1.2;
-      const n = add(nacelle(4.4, 1.25), ivory, [ex, ey, ez]); g.userData.nacelles.push(n);
+      const n = add(nacelle(4.4, 1.25), teal, [ex, ey, ez]); g.userData.nacelles.push(n);
       add(new THREE.TorusGeometry(1.03, 0.16, 8, 24), copper, [ex, ey, ez + 0.05]);
       add(new THREE.CircleGeometry(1.02, 24), dark, [ex, ey, ez + 0.3], [0, Math.PI, 0]);
+      add((fanGeometry ??= fanBlades()), fanMetal, [ex, ey, ez + 0.11]);
+      add(new THREE.SphereGeometry(0.22, 12, 8), dark, [ex, ey, ez + 0.06], [0, 0, 0], inner, [1, 1, 0.7]);
       add(new THREE.BoxGeometry(0.35, 1.2, 3.2), grey, [ex, ey + 1.05, ez + 2.4]);
     } else {
       const ex = sx * 4.4, ey = s.wingY - 0.35, ez = s.wingZ - 2.2;
-      add(nacelle(4.2, 0.72), ivory, [ex, ey, ez]);
+      add(nacelle(4.2, 0.72), teal, [ex, ey, ez]);
       add(new THREE.ConeGeometry(0.42, 0.9, 16), copper, [ex, ey, ez - 0.35], [-Math.PI / 2, 0, 0]);
       const hub = new THREE.Group(); hub.position.set(ex, ey, ez - 0.2); inner.add(hub);
-      for (let k = 0; k < 4; k++) add(new THREE.BoxGeometry(0.22, 1.85, 0.06), dark, [0, 0.95, 0], [0, 0, 0], hub).geometry.translate(0, 0, 0);
-      hub.children.forEach((b, k) => { b.position.set(Math.sin(k * Math.PI / 2) * 0.95, Math.cos(k * Math.PI / 2) * 0.95, 0); b.rotation.z = -k * Math.PI / 2; });
+      const bladeGeo = new THREE.BoxGeometry(0.19, 1.7, 0.075);
+      for (let k = 0; k < 6; k++) {
+        const angle = k * Math.PI / 3;
+        add(bladeGeo, dark, [Math.sin(angle) * 0.91, Math.cos(angle) * 0.91, 0], [0, 0, -angle], hub);
+      }
       g.userData.props.push(hub);
     }
   }

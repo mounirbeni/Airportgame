@@ -1,3 +1,4 @@
+import { createRouteMap } from './route-map.js';
 // Tycoon UI: top bar, side panel tabs (Tower / Fleet / Routes / Airport),
 // selected-aircraft card, labels over aircraft and toasts.
 import * as THREE from 'three';
@@ -20,15 +21,21 @@ const ORDER = ['approach', 'holding', 'ready', 'cleared', 'go_around', 'rollout'
 
 export class UI {
   constructor(sim) {
-    this.sim = sim; this.tab = 'tower'; this.selected = null; this.h = {}; this.tags = new Map(); this.lastSig = '';
+    this.sim = sim; this.tab = 'tower'; this.routeFocus = null; this.selected = null; this.h = {}; this.tags = new Map(); this.lastSig = '';
     $('tipClose').addEventListener('click', () => $('tip').classList.add('hidden'));
-    $('sideToggle').addEventListener('click', () => $('side').classList.toggle('collapsed'));
+    $('sideToggle').addEventListener('click', () => this.setPanelCollapsed(!$('side').classList.contains('collapsed')));
     $('lang').addEventListener('click', () => this.fire('lang'));
     $('overview').addEventListener('click', () => this.fire('overview'));
     $('tabBody').addEventListener('pointerdown', e => e.stopPropagation());
     // Keep panels below the real top-bar height (it wraps on narrow screens).
     const setTop = () => document.documentElement.style.setProperty('--top-h', Math.ceil($('top').getBoundingClientRect().bottom) + 'px');
     new ResizeObserver(setTop).observe($('top')); addEventListener('resize', setTop); setTop();
+  }
+  setPanelCollapsed(collapsed) {
+    $('side').classList.toggle('collapsed', collapsed);
+    document.body.classList.toggle('sheet-collapsed', collapsed);
+    $('sideToggle').setAttribute('aria-expanded', String(!collapsed));
+    $('tabs').querySelector('.on')?.setAttribute('aria-expanded', String(!collapsed));
   }
   on(n, f) { this.h[n] = f; }
   fire(n, ...a) { (this.h[n] || (() => {}))(...a); }
@@ -37,6 +44,8 @@ export class UI {
     document.title = t('app_title');
     $('top').querySelector('.title').textContent = t('app_title');
     $('lang').textContent = t('ui_lang_toggle'); $('overview').textContent = t('ty_act_overview');
+    $('sideToggle').setAttribute('aria-label', t('ty_panel_toggle'));
+    $('tabs').setAttribute('aria-label', t('ty_panel_toggle'));
     $('tipText').textContent = t('ty_tip');
     const sp = $('speed'); sp.innerHTML = '';
     for (const v of [0, 1, 2, 4]) sp.append(btn(v === 0 ? 'II' : v + '×', () => this.fire('speed', v), S.settings.speed === v ? 'on' : ''));
@@ -76,12 +85,13 @@ export class UI {
     const tabs = $('tabs'); tabs.innerHTML = '';
     for (const id of ['tower', 'fleet', 'routes', 'airport']) {
       const b = btn(t('ty_tab_' + id), () => {
-        const side = $('side');
-        if (this.tab === id) { side.classList.toggle('collapsed'); }   // tap the active tab to fold/unfold the panel
-        else { side.classList.remove('collapsed'); this.tab = id; this.renderTabs(); this.refresh(true); }
-        document.body.classList.toggle('sheet-collapsed', side.classList.contains('collapsed'));
+        if (this.tab === id) this.setPanelCollapsed(!$('side').classList.contains('collapsed'));
+        else { this.setPanelCollapsed(false); this.tab = id; this.renderTabs(); this.refresh(true); }
       }, this.tab === id ? 'on' : '');
       b.prepend(ic(TAB_ICON[id]));
+      b.setAttribute('aria-pressed', String(this.tab === id));
+      b.setAttribute('aria-controls', 'tabBody');
+      if (this.tab === id) b.setAttribute('aria-expanded', String(!$('side').classList.contains('collapsed')));
       if (id === 'tower') { const bd = el('span', 'badge'); b.append(bd); }
       tabs.append(b);
     }
@@ -137,8 +147,17 @@ export class UI {
     }
   }
   routes(body) {
+    const map = createRouteMap(DB.ty.destinations, S.routes, this.routeFocus, t, code => {
+      this.routeFocus = code;
+      this.renderTab();
+      const destination = document.getElementById('route-' + code);
+      destination?.focus({ preventScroll: true });
+      destination?.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    });
+    body.append(map);
     for (const d of DB.ty.destinations) {
-      const c = el('div', 'card'), r = S.routes[d.code];
+      const c = el('div', 'card route-card' + (this.routeFocus === d.code ? ' route-focus' : '')), r = S.routes[d.code];
+      c.id = 'route-' + d.code; c.tabIndex = -1;
       const head = el('div', 'row'); head.append(el('span', 't', t(d.name_key)), el('span', 'dim', `CMN ⇄ ${d.code} · ${t('ty_km', { n: d.km })}`));
       c.append(hero('card_' + d.code.toLowerCase()), head);
       if (!r) { c.append(btn(t('ty_open_route', { v: moneyShort(d.unlock_price) }), () => this.fire('openRoute', d.code), 'primary', S.money >= d.unlock_price)); body.append(c); continue; }
@@ -160,7 +179,10 @@ export class UI {
   }
   airport(body) {
     const g = DB.ty.gates;
-    const home = el('div', 'card'); home.append(hero('card_cmn'), el('div', 't', t('apt_cmn')));
+    const home = el('div', 'card airport-home');
+    const apron = el('img', 'hero'); apron.alt = ''; apron.src = 'assets/ui/airport_apron.webp';
+    apron.onerror = () => { apron.replaceWith(hero('card_cmn')); };
+    home.append(apron, el('div', 't', t('apt_cmn')));
     body.append(home);
     const gtitle = el('div', 'row t'); gtitle.append(ic('gate'), el('span', '', t('ty_gates', { n: S.gates, m: g.max })));
     const gc = el('div', 'card'); gc.append(gtitle,

@@ -5,9 +5,9 @@ import * as THREE from 'three';
 export class TycoonCamera {
   constructor(dom, home) {
     this.dom = dom;
-    this.cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 60000);
+    this.cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 4, 60000);
     this.target = new THREE.Vector3(home.x, 0, home.z);
-    this.dist = 900; this.yaw = home.yaw; this.pitch = 0.75;
+    this.dist = 900; this.displayDist = this.dist; this.yaw = home.yaw; this.pitch = 0.75;
     this.follow = null; this.onTap = () => {};
     this.pointers = new Map(); this.moved = 0;
     dom.addEventListener('pointerdown', e => this.down(e));
@@ -53,8 +53,9 @@ export class TycoonCamera {
     if (followPos && Math.hypot(followPos.x - this.target.x, followPos.z - this.target.z) > 2500) { this.target.set(followPos.x, followPos.y * (this.dist < 700 ? 1 : 0.6), followPos.z); }
     if (followPos) { const k = 1 - Math.exp(-4 * dt); this.target.x += (followPos.x - this.target.x) * k; this.target.z += (followPos.z - this.target.z) * k; const fy = followPos.y * (this.dist < 700 ? 1 : 0.6); this.target.y += (fy - this.target.y) * k; }
     else this.target.y += (0 - this.target.y) * Math.min(1, dt * 3);
-    const h = Math.cos(this.pitch) * this.dist;
-    this.cam.position.set(this.target.x + Math.sin(this.yaw) * h, this.target.y + Math.sin(this.pitch) * this.dist, this.target.z + Math.cos(this.yaw) * h);
+    this.displayDist += (this.dist - this.displayDist) * (1 - Math.exp(-12 * dt));
+    const h = Math.cos(this.pitch) * this.displayDist;
+    this.cam.position.set(this.target.x + Math.sin(this.yaw) * h, this.target.y + Math.sin(this.pitch) * this.displayDist, this.target.z + Math.cos(this.yaw) * h);
     this.cam.lookAt(this.target);
   }
   resize() { this.cam.aspect = innerWidth / innerHeight; this.cam.updateProjectionMatrix(); }

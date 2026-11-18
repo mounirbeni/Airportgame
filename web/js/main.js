@@ -33,7 +33,7 @@ async function boot() {
   const ui = new UI(sim);
   const centre = home.toWorld(190, 0, 0);
   const cam = new TycoonCamera(canvas, { x: centre.x, z: centre.z, yaw: home.yaw - Math.PI / 2 + 0.7 });
-  cam.dist = 620; cam.pitch = 0.55;
+  cam.dist = 620; cam.displayDist = cam.dist; cam.pitch = 0.68;
 
   function resize() {
     const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
@@ -77,7 +77,7 @@ async function boot() {
   };
   function select(a) {
     ui.selected = a; cam.follow = a ? a.id : null;
-    if (a) { const r = sim.rt.get(a.id); if (r && r.mesh.visible && cam.dist > 1600) cam.dist = 700; }
+    if (a && sim.rt.get(a.id)?.mesh.visible) cam.dist = Math.min(cam.dist, 380);
     ui.refresh(true);
   }
 
@@ -115,7 +115,7 @@ async function boot() {
   }
 
   // --- loop ------------------------------------------------------------------------------
-  let last = performance.now(), uiTimer = 0, saveTimer = 0;
+  let last = performance.now(), uiTimer = 0, labelTimer = 0, saveTimer = 0;
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 0.1); last = now;
     const speed = S.settings.speed;
@@ -135,7 +135,12 @@ async function boot() {
     updateSun(env, cam.target);
     env.sky.position.copy(cam.cam.position);
     env.mountains.position.set(cam.cam.position.x, -300, cam.cam.position.z);
-    ui.labels(cam.cam);
+    labelTimer += dt;
+    if (labelTimer >= 1 / 30) { labelTimer = 0; ui.labels(cam.cam); }
+    const sceneryRange = 6700 + cam.displayDist * 0.75;
+    for (const airport of Object.values(nodes)) {
+      airport.group.visible = airport.group.position.distanceToSquared(cam.cam.position) < sceneryRange ** 2;
+    }
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
     renderer.render(scene, cam.cam);
