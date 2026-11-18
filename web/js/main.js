@@ -16,6 +16,7 @@ import { setAnisotropy } from './assets.js';
 async function boot() {
   await Core.loadAll();
   St.load();
+  await document.fonts?.load('700 32px "Noto Kufi Arabic"', 'أطلس ATLAS').catch(() => {});
   const canvas = document.getElementById('view');
   const renderer = createRenderer(canvas);
   setAnisotropy(renderer);
