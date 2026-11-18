@@ -46,13 +46,13 @@ export function createEnvironment(scene) {
     m.position.y = 2000; m.frustumCulled = false; m.renderOrder = -1; mountains.add(m);
   });
   scene.fog = new THREE.Fog(0xf2b585, 5000, 42000);
-  scene.add(new THREE.HemisphereLight(0xffd1a8, 0x7a5a40, 1.1));
+  const hemi = new THREE.HemisphereLight(0xffd1a8, 0x7a5a40, 1.1); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc68c, 2.4);
   sun.shadow.mapSize.set(2048, 2048);
   const sc = sun.shadow.camera; sc.left = -130; sc.right = 130; sc.top = 130; sc.bottom = -130; sc.near = 10; sc.far = 1200;
   sun.shadow.bias = -0.0005;
   scene.add(sun); scene.add(sun.target);
-  return { sky, mountains, sun, sunDir: skyMat.uniforms.sunDir.value };
+  return { sky, mountains, sun, hemi, sunDir: skyMat.uniforms.sunDir.value };
 }
 
 export function applyQuality(renderer, env, q) {
@@ -89,7 +89,7 @@ export function buildScenery(scene, airports, terrain, low) {
   city(14500, -9800, 2200, 380, 0xdbc299, 6, 18);
   const trunks = [], crowns = [];
   for (const ap of airports) for (let i = 0; i < 90 * dens; i++) {
-    const lz = (rnd() * 2 - 1) * ap.hl, lx = rnd() < 0.4 ? -(120 + rnd() * 280) : TERMINAL_X + 70 + rnd() * 150;
+    const lz = (rnd() * 2 - 1) * ap.hl, lx = rnd() < 0.4 ? -(120 + rnd() * 280) : TERMINAL_X + 255 + rnd() * 170;
     const p = ap.toWorld(lx, 0, lz), gy = terrain.heightAt(p.x, p.z), h = 8 + rnd() * 6;
     trunks.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h / 2, p.z), new THREE.Quaternion(), new THREE.Vector3(1, h, 1)));
     crowns.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h, p.z), new THREE.Quaternion().setFromAxisAngle(up, rnd() * 6.28), new THREE.Vector3(1, 1, 1)));
@@ -98,4 +98,17 @@ export function buildScenery(scene, airports, terrain, low) {
   trunks.forEach((m, i) => tm.setMatrixAt(i, m)); scene.add(tm);
   const cm = new THREE.InstancedMesh(new THREE.ConeGeometry(4.5, 2.4, 6), new THREE.MeshLambertMaterial({ color: 0x476b38 }), crowns.length);
   crowns.forEach((m, i) => cm.setMatrixAt(i, m)); cm.castShadow = true; scene.add(cm);
+}
+
+/** Image-based lighting from the painted sky: reflections on glass, metal and copper. */
+export function useSkyEnvironment(renderer, scene, env) {
+  loadTex('sky_sunset_pano', { wrap: false }).then(tex => {
+    if (!tex) return;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = pmrem.fromEquirectangular(tex).texture;
+    tex.mapping = THREE.UVMapping;
+    pmrem.dispose();
+    env.hemi.intensity = 0.55;
+  });
 }

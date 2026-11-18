@@ -66,9 +66,9 @@ export class Terrain {
   }
   color(h, x, z) {
     const n = this.detail(x * 0.0019, z * 0.0019);
-    const c = new THREE.Color(0.78, 0.6, 0.4).lerp(new THREE.Color(0.47, 0.53, 0.31), Math.min(Math.max(n * 1.6 + 0.2, 0), 0.8));
+    const c = new THREE.Color(0.56, 0.45, 0.32).lerp(new THREE.Color(0.33, 0.38, 0.22), Math.min(Math.max(n * 1.6 + 0.2, 0), 0.75));
     if (h < 4) c.lerp(new THREE.Color(0.86, 0.77, 0.6), 0.6);
-    if (h > 90) c.lerp(new THREE.Color(0.64, 0.36, 0.25), Math.min((h - 90) / 400, 1));
+    if (h > 90) c.lerp(new THREE.Color(0.5, 0.32, 0.23), Math.min((h - 90) / 400, 1));
     if (h > 700) c.lerp(new THREE.Color(0.55, 0.49, 0.45), Math.min((h - 700) / 700, 1));
     if (h > 1650 + n * 150) c.lerp(new THREE.Color(0.95, 0.94, 0.92), Math.min((h - 1650) / 250, 1));
     if (h < -1) c.setRGB(0.6, 0.54, 0.42);
@@ -108,10 +108,20 @@ export class Terrain {
       for (let i = 0; i < px.length; i += 4) { r += px[i]; gg += px[i + 1]; b += px[i + 2]; }
       const cnt = px.length / 4, lin = v => Math.pow(v / cnt / 255, 2.2);
       const avg = [lin(r), lin(gg), lin(b)];
-      const c = geo.attributes.color;
-      for (let i = 0; i < c.count; i++) c.setXYZ(i, Math.min(c.getX(i) / avg[0] * 0.95, 2), Math.min(c.getY(i) / avg[1] * 0.95, 2), Math.min(c.getZ(i) / avg[2] * 0.95, 2));
-      c.needsUpdate = true;
-      mat.map = tex; mat.needsUpdate = true;
+      const avgL = 0.3 * avg[0] + 0.59 * avg[1] + 0.11 * avg[2];
+      mat.map = tex;
+      // Anti-tiling: blend the texture with a rotated, larger-scale copy of itself.
+      mat.onBeforeCompile = sh => {
+        sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `
+          vec2 uvB = mat2(0.8, -0.6, 0.6, 0.8) * vMapUv * 0.27 + vec2(0.31, 0.17);
+          vec4 tA = texture2D(map, vMapUv), tB = texture2D(map, uvB);
+          float k = smoothstep(0.25, 0.75, texture2D(map, vMapUv * 0.043).g);
+          vec3 t = mix(tA.rgb, tB.rgb, 0.35 + 0.3 * k);
+          float l = dot(t, vec3(0.3, 0.59, 0.11)) / ${avgL.toFixed(4)};
+          vec3 tint = t / vec3(${avg.map(v => v.toFixed(4)).join(', ')});
+          diffuseColor.rgb *= mix(vec3(l), tint, 0.25);`);
+      };
+      mat.needsUpdate = true;
     });
     const water = new THREE.Mesh(new THREE.PlaneGeometry(this.size * 1.6, this.size * 1.6),
       new THREE.MeshPhongMaterial({ color: 0x1f5566, shininess: 60, specular: 0x557788 }));

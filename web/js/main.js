@@ -10,7 +10,7 @@ import { Airport } from './airport.js';
 import { Sim } from './sim.js';
 import { UI } from './ui.js';
 import { TycoonCamera } from './camera.js';
-import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery } from './world.js';
+import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery, useSkyEnvironment } from './world.js';
 import { setAnisotropy } from './assets.js';
 
 async function boot() {
@@ -21,6 +21,7 @@ async function boot() {
   setAnisotropy(renderer);
   const scene = new THREE.Scene();
   const env = createEnvironment(scene);
+  useSkyEnvironment(renderer, scene, env);
   const airports = Object.values(DB.airports);
   const low = S.settings.quality === 'low';
   const terrain = new Terrain(airports); terrain.build(scene, low);
@@ -32,6 +33,7 @@ async function boot() {
   const ui = new UI(sim);
   const centre = home.toWorld(190, 0, 0);
   const cam = new TycoonCamera(canvas, { x: centre.x, z: centre.z, yaw: home.yaw - Math.PI / 2 + 0.7 });
+  cam.dist = 620; cam.pitch = 0.55;
 
   function resize() {
     const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
