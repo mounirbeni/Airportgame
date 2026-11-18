@@ -1,0 +1,371 @@
+[
+  {
+    "group": "1. App & screens",
+    "file": "app_icon.png",
+    "size": "1024×1024",
+    "format": "PNG",
+    "ar": "أيقونة التطبيق",
+    "priority": 1,
+    "prompt": "App icon for an airport tycoon game: a stylized air-traffic control tower with a copper cab in front of a large sunset circle, a small ivory jet climbing past it, a subtle eight-pointed Moroccan star in the background, midnight-teal background, bold simple shapes, key content inside the central 80% of the square. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "1. App & screens",
+    "file": "splash_keyart.png",
+    "size": "1920×1080",
+    "format": "PNG",
+    "ar": "شاشة البداية",
+    "priority": 2,
+    "prompt": "Isometric cinematic view of a busy Moroccan airport at sunset: a long terracotta terminal with horseshoe arches and a copper dome, ivory airliners with midnight-teal tails parked at gates with jet bridges, one jet lifting off from the runway, a turboprop taxiing, a slim control tower, palm trees, the Atlas foothills in the hazy distance, calm empty sky in the upper left third for the game title. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "1. App & screens",
+    "file": "airline_logo.png",
+    "size": "1024×1024",
+    "format": "PNG (transparent)",
+    "ar": "شعار الشركة",
+    "priority": 9,
+    "prompt": "Logo for the fictional airline 'Atlas Air 3D': an eight-pointed Moroccan star merged with a swept wing, copper on midnight teal, above the wordmark 'أطلس للطيران' in elegant Arabic calligraphy and 'ATLAS AIR' in a clean modern Latin typeface, flat vector look, centered. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "1. App & screens",
+    "file": "loading_bg.png",
+    "size": "1920×1080",
+    "format": "PNG",
+    "ar": "خلفية التحميل",
+    "priority": 9,
+    "prompt": "Minimal abstract background: soft midnight-teal to sunset-orange gradient, faint zellige eight-pointed star pattern, a thin copper flight path arc crossing the frame, lots of calm empty space in the center. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_tower.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: البرج",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an air-traffic control tower, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_fleet.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: الأسطول",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an airliner seen from directly above, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_routes.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: المسارات",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a curved dashed route between two map pins, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_airport.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: المطار",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an airport terminal building with a gate, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_money.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: المال",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a stack of coins with an eight-pointed star, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_reputation.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: السمعة",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a star inside a laurel wreath, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_clock.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: الوقت",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a round clock, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_pushback.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: دفع للخلف",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an aircraft being pushed backwards by a small tug, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_takeoff.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: إقلاع",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an aircraft taking off from a runway, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_landing.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: هبوط",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an aircraft landing on a runway, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_gate.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: البوابة",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a jet bridge connected to an aircraft door, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_controller.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: المراقب المساعد",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of an aviation headset with a microphone, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_speed.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: سرعة الوقت",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a fast-forward double arrow, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "2. UI icons",
+    "file": "icon_warning.png",
+    "size": "512×512",
+    "format": "PNG (transparent)",
+    "ar": "أيقونة: تنبيه",
+    "priority": 3,
+    "prompt": "Flat duotone mobile game UI icon of a triangle warning sign, copper #B8743D and ivory #F2ECDF, rounded strokes, centered with generous padding, part of one consistent icon set, simple and readable at 32 px. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "3. Aircraft (fleet shop)",
+    "file": "ac_p70.png",
+    "size": "1200×800",
+    "format": "PNG (transparent)",
+    "ar": "طائرة P70 مروحية",
+    "priority": 4,
+    "prompt": "An original 70-seat twin-turboprop regional airliner with high wings, ivory fuselage, midnight-teal tail with a copper eight-pointed Moroccan star emblem, copper cheatline along the windows, copper propeller spinners, landing gear down, three-quarter front view facing left, centered, soft contact shadow under the wheels. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "3. Aircraft (fleet shop)",
+    "file": "ac_t2.png",
+    "size": "1200×800",
+    "format": "PNG (transparent)",
+    "ar": "طائرة T2 نفاثة",
+    "priority": 4,
+    "prompt": "An original 120-seat twin-engine narrow-body jet airliner with low swept wings, ivory fuselage, midnight-teal tail with a copper eight-pointed Moroccan star emblem, copper cheatline along the windows, copper engine intake lips, landing gear down, three-quarter front view facing left, centered, soft contact shadow under the wheels. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "3. Aircraft (fleet shop)",
+    "file": "ac_t3.png",
+    "size": "1200×800",
+    "format": "PNG (transparent)",
+    "ar": "طائرة T3 طويلة",
+    "priority": 4,
+    "prompt": "An original 180-seat stretched twin-engine narrow-body jet airliner with winglets, visibly longer than a standard narrow-body, ivory fuselage, midnight-teal tail with a copper eight-pointed Moroccan star emblem, copper cheatline along the windows, copper winglet tips and copper engine intake lips, landing gear down, three-quarter front view facing left, centered, soft contact shadow under the wheels. Isolated on a fully transparent background (real alpha channel, no checkerboard, no backdrop). No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "4. Destination cards",
+    "file": "card_cmn.png",
+    "size": "1200×800",
+    "format": "PNG",
+    "ar": "بطاقة: الدار البيضاء",
+    "priority": 5,
+    "prompt": "Travel postcard illustration of Casablanca, Morocco: the Atlantic coastline with a grand mosque and its tall minaret standing on the ocean, white city buildings, wide composition, sunset light, rich but clean detail. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "4. Destination cards",
+    "file": "card_rak.png",
+    "size": "1200×800",
+    "format": "PNG",
+    "ar": "بطاقة: مراكش",
+    "priority": 5,
+    "prompt": "Travel postcard illustration of Marrakech, Morocco: the Koutoubia minaret, red ochre city walls and palm trees, the snow-capped Atlas mountains behind, wide composition, sunset light, rich but clean detail. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "4. Destination cards",
+    "file": "card_fez.png",
+    "size": "1200×800",
+    "format": "PNG",
+    "ar": "بطاقة: فاس",
+    "priority": 5,
+    "prompt": "Travel postcard illustration of Fès, Morocco: the old medina rooftops with green-tiled roofs climbing the hills, an ornate madrasa gate, wide composition, sunset light, rich but clean detail. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "4. Destination cards",
+    "file": "card_tng.png",
+    "size": "1200×800",
+    "format": "PNG",
+    "ar": "بطاقة: طنجة",
+    "priority": 5,
+    "prompt": "Travel postcard illustration of Tangier, Morocco: white kasbah houses on the hill above the Strait of Gibraltar, blue sea and the distant Spanish coast, wide composition, sunset light, rich but clean detail. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "4. Destination cards",
+    "file": "card_aga.png",
+    "size": "1200×800",
+    "format": "PNG",
+    "ar": "بطاقة: أكادير",
+    "priority": 5,
+    "prompt": "Travel postcard illustration of Agadir, Morocco: a long golden Atlantic beach, the Kasbah hill above the bay, a palm-lined promenade, wide composition, sunset light, rich but clean detail. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "4. Destination cards",
+    "file": "card_oud.png",
+    "size": "1200×800",
+    "format": "PNG",
+    "ar": "بطاقة: وجدة",
+    "priority": 5,
+    "prompt": "Travel postcard illustration of Oujda, Morocco: an old monumental city gate (Bab) in ochre stone, palm trees and a lively square, wide composition, sunset light, rich but clean detail. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_asphalt.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "أرضية المدرج",
+    "priority": 6,
+    "prompt": "Texture of airport runway asphalt: dark grey, fine aggregate, faint rubber tyre marks, no paint lines. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_concrete.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "أرضية الساحة",
+    "priority": 6,
+    "prompt": "Texture of airport apron concrete: light warm-grey slabs with a faint joint grid every 10 metres, a few subtle oil stains. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_desert.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "أرض صحراوية",
+    "priority": 6,
+    "prompt": "Texture of Moroccan arid ground around an airport: ochre sand and dry soil, small stones, sparse dry grass tufts. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_grass.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "عشب جاف بجانب المدرج",
+    "priority": 7,
+    "prompt": "Texture of dry sun-burnt grass strips beside an airport runway: yellow-green short grass with patches of ochre soil. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_farmland.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "أراضٍ زراعية",
+    "priority": 7,
+    "prompt": "High-altitude aerial texture of Moroccan countryside: olive groves in neat rows, ochre fields, green irrigated patches, thin dirt tracks. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_city.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "مدينة من الأعلى",
+    "priority": 8,
+    "prompt": "High-altitude aerial texture of a dense Moroccan city: white and ochre flat-roofed buildings, narrow streets, small courtyards, a few palm trees. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "5. Ground textures",
+    "file": "tex_rock.png",
+    "size": "2048×2048",
+    "format": "PNG",
+    "ar": "صخور الأطلس",
+    "priority": 8,
+    "prompt": "Texture of red-brown Atlas mountain rock and scree with patches of light snow. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "6. Buildings",
+    "file": "terminal_facade.png",
+    "size": "4096×1024",
+    "format": "PNG",
+    "ar": "واجهة مبنى الركاب",
+    "priority": 7,
+    "prompt": "Orthographic front elevation texture of a long modern Moroccan airport terminal: terracotta walls, a repeating arcade of tall horseshoe arches with dark teal glass, copper trim above the arches, cream crenellated roofline, no people. The left and right edges must repeat seamlessly. Flat front view, evenly lit, no perspective. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "6. Buildings",
+    "file": "terminal_roof.png",
+    "size": "2048×1024",
+    "format": "PNG",
+    "ar": "سقف مبنى الركاب",
+    "priority": 8,
+    "prompt": "Roof of a large airport terminal seen from directly above: cream roof panels, rooftop air-conditioning units, skylights, a central copper dome seen from above, terracotta parapet edges. Perfectly flat orthographic top-down view, evenly lit, no perspective, no shadows, no vignette. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "6. Buildings",
+    "file": "tower_texture.png",
+    "size": "1024×1024",
+    "format": "PNG",
+    "ar": "برج المراقبة",
+    "priority": 9,
+    "prompt": "Texture band for an air-traffic control tower: cream concrete with a copper ring, tinted teal glass cab windows with thin mullions. The left and right edges must repeat seamlessly. Flat front view, evenly lit, no perspective. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "6. Buildings",
+    "file": "hangar_texture.png",
+    "size": "2048×1024",
+    "format": "PNG",
+    "ar": "الحظيرة",
+    "priority": 9,
+    "prompt": "Texture of an aircraft hangar exterior wall: light corrugated metal panels, teal safety stripes, a large copper band above the door. The left and right edges must repeat seamlessly. Flat front view, evenly lit, no perspective. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "6. Buildings",
+    "file": "tex_zellige.png",
+    "size": "1024×1024",
+    "format": "PNG",
+    "ar": "نقش الزليج",
+    "priority": 9,
+    "prompt": "Moroccan zellige tile pattern in teal, copper, ivory and terracotta with geometric eight-pointed stars. Flat front view, evenly lit. Seamless tileable texture: the left edge matches the right edge and the top edge matches the bottom edge. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "7. Sky & landscape",
+    "file": "sky_sunset_pano.png",
+    "size": "4096×2048",
+    "format": "PNG",
+    "ar": "السماء 360°",
+    "priority": 6,
+    "prompt": "Equirectangular 360-degree panorama of a clear Moroccan sunset sky: sun low on the western horizon, warm orange-pink horizon fading to deep teal-blue at the top, a few thin high clouds lit gold. Sky only: the horizon line is exactly at the vertical middle and the lower half is a plain soft haze. The left and right edges must wrap seamlessly. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  },
+  {
+    "group": "7. Sky & landscape",
+    "file": "atlas_mountains_strip.png",
+    "size": "4096×1024",
+    "format": "PNG (transparent)",
+    "ar": "جبال الأطلس في الأفق",
+    "priority": 8,
+    "prompt": "Distant panorama of the High Atlas mountain range at sunset: layered ridges, red-brown foothills, snow-capped peaks lit pink-gold, atmospheric haze. Fully transparent sky above the peaks, solid bottom edge. The left and right edges must repeat seamlessly. No text, no letters, no numbers in the image. Style: warm Moroccan golden-hour light, clean semi-realistic mobile game art, crisp shapes readable on small phone screens. Palette: ivory #F2ECDF, midnight teal #0F3F45, copper #B8743D, terracotta #B5583A, desert ochre #C79A66, sunset orange #F2A86B. Original design: no real airline names, logos or liveries, no watermark, no signature."
+  }
+]
