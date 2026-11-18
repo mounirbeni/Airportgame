@@ -1,5 +1,6 @@
 // Reusable procedural airport (port of scripts/world/airport_builder.gd).
 import * as THREE from 'three';
+import { applyMap, tileUV } from './assets.js';
 import { t, TAXIWAY_X, APRON_X, TERMINAL_X, HOLD_X, STAND_X, STAND_Z, LANE_X } from './core.js';
 
 const Y_PAINT = 0.19;
@@ -47,6 +48,18 @@ export class Airport {
       const box = new THREE.Box3().setFromObject(m); this.group.remove(m); return box;
     });
   }
+  /** Box whose top face tiles a texture every `tile` metres. */
+  tbox(size, pos, material, tile) {
+    const m = new THREE.Mesh(tileUV(new THREE.BoxGeometry(...size), size[0] / tile, size[2] / tile), material);
+    m.position.set(...pos); m.receiveShadow = true; this.group.add(m); return m;
+  }
+  /** Flat textured ground patch (local x0..x1, z0..z1) slightly above the flat terrain. */
+  patch(x0, x1, z0, z1, material, tile) {
+    const w = x1 - x0, l = z1 - z0;
+    const geo = tileUV(new THREE.PlaneGeometry(w, l), w / tile, l / tile);
+    const m = new THREE.Mesh(geo, material); m.rotation.x = -Math.PI / 2;
+    m.position.set((x0 + x1) / 2, 0.03, (z0 + z1) / 2); m.receiveShadow = true; this.group.add(m); return m;
+  }
   box(size, pos, material, collide = false) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
     m.position.set(...pos); m.castShadow = collide; m.receiveShadow = true;
@@ -78,13 +91,27 @@ export class Airport {
   }
   buildPavement() {
     const d = this.def, w = d.runway_width;
-    this.box([w + 14, 0.2, d.runway_length + 120], [0, 0.03, 0], mat('shoulder', 0x736b5c));
-    this.box([w, 0.3, d.runway_length], [0, 0, 0], mat('asphalt', 0x333336));
-    const taxi = mat('taxi', 0x454545);
-    this.box([23, 0.24, d.runway_length - 40], [TAXIWAY_X, 0, 0], taxi);
-    for (const z of [d.connZ, -d.connZ, 0]) this.box([TAXIWAY_X, 0.24, 23], [TAXIWAY_X / 2, 0, z], taxi);
+    const shoulder = mat('shoulder_t', 0x736b5c), rwy = mat('asphalt_t', 0x333336), taxi = mat('taxi_t', 0x454545), conc = mat('concrete_t', 0x9e998f);
+    const grass = mat('grass_t', 0x8c7a4c), farm = mat('farm_t', 0x9a8452);
+    for (const m of [grass, farm]) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
+    applyMap(shoulder, 'tex_grass', { tint: 0xd8d0b8 });
+    applyMap(rwy, 'tex_asphalt', { tint: 0xc4c4c4 });
+    applyMap(taxi, 'tex_asphalt');
+    applyMap(conc, 'tex_concrete');
+    applyMap(grass, 'tex_grass');
+    applyMap(farm, 'tex_farmland', { tint: 0xe2d8c2 });
+    this.tbox([w + 14, 0.2, d.runway_length + 120], [0, 0.03, 0], shoulder, 30);
+    this.tbox([w, 0.3, d.runway_length], [0, 0, 0], rwy, 45);
+    this.tbox([23, 0.24, d.runway_length - 40], [TAXIWAY_X, 0, 0], taxi, 23);
+    for (const z of [d.connZ, -d.connZ, 0]) this.tbox([TAXIWAY_X, 0.24, 23], [TAXIWAY_X / 2, 0, z], taxi, 23);
     const x0 = TAXIWAY_X + 11, x1 = TERMINAL_X - 6;
-    this.box([x1 - x0, 0.2, 1040], [(x0 + x1) / 2, 0, 0], mat('concrete', 0x9e998f));
+    this.tbox([x1 - x0, 0.2, 1040], [(x0 + x1) / 2, 0, 0], conc, 25);
+    // Grass infield and farmland inside the airport's flat zone.
+    const zl = d.hl + 700;
+    this.patch(30, TAXIWAY_X - 12, -d.hl - 60, d.hl + 60, grass, 40);
+    this.patch(-420, -30, -zl, zl, grass, 40);
+    this.patch(-940, -440, -zl, zl, farm, 420);
+    this.patch(620, 1240, -zl, zl, farm, 420);
   }
   buildMarkings() {
     const d = this.def, hl = d.hl, w = d.runway_width;
@@ -159,12 +186,24 @@ export class Airport {
     const d = this.def, x0 = TERMINAL_X, len = 420, dep = 60, h = 16, cx = x0 + dep / 2;
     const terra = mat('terra_' + d.code, new THREE.Color(d.terminal_color)), cream = mat('cream', 0xede0c2);
     const glass = mat('glass', 0x1a4a4f), copper = mat('copper', 0xb8733d), teal = mat('teal', 0x0f4045);
-    this.box([dep, h, len], [cx, h / 2, 0], terra, true);
-    this.box([dep + 4, 1.2, len + 4], [cx, h + 0.6, 0], cream);
-    this.box([0.6, 4, len - 20], [x0 - 0.3, h - 4.5, 0], glass);
-    for (let z = -len / 2 + 14; z < len / 2 - 10; z += 16) { this.box([0.8, 7, 7], [x0 - 0.2, 3.5, z], teal); this.box([1, 0.6, 9], [x0 - 0.4, 7.3, z], copper); }
+    // Main hall: facade texture on the apron side (-X), roof texture on top.
+    const facade = new THREE.MeshLambertMaterial({ color: new THREE.Color(d.terminal_color) });
+    const roof = new THREE.MeshLambertMaterial({ color: 0xede0c2 });
+    const hall = this.box([dep, h, len], [cx, h / 2, 0], [terra, facade, roof, terra, terra, terra], true);
+    this.box([dep + 4, 1.2, len + 4], [cx, h + 0.6, 0], cream).visible = false;
+    const deco = new THREE.Group(); this.group.add(deco);
+    const addDeco = (sz, pos, m) => { const b = this.box(sz, pos, m); this.group.remove(b); deco.add(b); };
+    addDeco([0.6, 4, len - 20], [x0 - 0.3, h - 4.5, 0], glass);
+    for (let z = -len / 2 + 14; z < len / 2 - 10; z += 16) { addDeco([0.8, 7, 7], [x0 - 0.2, 3.5, z], teal); addDeco([1, 0.6, 9], [x0 - 0.4, 7.3, z], copper); }
+    applyMap(facade, 'terminal_facade', { repeat: [len / 64, 1] }, () => { deco.visible = false; });
+    applyMap(roof, 'terminal_roof', { repeat: [1, 3] });
     for (let z = -len / 2 + 4; z < len / 2; z += 8) this.box([2, 1.6, 2], [x0 + 1, h + 2, z], cream);
-    this.box([40, 24, 60], [cx + 4, 12, 0], terra, true);
+    // Central hall clad in zellige tiles.
+    const zA = new THREE.MeshLambertMaterial({ color: new THREE.Color(d.terminal_color) }), zB = zA.clone();
+    applyMap(zA, 'tex_zellige', { repeat: [60 / 9, 24 / 9], key: 'a' });
+    applyMap(zB, 'tex_zellige', { repeat: [40 / 9, 24 / 9], key: 'b' });
+    this.box([40, 24, 60], [cx + 4, 12, 0], [zA, zA, terra, terra, zB, zB], true);
+    void hall;
     const dome = new THREE.Mesh(new THREE.SphereGeometry(16, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), copper);
     dome.position.set(cx + 4, 24, 0); dome.scale.y = 0.65; this.group.add(dome);
     for (const sz of STAND_Z) { this.box([12, 3.2, 3.4], [x0 - 6, 5, sz - 7], cream); this.box([1.2, 4.6, 1.2], [x0 - 10, 2.3, sz - 7], teal); }
@@ -177,17 +216,21 @@ export class Airport {
   buildTower() {
     const x = TERMINAL_X + 40, z = -300;
     const add = (geo, m, y) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; this.group.add(o); };
-    add(new THREE.CylinderGeometry(3.5, 4.5, 46, 12), mat('cream', 0xede0c2), 23);
-    add(new THREE.CylinderGeometry(8.5, 7, 6, 12), mat('glass', 0x1a4a4f), 49);
+    const shaft = new THREE.MeshLambertMaterial({ color: 0xede0c2 }), cab = new THREE.MeshLambertMaterial({ color: 0x1a4a4f });
+    applyMap(shaft, 'tower_texture', { repeat: [3, 0.46], offset: [0, 0.02], key: 'shaft' });
+    applyMap(cab, 'tower_texture', { repeat: [4, 0.44], offset: [0, 0.54], key: 'cab' });
+    add(new THREE.CylinderGeometry(3.5, 4.5, 46, 16), shaft, 23);
+    add(new THREE.CylinderGeometry(8.5, 7, 6, 16), cab, 49);
     add(new THREE.CylinderGeometry(6, 9.5, 2, 12), mat('teal', 0x0f4045), 53);
     this.colliders.push({ size: [14, 56, 14], pos: new THREE.Vector3(x, 28, z) });
   }
   hangarLocal() { return [APRON_X + 60, -700]; }
   buildHangar() {
     const [ox, oz] = this.hangarLocal(), dep = 70, wid = 84, h = 22;
-    const wall = mat('hwall', 0xd1c7b3, { double: true }), roof = mat('hroof', 0x0f4045, { double: true });
+    const wall = new THREE.MeshLambertMaterial({ color: 0xd1c7b3, side: THREE.DoubleSide }), roof = mat('hroof', 0x0f4045, { double: true });
+    applyMap(wall, 'hangar_texture', { repeat: [2, 1] });
     this.box([dep, 0.3, wid], [ox, 0.15, oz], mat('hfloor', 0x8c8c87));
-    this.box([130, 0.2, wid + 20], [ox - dep / 2 - 65, 0, oz], mat('concrete', 0x9e998f));
+    this.tbox([130, 0.2, wid + 20], [ox - dep / 2 - 65, 0, oz], mat('concrete_t', 0x9e998f), 25);
     this.box([1.5, h, wid], [ox + dep / 2, h / 2, oz], wall, true);
     for (const s of [-1, 1]) this.box([dep, h, 1.5], [ox, h / 2, oz + s * wid / 2], wall, true);
     for (const s of [-1, 1]) { const r = this.box([dep + 2, 1, wid * 0.54], [ox, h + 5, oz + s * wid / 4], roof); r.rotation.x = s * 13 * Math.PI / 180; }

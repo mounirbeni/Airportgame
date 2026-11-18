@@ -1,6 +1,7 @@
 // Renderer, sunset sky, lights, scenery, chase camera and procedural audio.
 import * as THREE from 'three';
 import { TERMINAL_X } from './core.js';
+import { loadTex } from './assets.js';
 
 export function createRenderer(canvas) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -24,8 +25,26 @@ export function createEnvironment(scene) {
       #include <colorspace_fragment>
       }`,
   });
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(40000, 32, 16), skyMat);
-  sky.frustumCulled = false; scene.add(sky);
+  const gradient = new THREE.Mesh(new THREE.SphereGeometry(40000, 32, 16), skyMat);
+  gradient.frustumCulled = false;
+  const sky = new THREE.Group(); sky.add(gradient); scene.add(sky);
+  // Painted 360° sunset panorama (sun in the west). Geometry is mirrored so
+  // the texture reads correctly from inside; u = 0.5 then faces west (-X).
+  loadTex('sky_sunset_pano', { wrap: false }).then(tex => {
+    if (!tex) return;
+    const g = new THREE.SphereGeometry(39000, 48, 24); g.scale(-1, 1, 1);
+    const pano = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex, fog: false, depthWrite: false, toneMapped: false }));
+    pano.frustumCulled = false; pano.renderOrder = -2; sky.add(pano); gradient.visible = false;
+  });
+  // Distant High Atlas ridge on the southern horizon (follows the camera).
+  const mountains = new THREE.Group(); scene.add(mountains);
+  loadTex('atlas_mountains_strip', { repeat: [5, 1] }).then(tex => {
+    if (!tex) return;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    const geo = new THREE.CylinderGeometry(30000, 30000, 5000, 96, 1, true, -Math.PI * 0.55, Math.PI * 1.1);
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.04, side: THREE.DoubleSide, fog: false, depthWrite: false, toneMapped: false }));
+    m.position.y = 2000; m.frustumCulled = false; m.renderOrder = -1; mountains.add(m);
+  });
   scene.fog = new THREE.Fog(0xf2b585, 5000, 42000);
   scene.add(new THREE.HemisphereLight(0xffd1a8, 0x7a5a40, 1.1));
   const sun = new THREE.DirectionalLight(0xffc68c, 2.4);
@@ -33,7 +52,7 @@ export function createEnvironment(scene) {
   const sc = sun.shadow.camera; sc.left = -130; sc.right = 130; sc.top = 130; sc.bottom = -130; sc.near = 10; sc.far = 1200;
   sun.shadow.bias = -0.0005;
   scene.add(sun); scene.add(sun.target);
-  return { sky, sun, sunDir: skyMat.uniforms.sunDir.value };
+  return { sky, mountains, sun, sunDir: skyMat.uniforms.sunDir.value };
 }
 
 export function applyQuality(renderer, env, q) {

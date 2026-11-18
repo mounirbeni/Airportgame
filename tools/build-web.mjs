@@ -13,6 +13,7 @@ const copyDir = (from, to) => { for (const f of fs.readdirSync(path.join(ROOT, f
 
 copyDir('web/js', 'js');
 copyDir('web/icons', 'icons');
+if (fs.existsSync(path.join(ROOT, 'web/assets'))) copyDir('web/assets', 'assets');
 copyDir('data', 'data');
 copyDir('localization', 'localization');
 copy('web/manifest.webmanifest', 'manifest.webmanifest');

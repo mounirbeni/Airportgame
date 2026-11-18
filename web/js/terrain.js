@@ -1,6 +1,7 @@
 // Procedural terrain matching scripts/world/terrain.gd: Atlantic coast,
 // plains, Atlas foothills south of Marrakech, Middle Atlas hills near Fès.
 import * as THREE from 'three';
+import { loadTex } from './assets.js';
 
 function makeSimplex(seed) {
   const p = new Uint8Array(512), perm = new Uint8Array(256);
@@ -89,9 +90,29 @@ export class Terrain {
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     geo.setIndex(idx); geo.computeVertexNormals();
-    const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const mesh = new THREE.Mesh(geo, mat);
     mesh.receiveShadow = true;
     scene.add(mesh);
+    // Detail texture: tile the desert ground every ~120 m. The vertex colours
+    // are divided by the texture's average colour so the overall palette
+    // (fields, foothills, snow) stays the same while gaining surface detail.
+    const uv = new Float32Array((n + 1) * (n + 1) * 2);
+    for (let iz = 0, k2 = 0; iz <= n; iz++) for (let ix = 0; ix <= n; ix++, k2 += 2) { uv[k2] = ix * step / 120; uv[k2 + 1] = iz * step / 120; }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    loadTex('tex_desert').then(tex => {
+      if (!tex) return;
+      const cv = document.createElement('canvas'); cv.width = cv.height = 16;
+      const g = cv.getContext('2d'); g.drawImage(tex.image, 0, 0, 16, 16);
+      const px = g.getImageData(0, 0, 16, 16).data; let r = 0, gg = 0, b = 0;
+      for (let i = 0; i < px.length; i += 4) { r += px[i]; gg += px[i + 1]; b += px[i + 2]; }
+      const cnt = px.length / 4, lin = v => Math.pow(v / cnt / 255, 2.2);
+      const avg = [lin(r), lin(gg), lin(b)];
+      const c = geo.attributes.color;
+      for (let i = 0; i < c.count; i++) c.setXYZ(i, Math.min(c.getX(i) / avg[0] * 0.95, 2), Math.min(c.getY(i) / avg[1] * 0.95, 2), Math.min(c.getZ(i) / avg[2] * 0.95, 2));
+      c.needsUpdate = true;
+      mat.map = tex; mat.needsUpdate = true;
+    });
     const water = new THREE.Mesh(new THREE.PlaneGeometry(this.size * 1.6, this.size * 1.6),
       new THREE.MeshPhongMaterial({ color: 0x1f5566, shininess: 60, specular: 0x557788 }));
     water.rotation.x = -Math.PI / 2; water.position.set(this.cx, -3, this.cz);

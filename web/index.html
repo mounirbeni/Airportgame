@@ -101,6 +101,21 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
   .toast { font-size: 13px; }
   #tip { left: 8px; right: 8px; width: auto; transform: none; bottom: calc(42svh + 16px + var(--safe-b)); font-size: 13px; }
 }
+/* Art assets */
+.ic { width: 20px; height: 20px; vertical-align: middle; margin-inline-end: 6px; flex: none; pointer-events: none; }
+button .ic { margin-inline-end: 6px; }
+#tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
+#tabs .ic { width: 18px; height: 18px; margin: 0; }
+.chip { display: inline-flex; align-items: center; } .chip .ic { width: 17px; height: 17px; }
+.hero { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 10px; display: block; }
+.hero.ac { aspect-ratio: 2 / 1; object-fit: contain; background: radial-gradient(ellipse at 50% 65%, rgba(250,243,225,.12), rgba(250,243,225,0) 70%); }
+.thumb { width: 64px; height: 42px; object-fit: contain; flex: none; }
+#side { background: linear-gradient(rgba(8,36,40,.9), rgba(8,36,40,.94)), url(assets/ui/loading_bg.webp) center / cover; }
+#loading { background: #0f3f45 url(assets/ui/splash_keyart.webp) center / cover; flex-direction: column; gap: 14px; display: flex; align-items: center; justify-content: center; }
+#loading img { width: min(260px, 50vw); filter: drop-shadow(0 4px 18px rgba(0,0,0,.45)); }
+#loading span { background: rgba(8,36,40,.75); padding: 6px 16px; border-radius: 12px; font-size: 16px; }
+@media (orientation: portrait) { #tabs .ic { display: none; } }
+@media (max-width: 760px), (max-height: 480px) { .hero { aspect-ratio: 16 / 7; } .hero.ac { aspect-ratio: 3 / 1; } }
 </style>
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
@@ -127,7 +142,7 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
 <div id="sel" class="hidden"></div>
 <div id="toasts"></div>
 <div id="tip" class="hidden"><span id="tipText"></span><button id="tipClose">OK</button></div>
-<div id="loading">Atlas Air 3D …</div>
+<div id="loading"><img src="assets/ui/airline_logo.webp" alt="Atlas Air" onerror="this.remove()"><span>…</span></div>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

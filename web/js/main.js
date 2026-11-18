@@ -11,12 +11,14 @@ import { Sim } from './sim.js';
 import { UI } from './ui.js';
 import { TycoonCamera } from './camera.js';
 import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery } from './world.js';
+import { setAnisotropy } from './assets.js';
 
 async function boot() {
   await Core.loadAll();
   St.load();
   const canvas = document.getElementById('view');
   const renderer = createRenderer(canvas);
+  setAnisotropy(renderer);
   const scene = new THREE.Scene();
   const env = createEnvironment(scene);
   const airports = Object.values(DB.airports);
@@ -130,6 +132,7 @@ async function boot() {
     cam.update(dt, cam.follow && fr && fr.mesh.visible ? fr.mesh.position : null);
     updateSun(env, cam.target);
     env.sky.position.copy(cam.cam.position);
+    env.mountains.position.set(cam.cam.position.x, -300, cam.cam.position.z);
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }

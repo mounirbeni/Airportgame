@@ -11,6 +11,11 @@ function btn(text, cb, cls = '', enabled = true) {
   const b = el('button', cls, text); b.disabled = !enabled;
   b.addEventListener('click', e => { e.stopPropagation(); cb(); }); return b;
 }
+/** Small UI icon from web/assets/ui (hidden if the file is missing). */
+function ic(name, cls = 'ic') { const i = el('img', cls); i.src = `assets/ui/icon_${name}.webp`; i.alt = ''; i.draggable = false; i.onerror = () => i.remove(); return i; }
+function hero(file, cls = 'hero') { const i = el('img', cls); i.src = `assets/cards/${file}.webp`; i.alt = ''; i.draggable = false; i.loading = 'lazy'; i.onerror = () => i.remove(); return i; }
+const ACTION_ICON = { ready: 'pushback', holding: 'takeoff', approach: 'landing' };
+const TAB_ICON = { tower: 'tower', fleet: 'fleet', routes: 'routes', airport: 'airport' };
 const ORDER = ['approach', 'holding', 'ready', 'cleared', 'go_around', 'rollout', 'taxi_in', 'lineup', 'takeoff', 'pushback', 'taxi_out', 'turn', 'idle', 'enroute'];
 
 export class UI {
@@ -48,8 +53,14 @@ export class UI {
   top() {
     $('money').textContent = moneyShort(S.money);
     $('money').className = 'chip ' + (S.money < 0 ? 'bad' : '');
-    $('rep').textContent = t('ty_rep', { v: Math.round(S.rep) });
-    $('clock').textContent = t('ty_day', { d: S.day, t: clockText() });
+    this.chip('rep', 'reputation', t('ty_rep', { v: Math.round(S.rep) }));
+    this.chip('clock', 'clock', t('ty_day', { d: S.day, t: clockText() }));
+  }
+  chip(id, icon, text) {
+    const c = $(id);
+    if (!c.dataset.init) { c.dataset.init = '1'; c.textContent = ''; c.append(ic(icon), el('span')); }
+    const span = c.querySelector('span') || c.appendChild(el('span'));
+    if (span.textContent !== text) span.textContent = text;
   }
   /** Rebuilds the active tab only when something visible changed. */
   refresh(force = false) {
@@ -70,6 +81,7 @@ export class UI {
         else { side.classList.remove('collapsed'); this.tab = id; this.renderTabs(); this.refresh(true); }
         document.body.classList.toggle('sheet-collapsed', side.classList.contains('collapsed'));
       }, this.tab === id ? 'on' : '');
+      b.prepend(ic(TAB_ICON[id]));
       if (id === 'tower') { const bd = el('span', 'badge'); b.append(bd); }
       tabs.append(b);
     }
@@ -84,6 +96,7 @@ export class UI {
     const key = NEEDS_ORDER[a.state]; if (!key) return null;
     const why = this.sim.blockReason(a);
     const b = btn(why ? t(why) : t(key), () => this.fire('order', a), (big ? 'act ' : '') + (why ? '' : 'primary'), !why);
+    b.prepend(ic(why ? 'warning' : ACTION_ICON[a.state]));
     return b;
   }
   tower(body) {
@@ -103,7 +116,7 @@ export class UI {
     body.append(el('div', 'dim', t('ty_fleet_count', { n: S.fleet.length, g: S.gates })));
     for (const a of S.fleet) {
       const c = el('div', 'card'), row = el('div', 'row');
-      row.append(el('span', 't', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)));
+      row.append(hero('ac_' + a.type, 'thumb'), el('span', 't', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)));
       const sel = el('select'); sel.append(new Option(t('ty_none'), ''));
       for (const code of Object.keys(S.routes)) sel.append(new Option(t(DB.dests[code].name_key), code, false, a.route === code));
       sel.value = a.route || '';
@@ -116,7 +129,7 @@ export class UI {
     }
     for (const ty of DB.ty.aircraft_types) {
       const c = el('div', 'card'), why = canBuyAircraft(ty.id);
-      c.append(el('div', 't cop', t(ty.name_key)),
+      c.append(hero('ac_' + ty.id, 'hero ac'), el('div', 't cop', t(ty.name_key)),
         el('div', 'dim', `${t('ty_seats', { n: ty.seats })} · ${t('ty_kmh', { n: ty.speed_kmh })}`),
         btn(why === 'need_gate' ? t('ty_need_gate') : why === 'need_rep' ? t('ty_need_rep', { n: ty.rep_required }) : t('ty_buy', { v: moneyShort(ty.price) }),
           () => this.fire('buy', ty.id), why ? '' : 'primary', !why));
@@ -127,7 +140,7 @@ export class UI {
     for (const d of DB.ty.destinations) {
       const c = el('div', 'card'), r = S.routes[d.code];
       const head = el('div', 'row'); head.append(el('span', 't', t(d.name_key)), el('span', 'dim', `CMN ⇄ ${d.code} · ${t('ty_km', { n: d.km })}`));
-      c.append(head);
+      c.append(hero('card_' + d.code.toLowerCase()), head);
       if (!r) { c.append(btn(t('ty_open_route', { v: moneyShort(d.unlock_price) }), () => this.fire('openRoute', d.code), 'primary', S.money >= d.unlock_price)); body.append(c); continue; }
       const info = el('div', 'dim'), slider = el('input'); slider.type = 'range'; slider.min = Math.round(d.base_price * 0.6); slider.max = Math.round(d.base_price * 1.6); slider.step = 10; slider.value = r.price;
       const label = el('div', '');
@@ -147,9 +160,13 @@ export class UI {
   }
   airport(body) {
     const g = DB.ty.gates;
-    const gc = el('div', 'card'); gc.append(el('div', 't', t('ty_gates', { n: S.gates, m: g.max })),
+    const home = el('div', 'card'); home.append(hero('card_cmn'), el('div', 't', t('apt_cmn')));
+    body.append(home);
+    const gtitle = el('div', 'row t'); gtitle.append(ic('gate'), el('span', '', t('ty_gates', { n: S.gates, m: g.max })));
+    const gc = el('div', 'card'); gc.append(gtitle,
       btn(t('ty_buy_gate', { v: moneyShort(g.price) }), () => this.fire('buyGate'), 'primary', S.gates < g.max && S.money >= g.price));
-    const ac = el('div', 'card'); ac.append(el('div', 't', t('ty_auto_atc')), el('div', 'dim', t('ty_auto_atc_desc', { v: moneyShort(DB.ty.auto_atc.price_per_day) })),
+    const atitle = el('div', 'row t'); atitle.append(ic('controller'), el('span', '', t('ty_auto_atc')));
+    const ac = el('div', 'card'); ac.append(atitle, el('div', 'dim', t('ty_auto_atc_desc', { v: moneyShort(DB.ty.auto_atc.price_per_day) })),
       btn(S.autoAtc ? t('ty_dismiss') : t('ty_hire'), () => this.fire('autoAtc'), S.autoAtc ? '' : 'primary'));
     const fin = el('div', 'card'); fin.append(el('div', 't', t('ty_today')),
       el('div', 'good', `${t('ty_revenue')}: ${money(S.today.revenue)}`), el('div', 'bad', `${t('ty_costs')}: ${money(S.today.costs)} (+${moneyShort(dailyCosts())} / ${t('ty_today')})`),
@@ -190,7 +207,7 @@ export class UI {
       tag.style.display = behind || x < -50 || x > W + 50 || y < -20 || y > H + 40 ? 'none' : '';
       tag.style.left = x + 'px'; tag.style.top = y + 'px';
       const need = !!NEEDS_ORDER[a.state];
-      const txt = a.flightNo + (need ? ' ⚑' : '');
+      const txt = a.flightNo + (need ? ' !' : '');
       if (tag.textContent !== txt) tag.textContent = txt;
       tag.classList.toggle('attn', need); tag.classList.toggle('sel', this.selected === a);
       r.mesh.userData.ring.visible = this.selected === a || need;
