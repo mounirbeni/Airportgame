@@ -313,6 +313,13 @@ func _update_takeoff(pos: Vector3, speed: float) -> void:
 
 
 func _update_nav(pos: Vector3, speed: float, delta: float) -> void:
+	if nav_index == faf_index:
+		# Joined the final approach inside the fix while aligned: count it as passed.
+		var lf: Vector3 = dest.to_local(pos)
+		if lf.z - dest.half_length() < contract.faf_distance and lf.z > dest.half_length() \
+				and absf(lf.x) < 600.0 and _heading_error(dest.runway_yaw()) < 45.0:
+			_advance_nav()
+			return
 	if nav_index < nav_points.size():
 		var p: Vector3 = nav_points[nav_index]
 		var hd: float = Vector2(pos.x - p.x, pos.z - p.z).length()
