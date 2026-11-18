@@ -75,11 +75,11 @@ function makeAirport(d) {
         [TAXIWAY_X, connZ - 90], [TAXIWAY_X - 6, connZ - 30], [TAXIWAY_X - 40, connZ], [HOLD_X + 10, connZ]];
     },
     lineupRoute() { return [[HOLD_X + 10, connZ], [45, connZ], [16, connZ - 22], [3, connZ - 60], [0, connZ - 100]]; },
-    /** From the end of the landing roll, off the far end and back to stand i. */
+    /** Rapid exit at mid-runway, down the taxiway and back to stand i. */
     taxiInRoute(i) {
-      const z = STAND_Z[i], fz = -connZ;
-      return [[0, -hl + 260], [0, fz + 70], [10, fz + 20], [45, fz], [HOLD_X + 20, fz], [TAXIWAY_X - 25, fz], [TAXIWAY_X, fz + 30],
-        [TAXIWAY_X, -330], [185, -308], [225, -285], [LANE_X, -255], [LANE_X, z - 55], [262, z - 20], [288, z - 3], [STAND_X, z]];
+      const z = STAND_Z[i];
+      return [[0, 60], [0, 28], [12, 6], [45, 0], [HOLD_X + 20, 0], [TAXIWAY_X - 25, 0], [TAXIWAY_X, -25], [TAXIWAY_X, -280],
+        [163, -322], [198, -318], [228, -290], [LANE_X, -255], [LANE_X, z - 55], [262, z - 20], [288, z - 3], [STAND_X, z]];
     },
     holdPoint() { return ap.toWorld(HOLD_X + 10, 0, connZ); },
     approachFix(dist, alt) { const th = ap.threshold(); return { x: th.x - ap.dir.x * dist, y: alt, z: th.z - ap.dir.z * dist }; },

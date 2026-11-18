@@ -50,6 +50,7 @@ export class TycoonCamera {
     if (wasTap) this.onTap(e.clientX, e.clientY);
   }
   update(dt, followPos) {
+    if (followPos && Math.hypot(followPos.x - this.target.x, followPos.z - this.target.z) > 2500) { this.target.set(followPos.x, followPos.y * 0.6, followPos.z); }
     if (followPos) { const k = 1 - Math.exp(-4 * dt); this.target.x += (followPos.x - this.target.x) * k; this.target.z += (followPos.z - this.target.z) * k; this.target.y += (followPos.y * 0.6 - this.target.y) * k; }
     else this.target.y += (0 - this.target.y) * Math.min(1, dt * 3);
     const h = Math.cos(this.pitch) * this.dist;

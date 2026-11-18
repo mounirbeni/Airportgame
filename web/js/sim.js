@@ -7,7 +7,7 @@ import { S, typeOf, flightMinutes, legEconomics, earn, spend, addRep, save } fro
 import { buildAircraftModel, GEAR_H } from './aircraft.js';
 
 const Y_GROUND = GEAR_H + 0.15;
-const TAXI_SPEED = 22, PUSH_SPEED = 5, APPROACH_SPEED = 72, FINAL_DIST = 9000, GO_AROUND_DIST = 2300;
+const TAXI_SPEED = 24, PUSH_SPEED = 6, APPROACH_SPEED = 78, FINAL_DIST = 6500, GO_AROUND_DIST = 1900;
 // States in which the aircraft is waiting for the player (or the auto controller).
 export const NEEDS_ORDER = { ready: 'ty_act_depart', holding: 'ty_act_takeoff', approach: 'ty_act_land' };
 
@@ -47,7 +47,8 @@ export class Sim {
   // --- queries ------------------------------------------------------------------
   runwayBusy() {
     return S.fleet.some(a => {
-      if (['lineup', 'takeoff', 'rollout'].includes(a.state)) return true;
+      if (['lineup', 'rollout'].includes(a.state)) return true;
+      if (a.state === 'takeoff') { const r = this.rt.get(a.id); return !r || r.alt < 60; }
       if (a.state === 'taxi_in') { const r = this.rt.get(a.id); if (!r) return false; const l = this.ap.toLocal(r.pos.x, 0, r.pos.z); return Math.abs(l.x) < 40; }
       return false;
     });
@@ -59,8 +60,10 @@ export class Sim {
   /** Why an order cannot be given right now ('' when allowed). */
   blockReason(a) {
     if (a.state === 'ready' && !a.route) return 'ty_why_route';
-    if (a.state === 'holding' && (this.runwayBusy() || this.landingInProgress(5000))) return 'ty_why_runway';
-    if (a.state === 'approach' && (S.fleet.some(o => ['lineup', 'takeoff'].includes(o.state)) || S.fleet.some(o => o !== a && o.state === 'cleared'))) return 'ty_why_runway';
+    if (a.state === 'holding' && (this.runwayBusy() || this.landingInProgress(4800))) return 'ty_why_runway';
+    // Landing clearance may be given while the runway is still being vacated;
+    // the aircraft goes around if it is not free on short final.
+    if (a.state === 'approach' && S.fleet.some(o => o !== a && o.state === 'cleared')) return 'ty_why_runway';
     return '';
   }
 
@@ -74,7 +77,7 @@ export class Sim {
     a.waitMin = 0;
     return true;
   }
-  waitPenalty(a) { return (a.waitMin || 0) > 15 ? -1 : 0.2; }
+  waitPenalty(a) { return (a.waitMin || 0) > 40 ? -0.5 : 0.2; }
 
   // --- simulation step --------------------------------------------------------------
   update(dtS, dtMin) {
@@ -96,6 +99,7 @@ export class Sim {
           a.timer -= dtMin;
           if (a.timer <= 0) {
             if (a.legOut) { a.legOut = false; a.timer = DB.ty.outstation_turnaround_min + flightMinutes(a.route, a.type); }
+            else if (S.fleet.some(o => o !== a && ['approach', 'cleared'].includes(o.state) && this.distToThreshold(o) > FINAL_DIST - 4300)) a.timer = 1; // keep ~4.3 km spacing on final
             else this.spawnApproach(a, r);
           }
           break;
@@ -159,9 +163,9 @@ export class Sim {
   spawnApproach(a, r) {
     const p = this.ap.approachFix(FINAL_DIST, Math.tan(3 * Math.PI / 180) * (FINAL_DIST + 300));
     r.pos.set(p.x, Y_GROUND, p.z); r.alt = p.y; r.speed = APPROACH_SPEED; r.yaw = this.ap.yaw; r.pitch = 2;
-    a.state = S.autoAtc && !this.blockReason(a) ? 'cleared' : 'approach'; a.waitMin = 0;
+    a.state = 'approach'; a.waitMin = 0;          // the (auto) controller clears it through the normal rules
     r.mesh.visible = true;
-    if (a.state === 'approach') this.emit('waiting', { a });
+    this.emit('waiting', { a });
   }
   approach(a, r, dtS) {
     const dir = this.ap.dir;
@@ -170,7 +174,7 @@ export class Sim {
     const glide = Math.tan(3 * Math.PI / 180) * Math.max(d + 300, 0);
     r.alt = Math.max(0, glide); r.pitch = d < 400 ? 4 : 2;
     if (a.state === 'approach' && d < GO_AROUND_DIST) return this.startGoAround(a, r);
-    if (a.state === 'cleared' && d < 1200 && S.fleet.some(o => ['lineup', 'takeoff'].includes(o.state))) return this.startGoAround(a, r);
+    if (a.state === 'cleared' && d < 1200 && d > 0 && this.runwayBusy()) return this.startGoAround(a, r);
     if (a.state === 'cleared' && d <= -300) {
       a.state = 'rollout'; r.alt = 0;
       const e = legEconomics(a.route, a.type);
@@ -188,10 +192,10 @@ export class Sim {
   }
   rollout(a, r, dtS) {
     const dir = this.ap.dir;
-    r.speed = Math.max(r.speed - 2.4 * dtS, TAXI_SPEED);
+    r.speed = Math.max(r.speed - 3.0 * dtS, TAXI_SPEED + 6);
     r.pos.x += dir.x * r.speed * dtS; r.pos.z += dir.z * r.speed * dtS; r.pitch = Math.max(0, r.pitch - 3 * dtS);
     const l = this.ap.toLocal(r.pos.x, 0, r.pos.z);
-    if (l.z <= -this.ap.hl + 260) { a.state = 'taxi_in'; this.setRoute(r, this.ap.taxiInRoute(a.stand)); }
+    if (l.z <= 60) { a.state = 'taxi_in'; this.setRoute(r, this.ap.taxiInRoute(a.stand)); }
   }
 
   applyPose(a, r, dtS) {
@@ -206,8 +210,13 @@ export class Sim {
 
   autoController() {
     // Landings first (safety), then takeoffs, then pushbacks.
+    const arrivalNear = S.fleet.some(o => ['approach', 'cleared', 'go_around'].includes(o.state) && this.distToThreshold(o) < 5200);
     for (const st of ['approach', 'holding', 'ready']) {
-      for (const a of S.fleet) if (a.state === st && !this.blockReason(a)) this.order(a);
+      for (const a of S.fleet) {
+        if (a.state !== st || this.blockReason(a)) continue;
+        if (st === 'holding' && arrivalNear) continue;   // let arrivals land first
+        this.order(a);
+      }
     }
   }
 }
