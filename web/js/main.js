@@ -31,14 +31,40 @@ async function boot() {
   const centre = home.toWorld(190, 0, 0);
   const cam = new TycoonCamera(canvas, { x: centre.x, z: centre.z, yaw: home.yaw - Math.PI / 2 + 0.7 });
 
-  function resize() { renderer.setSize(innerWidth, innerHeight, false); cam.resize(); }
+  function resize() {
+    const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+    renderer.setSize(w, h, false); cam.cam.aspect = w / h; cam.cam.updateProjectionMatrix();
+  }
+  if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+
+  // Centre the 3D view in the area not covered by the panel / aircraft card.
+  function updateViewCenter() {
+    const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+    const vis = id => { const e = document.getElementById(id); if (!e || e.classList.contains('hidden')) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? r : null; };
+    const top = document.getElementById('top').getBoundingClientRect().bottom;
+    let left = 0, right = w, bottom = h;
+    const side = vis('side'), sel = vis('sel');
+    if (side) {
+      if (side.width > w * 0.8) bottom = Math.min(bottom, side.top);          // bottom sheet (portrait)
+      else if (side.left < w / 2) left = side.right; else right = side.left;   // side panel (landscape)
+    }
+    if (sel) {   // card overlapping the free area pushes the centre above it
+      const overlap = Math.min(sel.right, right) - Math.max(sel.left, left);
+      if (overlap > sel.width * 0.5) bottom = Math.min(bottom, sel.top);
+    }
+    const cx = (left + right) / 2, cy = (top + bottom) / 2;
+    const offX = Math.round(w / 2 - cx), offY = Math.round(h / 2 - cy);
+    const v = cam.cam.view;
+    if (!v || v.offsetX !== offX || v.offsetY !== offY || v.fullWidth !== w || v.fullHeight !== h) cam.cam.setViewOffset(w, h, offX, offY, w, h);
+  }
   addEventListener('resize', resize); resize();
   applyQuality(renderer, env, S.settings.quality);
 
   // --- picking -------------------------------------------------------------------
   const ray = new THREE.Raycaster();
   cam.onTap = (x, y) => {
-    ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), cam.cam);
+    const rc = canvas.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2((x - rc.left) / rc.width * 2 - 1, -((y - rc.top) / rc.height) * 2 + 1), cam.cam);
     const meshes = [...sim.rt.values()].filter(r => r.mesh.visible).map(r => r.mesh);
     const hit = ray.intersectObjects(meshes, true)[0];
     if (!hit) return select(null);
@@ -105,7 +131,7 @@ async function boot() {
     updateSun(env, cam.target);
     env.sky.position.copy(cam.cam.position);
     ui.labels(cam.cam);
-    uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); }
+    uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
     renderer.render(scene, cam.cam);
     requestAnimationFrame(frame);

@@ -21,6 +21,9 @@ export class UI {
     $('lang').addEventListener('click', () => this.fire('lang'));
     $('overview').addEventListener('click', () => this.fire('overview'));
     $('tabBody').addEventListener('pointerdown', e => e.stopPropagation());
+    // Keep panels below the real top-bar height (it wraps on narrow screens).
+    const setTop = () => document.documentElement.style.setProperty('--top-h', Math.ceil($('top').getBoundingClientRect().bottom) + 'px');
+    new ResizeObserver(setTop).observe($('top')); addEventListener('resize', setTop); setTop();
   }
   on(n, f) { this.h[n] = f; }
   fire(n, ...a) { (this.h[n] || (() => {}))(...a); }
@@ -61,7 +64,12 @@ export class UI {
   renderTabs() {
     const tabs = $('tabs'); tabs.innerHTML = '';
     for (const id of ['tower', 'fleet', 'routes', 'airport']) {
-      const b = btn(t('ty_tab_' + id), () => { this.tab = id; this.renderTabs(); this.refresh(true); }, this.tab === id ? 'on' : '');
+      const b = btn(t('ty_tab_' + id), () => {
+        const side = $('side');
+        if (this.tab === id) { side.classList.toggle('collapsed'); }   // tap the active tab to fold/unfold the panel
+        else { side.classList.remove('collapsed'); this.tab = id; this.renderTabs(); this.refresh(true); }
+        document.body.classList.toggle('sheet-collapsed', side.classList.contains('collapsed'));
+      }, this.tab === id ? 'on' : '');
       if (id === 'tower') { const bd = el('span', 'badge'); b.append(bd); }
       tabs.append(b);
     }
@@ -169,7 +177,7 @@ export class UI {
 
   // --- labels over aircraft ------------------------------------------------------------
   labels(camera) {
-    const host = $('labels'), W = innerWidth, H = innerHeight, v = new THREE.Vector3();
+    const cv = $('view'), host = $('labels'), W = cv.clientWidth || innerWidth, H = cv.clientHeight || innerHeight, v = new THREE.Vector3();
     const seen = new Set();
     for (const a of S.fleet) {
       const r = this.sim.rt.get(a.id); if (!r || !r.mesh.visible) continue;
