@@ -1,6 +1,6 @@
 // Reusable procedural airport (port of scripts/world/airport_builder.gd).
 import * as THREE from 'three';
-import { t, TAXIWAY_X, APRON_X, TERMINAL_X, HOLD_X } from './core.js';
+import { t, TAXIWAY_X, APRON_X, TERMINAL_X, HOLD_X, STAND_X, STAND_Z, LANE_X } from './core.js';
 
 const Y_PAINT = 0.19;
 const matCache = {};
@@ -108,9 +108,15 @@ export class Airport {
     const d = this.def, cz = d.connZ;
     this.paintLine('yellow', [TAXIWAY_X, -cz], [TAXIWAY_X, cz], 0.5);
     for (const z of [cz, -cz, 0]) this.paintLine('yellow', [TAXIWAY_X, z], [0, z], 0.5);
-    const pts = [[APRON_X + 20, -80], ...d.taxiLocal()];
-    for (let i = 0; i < pts.length - 1; i++) this.paintLine('yellow', pts[i], pts[i + 1], 0.5);
-    this.addPaint('yellow', APRON_X + 20, -58, 6, 0.6);
+    const poly = pts => { for (let i = 0; i < pts.length - 1; i++) this.paintLine('yellow', pts[i], pts[i + 1], 0.5); };
+    poly([[LANE_X, -255], [LANE_X, 250]]);
+    poly([[LANE_X, 250], [228, 285], [185, 310], [TAXIWAY_X, 335]]);
+    poly([[TAXIWAY_X, -330], [185, -308], [225, -285], [LANE_X, -255]]);
+    for (const z of STAND_Z) {
+      poly([[LANE_X, z - 55], [262, z - 20], [288, z - 3], [STAND_X + 14, z]]);
+      this.addPaint('yellow', STAND_X + 16, z, 0.6, 5);          // stop bar
+      this.addPaint('white', STAND_X, z + 21, 30, 0.4);          // stand boundary
+    }
     for (const z of [cz, -cz, 0]) {
       for (const sx of [0, 0.9]) this.addPaint('yellow', HOLD_X + 1 + sx, z, 0.35, 22);
       for (let dz = -5; dz <= 5; dz += 2) for (const sx of [-1.2, -2.1]) this.addPaint('yellow', HOLD_X + sx, z + dz * 2, 0.35, 2.2);
@@ -161,12 +167,12 @@ export class Airport {
     this.box([40, 24, 60], [cx + 4, 12, 0], terra, true);
     const dome = new THREE.Mesh(new THREE.SphereGeometry(16, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), copper);
     dome.position.set(cx + 4, 24, 0); dome.scale.y = 0.65; this.group.add(dome);
-    for (const jz of [-150, -80, 60]) { this.box([26, 3.2, 3.6], [x0 - 13, 5, jz], cream); this.box([1.2, 4.6, 1.2], [x0 - 22, 2.3, jz], teal); }
+    for (const sz of STAND_Z) { this.box([12, 3.2, 3.4], [x0 - 6, 5, sz - 7], cream); this.box([1.2, 4.6, 1.2], [x0 - 10, 2.3, sz - 7], teal); }
     const sign = textSprite(t(d.name_key), { size: 90, flat: true, width: 1400 });
     sign.scale.set(3.4, 3.4, 1); sign.rotation.y = -Math.PI / 2; sign.position.set(x0 - 1, h + 6, -110); this.group.add(sign);
     this.signMesh = sign;
     const gse = mat('gse', 0xe69e26);
-    this.box([3, 2.5, 6], [APRON_X + 50, 1.35, -60], gse); this.box([2.4, 2, 4], [APRON_X + 45, 1.1, -130], gse);
+    this.box([3, 2.5, 6], [APRON_X + 55, 1.35, 175], gse); this.box([2.4, 2, 4], [APRON_X + 45, 1.1, 190], gse);
   }
   buildTower() {
     const x = TERMINAL_X + 40, z = -300;

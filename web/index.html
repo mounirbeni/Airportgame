@@ -18,75 +18,68 @@
 <style>
 :root {
   --ink: #faf3e1; --dim: #cfc6b4; --teal: #0f3f45; --teal2: #1e5c61; --copper: #e08c4c;
-  --good: #73e6b3; --bad: #ff7559; --bg: rgba(8, 36, 40, 0.88); --card: rgba(250, 243, 225, 0.07);
+  --good: #73e6b3; --bad: #ff7559; --bg: rgba(8, 36, 40, 0.9); --card: rgba(250, 243, 225, 0.07); --line: rgba(250,243,225,.12);
   --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: rgba(8, 36, 40, 0.9); } }
-:root[data-theme="dark"] { --bg: rgba(8, 36, 40, 0.9); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: rgba(8, 36, 40, 0.92); } }
+:root[data-theme="dark"] { --bg: rgba(8, 36, 40, 0.92); }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #c98b5e; color: var(--ink);
   font-family: "Noto Kufi Arabic", system-ui, sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
 #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-#overlay { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.layer { position: fixed; inset: 0; padding: calc(10px + var(--safe-t)) calc(14px + var(--safe-r)) calc(10px + var(--safe-b)) calc(14px + var(--safe-l)); pointer-events: none; }
 .hidden { display: none !important; }
-/* HUD */
-#inst { position: absolute; top: calc(10px + var(--safe-t)); left: calc(14px + var(--safe-l)); background: rgba(10, 36, 40, .62);
-  border-radius: 10px; padding: 6px 14px; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-#objective { position: absolute; top: calc(56px + var(--safe-t)); left: 50%; transform: translateX(-50%); max-width: min(720px, 60vw);
-  background: rgba(10, 36, 40, .62); border-radius: 10px; padding: 6px 16px; font-size: 19px; text-align: center; }
-#hint { position: absolute; top: calc(112px + var(--safe-t)); left: 50%; transform: translateX(-50%); color: #ffd08a; font-size: 17px;
-  text-shadow: 0 1px 4px #062024; text-align: center; max-width: 70vw; }
-#toast { position: absolute; top: 34%; left: 50%; transform: translateX(-50%); font-size: 30px; font-weight: 700; text-shadow: 0 2px 8px #062024; transition: opacity .3s; }
-#stall { position: absolute; top: 46%; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 700; color: #ff4433; text-shadow: 0 2px 8px #000; }
-#help { position: absolute; bottom: calc(8px + var(--safe-b)); left: 50%; transform: translateX(-50%); font-size: 12px; opacity: .75; white-space: nowrap; }
-/* Touch controls (kept left-to-right for ergonomics) */
-#touch { direction: ltr; }
-.tc { position: absolute; pointer-events: auto; touch-action: none; }
-#stick { width: 220px; height: 220px; border-radius: 50%; right: calc(40px + var(--safe-r)); bottom: calc(30px + var(--safe-b));
-  background: rgba(5, 40, 45, .35); border: 2px solid rgba(250, 243, 225, .8); }
-#knob { position: absolute; width: 76px; height: 76px; border-radius: 50%; left: 72px; top: 72px; background: rgba(250, 243, 225, .5); pointer-events: none; }
-#throttle { width: 74px; height: 52vh; left: calc(36px + var(--safe-l)); top: 28vh; background: rgba(5, 40, 45, .35); border: 2px solid rgba(250, 243, 225, .8); border-radius: 8px; }
-#thrFill { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(224, 140, 76, .55); border-radius: 0 0 6px 6px; pointer-events: none; }
-#thrHandle { position: absolute; left: -8px; right: -8px; height: 18px; background: var(--ink); border-radius: 4px; pointer-events: none; transform: translateY(50%); }
-#thrLabel { position: absolute; top: -28px; width: 140px; left: -33px; text-align: center; font-size: 14px; pointer-events: none; }
-#brake { width: 116px; height: 116px; border-radius: 50%; left: calc(140px + var(--safe-l)); bottom: calc(36px + var(--safe-b));
-  background: rgba(5, 40, 45, .35); border: 2px solid rgba(250, 243, 225, .8); display: grid; place-items: center; font-size: 16px; }
-#brake.on { background: rgba(180, 40, 30, .75); }
-.small { width: 62px; height: 62px; border-radius: 50%; top: calc(18px + var(--safe-t)); background: rgba(5, 40, 45, .35);
-  border: 2px solid rgba(250, 243, 225, .8); display: grid; place-items: center; font-size: 13px; }
-#cam { right: calc(18px + var(--safe-r)); }
-#pause { right: calc(94px + var(--safe-r)); font-size: 18px; }
-/* Menus */
-#menus { pointer-events: none; display: flex; flex-direction: column; gap: 10px; }
-#topbar { pointer-events: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-#topbar .title { color: var(--copper); font-size: 22px; font-weight: 700; }
-#topbar .spacer { flex: 1; }
-#topbar .bal { font-size: 18px; }
-.panel { pointer-events: auto; background: var(--bg); border-radius: 18px; padding: 18px 22px; overflow-y: auto; max-height: calc(100vh - 90px);
-  width: min(560px, 100%); display: flex; flex-direction: column; gap: 12px; }
-.panel.side { margin-inline-start: auto; }
-.panel.center { margin: auto; }
-.panel h2 { margin: 0; color: var(--copper); font-size: 24px; }
-.card { background: var(--card); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
-.card .t { font-size: 19px; font-weight: 600; }
-.dim { color: var(--dim); font-size: 14px; }
-.row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
-.good { color: var(--good); } .bad { color: var(--bad); } .cop { color: var(--copper); }
-button { font: inherit; color: var(--ink); background: var(--teal2); border: 0; border-radius: 12px; padding: 10px 16px; min-height: 48px;
-  font-size: 16px; cursor: pointer; }
+button { font: inherit; color: var(--ink); background: var(--teal2); border: 0; border-radius: 10px; padding: 8px 12px; min-height: 42px; font-size: 14px; cursor: pointer; }
 button.primary { background: var(--copper); }
+button.on { background: var(--copper); }
 button:disabled { background: rgba(80, 85, 85, .7); color: #bbb; cursor: default; }
 button:hover:not(:disabled) { filter: brightness(1.1); }
-.bar { height: 12px; background: rgba(255, 255, 255, .1); border-radius: 6px; overflow: hidden; }
-.bar > i { display: block; height: 100%; background: var(--copper); }
+select, input[type=range] { font: inherit; }
+select { background: var(--teal2); color: var(--ink); border: 0; border-radius: 8px; padding: 6px 8px; min-height: 36px; }
+input[type=range] { width: 100%; accent-color: var(--copper); }
+.dim { color: var(--dim); font-size: 13px; } .good { color: var(--good); } .bad { color: var(--bad); } .cop { color: var(--copper); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spacer { flex: 1; }
+/* top bar */
+#top { position: fixed; top: 0; left: 0; right: 0; padding: calc(8px + var(--safe-t)) calc(10px + var(--safe-r)) 8px calc(10px + var(--safe-l));
+  display: flex; gap: 8px; align-items: center; background: linear-gradient(rgba(6,26,30,.8), rgba(6,26,30,0)); pointer-events: none; }
+#top > * { pointer-events: auto; }
+#top .title { color: var(--copper); font-weight: 700; font-size: 18px; white-space: nowrap; }
+.chip { background: rgba(10,36,40,.75); border-radius: 10px; padding: 6px 10px; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#speed button { min-height: 34px; padding: 4px 10px; }
+/* side panel */
+#side { position: fixed; top: calc(58px + var(--safe-t)); bottom: calc(10px + var(--safe-b)); inset-inline-end: calc(10px + var(--safe-r));
+  width: min(380px, 44vw); background: var(--bg); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+#tabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); }
+#tabs button { flex: 1; min-height: 36px; padding: 4px 6px; position: relative; }
+#tabs .badge { position: absolute; top: -4px; inset-inline-end: -4px; background: var(--bad); color: #fff; border-radius: 9px; font-size: 11px; min-width: 18px; height: 18px; line-height: 18px; }
+#tabBody { overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; touch-action: pan-y; }
+.card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.card.attn { outline: 2px solid var(--copper); }
+.card .t { font-weight: 600; font-size: 15px; }
+.bar { height: 8px; background: rgba(255,255,255,.1); border-radius: 4px; overflow: hidden; } .bar > i { display: block; height: 100%; background: var(--copper); }
+#sideToggle { position: fixed; top: calc(58px + var(--safe-t)); inset-inline-end: calc(10px + var(--safe-r)); display: none; }
+/* selected aircraft */
+#sel { position: fixed; bottom: calc(12px + var(--safe-b)); inset-inline-start: calc(12px + var(--safe-l)); width: min(420px, 52vw); background: var(--bg); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+#sel .act { font-size: 17px; min-height: 52px; }
+/* labels over aircraft */
+#labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.tag { position: absolute; transform: translate(-50%, -100%); background: rgba(10,36,40,.82); border-radius: 8px; padding: 2px 7px; font-size: 12px; white-space: nowrap; pointer-events: auto; cursor: pointer; border: 1px solid rgba(250,243,225,.25); direction: ltr; }
+.tag.attn { background: var(--copper); animation: pulse 1s infinite alternate; }
+.tag.sel { border-color: #ffc233; border-width: 2px; }
+@keyframes pulse { from { transform: translate(-50%, -100%) scale(1); } to { transform: translate(-50%, -100%) scale(1.12); } }
+/* toasts */
+#toasts { position: fixed; top: calc(60px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; width: min(520px, 60vw); }
+.toast { background: rgba(10,36,40,.88); border-radius: 10px; padding: 6px 12px; font-size: 14px; text-align: center; transition: opacity .5s; }
+.toast.money { color: var(--good); }
+#tip { position: fixed; bottom: calc(12px + var(--safe-b)); left: 50%; transform: translateX(-50%); width: min(560px, 70vw); background: var(--bg); border-radius: 14px; padding: 10px 14px; font-size: 14px; display: flex; gap: 10px; align-items: center; }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #0f3f45; font-size: 22px; z-index: 10; }
-@media (max-width: 700px), (max-height: 460px) {
-  #inst { font-size: 12px; } #objective { font-size: 15px; top: calc(46px + var(--safe-t)); } #hint { font-size: 14px; top: calc(92px + var(--safe-t)); }
-  #stick { width: 170px; height: 170px; } #knob { width: 60px; height: 60px; left: 55px; top: 55px; }
-  #brake { width: 90px; height: 90px; left: calc(120px + var(--safe-l)); }
-  #throttle { width: 60px; } .panel { max-height: calc(100vh - 70px); padding: 12px 14px; } #help { display: none; }
+@media (max-width: 760px), (max-height: 480px) {
+  #top .title { display: none; } .chip { font-size: 12px; padding: 4px 8px; } #top { gap: 5px; }
+  #side { width: min(330px, 48vw); top: calc(50px + var(--safe-t)); }
+  #side.collapsed { display: none; } #sideToggle { display: block; top: calc(50px + var(--safe-t)); }
+  #sel { width: min(330px, 46vw); padding: 8px 10px; } #sel .act { min-height: 44px; font-size: 15px; }
+  button { font-size: 13px; min-height: 38px; } #tip { width: min(420px, 50vw); font-size: 12px; inset-inline-start: calc(12px + var(--safe-l)); left: auto; transform: none; }
 }
 </style>
 <script type="importmap">
@@ -95,26 +88,25 @@ button:hover:not(:disabled) { filter: brightness(1.1); }
 </head>
 <body>
 <canvas id="view"></canvas>
-<canvas id="overlay"></canvas>
-<div id="hud" class="layer hidden">
-  <div id="inst"></div>
-  <div id="objective"></div>
-  <div id="hint"></div>
-  <div id="toast"></div>
-  <div id="stall" class="hidden"></div>
-  <div id="help"></div>
+<div id="labels"></div>
+<div id="top">
+  <div class="title"></div>
+  <div class="chip" id="money"></div>
+  <div class="chip" id="rep"></div>
+  <div class="chip" id="clock"></div>
+  <div class="row" id="speed"></div>
+  <div class="spacer"></div>
+  <button id="overview"></button>
+  <button id="lang"></button>
 </div>
-<div id="touch" class="layer hidden">
-  <div id="throttle" class="tc"><div id="thrFill"></div><div id="thrHandle"></div><div id="thrLabel"></div></div>
-  <div id="brake" class="tc"></div>
-  <div id="stick" class="tc"><div id="knob"></div></div>
-  <div id="cam" class="tc small"></div>
-  <div id="pause" class="tc small">II</div>
+<button id="sideToggle">☰</button>
+<div id="side">
+  <div id="tabs"></div>
+  <div id="tabBody"></div>
 </div>
-<div id="menus" class="layer hidden">
-  <div id="topbar"></div>
-  <div id="panelHost" style="display:flex;flex:1;min-height:0"></div>
-</div>
+<div id="sel" class="hidden"></div>
+<div id="toasts"></div>
+<div id="tip" class="hidden"><span id="tipText"></span><button id="tipClose">OK</button></div>
 <div id="loading">Atlas Air 3D …</div>
 <script type="module" src="js/main.js"></script>
 </body>

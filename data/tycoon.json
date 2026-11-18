@@ -1,0 +1,37 @@
+{
+	"version": 1,
+	"start_money": 3000000,
+	"start_reputation": 60,
+	"start_fleet": [
+		{ "type": "t2", "route": "RAK" },
+		{ "type": "p70", "route": "FEZ" }
+	],
+	"start_routes": ["RAK", "FEZ"],
+	"gates": { "start": 2, "max": 6, "price": 2500000, "rent_per_day": 40000 },
+	"staff_per_day": 60000,
+	"auto_atc": { "price_per_day": 150000 },
+	"turnaround_min": 25,
+	"outstation_turnaround_min": 30,
+	"landing_fee": 5000,
+	"aircraft_types": [
+		{
+			"id": "p70", "name_key": "ty_ac_p70", "kind": "turboprop", "seats": 70, "speed_kmh": 500,
+			"price": 4500000, "fuel_per_km": 14, "maint_per_flight": 2500, "rep_required": 0
+		},
+		{
+			"id": "t2", "name_key": "ty_ac_t2", "kind": "jet", "seats": 120, "speed_kmh": 780,
+			"price": 9000000, "fuel_per_km": 26, "maint_per_flight": 4000, "rep_required": 0
+		},
+		{
+			"id": "t3", "name_key": "ty_ac_t3", "kind": "jet_large", "seats": 180, "speed_kmh": 830,
+			"price": 16000000, "fuel_per_km": 36, "maint_per_flight": 6000, "rep_required": 70
+		}
+	],
+	"destinations": [
+		{ "code": "RAK", "name_key": "ty_city_rak", "km": 220, "demand": 140, "base_price": 650, "unlock_price": 0 },
+		{ "code": "FEZ", "name_key": "ty_city_fez", "km": 240, "demand": 100, "base_price": 680, "unlock_price": 0 },
+		{ "code": "TNG", "name_key": "ty_city_tng", "km": 330, "demand": 110, "base_price": 760, "unlock_price": 600000 },
+		{ "code": "AGA", "name_key": "ty_city_aga", "km": 460, "demand": 150, "base_price": 900, "unlock_price": 900000 },
+		{ "code": "OUD", "name_key": "ty_city_oud", "km": 520, "demand": 80, "base_price": 980, "unlock_price": 1200000 }
+	]
+}

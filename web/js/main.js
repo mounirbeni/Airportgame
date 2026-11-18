@@ -1,152 +1,124 @@
-// Atlas Air 3D — browser build. Game flow: gate -> flight -> results/failure,
-// pause and the 3D hangar. Shares data/ and localization/ with the Godot project.
+// Atlas Air 3D — airport & airline tycoon (browser build).
+// You run the tower and the airline; aircraft operate automatically.
 import * as THREE from 'three';
 import * as Core from './core.js';
-import { DB, State, t, Loc } from './core.js';
+import { DB, t, Loc, moneyShort } from './core.js';
+import * as St from './state.js';
+import { S } from './state.js';
 import { Terrain } from './terrain.js';
 import { Airport } from './airport.js';
-import { Aircraft, buildAircraftModel, GEAR_H } from './aircraft.js';
-import { Mission } from './mission.js';
-import { Input, bindTouch } from './input.js';
+import { Sim } from './sim.js';
 import { UI } from './ui.js';
-import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery, ChaseCamera, EngineAudio } from './world.js';
-
-const Mode = { GATE: 0, FLYING: 1, RESULTS: 2, FAILED: 3, HANGAR: 4 };
-let mode = Mode.GATE, paused = false, lastFail = {};
+import { TycoonCamera } from './camera.js';
+import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery } from './world.js';
 
 async function boot() {
   await Core.loadAll();
-  Core.loadGame();
+  St.load();
   const canvas = document.getElementById('view');
   const renderer = createRenderer(canvas);
   const scene = new THREE.Scene();
   const env = createEnvironment(scene);
   const airports = Object.values(DB.airports);
-  const low = State.settings.quality === 'low';
+  const low = S.settings.quality === 'low';
   const terrain = new Terrain(airports); terrain.build(scene, low);
   const nodes = {};
   for (const ap of airports) nodes[ap.code] = new Airport(ap, scene);
   buildScenery(scene, airports, terrain, low);
-  const ac = new Aircraft(scene, terrain);
-  ac.obstacles = Object.values(nodes).flatMap(n => n.obstacles);
-  ac.setup(Core.effectiveAircraft());
-  const chase = new ChaseCamera(innerWidth / innerHeight); chase.setMode(State.settings.camera | 0);
-  const audio = new EngineAudio(); audio.vol = State.settings.volume;
-  ac.on('touchdown', i => audio.chirp(i.vs));
-  const ui = new UI();
-  const mission = new Mission(scene, ac, nodes, ui);
-  const touch = bindTouch({ onCamera: cycleCamera, onPause: pause });
+  const home = DB.airports[DB.home];
+  const sim = new Sim(scene, home);
+  const ui = new UI(sim);
+  const centre = home.toWorld(190, 0, 0);
+  const cam = new TycoonCamera(canvas, { x: centre.x, z: centre.z, yaw: home.yaw - Math.PI / 2 + 0.7 });
 
-  // 3D hangar: showcase aircraft inside the Casablanca hangar.
-  const home = DB.airports[DB.home], homeNode = nodes[home.code];
-  const [hx, hz] = homeNode.hangarLocal(), hangarPos = home.toWorld(hx, 0, hz);
-  const hangarCam = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.3, 3000);
-  let showcase = null, hangarAngle = 0.6;
-  function buildShowcase() {
-    if (showcase) scene.remove(showcase);
-    showcase = buildAircraftModel(Core.effectiveAircraft());
-    showcase.position.set(hangarPos.x, GEAR_H + 0.15, hangarPos.z);
-    showcase.rotation.y = home.yaw + Math.PI / 2; // nose to the door
-    scene.add(showcase);
-  }
-  let camera = chase.cam;
-
-  function resize() {
-    renderer.setSize(innerWidth, innerHeight, false);
-    for (const c of [chase.cam, hangarCam]) { c.aspect = innerWidth / innerHeight; c.updateProjectionMatrix(); }
-  }
+  function resize() { renderer.setSize(innerWidth, innerHeight, false); cam.resize(); }
   addEventListener('resize', resize); resize();
-  applyQuality(renderer, env, State.settings.quality);
-  ui.setStaticTexts();
+  applyQuality(renderer, env, S.settings.quality);
 
-  function goToGate() {
-    mode = Mode.GATE; paused = false; Input.releaseAll(); mission.stop();
-    if (showcase) { scene.remove(showcase); showcase = null; }
-    camera = chase.cam;
-    ac.setup(Core.effectiveAircraft());
-    const gp = home.gatePose(); ac.place(gp.pos, gp.yaw, 0, true, 0); ac.freeze(); chase.snap = true;
-    ui.show('hud', false); ui.show('touch', false); ui.clearMessages(); ui.board();
-  }
-  function startFlight(c, runId) {
-    mode = Mode.FLYING; paused = false; lastFail = {};
-    ui.hideMenus(); ui.show('hud', true); ui.show('touch', true); ui.clearMessages();
-    camera = chase.cam; ac.setup(Core.effectiveAircraft());
-    mission.guidance = State.settings.guidance; mission.start(c, runId); chase.snap = true;
-    audio.start();
-  }
-  function pause() {
-    if (mode !== Mode.FLYING || paused) return;
-    Input.releaseAll(); paused = true; ui.show('touch', false); ui.pause({ retry: mission.canRetry() });
-  }
-  function unpause() { if (!paused) return; paused = false; ui.hideMenus(); ui.show('touch', true); }
-  function resumeFlying() { mode = Mode.FLYING; paused = false; ui.hideMenus(); ui.show('touch', true); ui.show('hud', true); ui.clearMessages(); chase.snap = true; }
-  function cycleCamera() { if (mode === Mode.HANGAR) return; State.settings.camera = chase.cycle(); Core.save(); }
-  function toggleGuidance() {
-    Core.setSetting('guidance', !State.settings.guidance); mission.guidance = State.settings.guidance;
-    ui.refresh(); ui.toast(t('ui_guidance', { v: t(State.settings.guidance ? 'ui_on' : 'ui_off') }));
-  }
-
-  mission.onComplete = r => { mode = Mode.RESULTS; Input.releaseAll(); Input.setThrottle(0); ui.show('touch', false); ui.results(r); };
-  mission.onFail = (reason, advice, retry) => {
-    mode = Mode.FAILED; Input.releaseAll(); Input.setThrottle(0); ui.show('touch', false);
-    lastFail = { reason, advice, retry }; ui.failed(lastFail);
+  // --- picking -------------------------------------------------------------------
+  const ray = new THREE.Raycaster();
+  cam.onTap = (x, y) => {
+    ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), cam.cam);
+    const meshes = [...sim.rt.values()].filter(r => r.mesh.visible).map(r => r.mesh);
+    const hit = ray.intersectObjects(meshes, true)[0];
+    if (!hit) return select(null);
+    let o = hit.object; while (o && !o.userData.acId) o = o.parent;
+    select(o ? S.fleet.find(a => a.id === o.userData.acId) : null);
   };
-  ui.on('accept', id => { const run = Core.acceptContract(id); if (!run) return ui.refresh(); startFlight(Core.contractById(id), run); });
-  ui.on('resume', () => { const r = State.activeRun; if (r) startFlight(Core.contractById(r.contract_id), r.run_id); });
-  ui.on('cancelRun', () => { Core.abandonRun(); ui.refresh(); });
-  ui.on('hangar', () => { mode = Mode.HANGAR; buildShowcase(); camera = hangarCam; ui.hangar(); });
-  ui.on('closeHangar', goToGate);
-  ui.on('buy', id => { if (Core.buyUpgrade(id)) { buildShowcase(); ac.setup(Core.effectiveAircraft()); } ui.refresh(); });
-  ui.on('resultsClosed', goToGate);
-  ui.on('retry', () => { if (!(lastFail.retry || mission.canRetry())) return; resumeFlying(); mission.retryApproach(); });
-  ui.on('restart', () => { resumeFlying(); mission.restart(); });
-  ui.on('toGate', goToGate);
-  ui.on('unpause', unpause);
-  ui.on('lang', () => Core.setSetting('lang', Loc.current === 'ar' ? 'en' : 'ar'));
-  ui.on('quality', () => { Core.setSetting('quality', State.settings.quality === 'low' ? 'high' : 'low'); applyQuality(renderer, env, State.settings.quality); ui.refresh(); });
-  ui.on('guidance', toggleGuidance);
-  Loc.listeners.push(() => { ui.setStaticTexts(); ui.refresh(); mission.refreshTexts(); });
-  Input.onPress = a => {
-    if (a === 'pause_game') { paused ? unpause() : pause(); }
-    else if (a === 'camera_toggle') cycleCamera();
-    else if (a === 'guidance_toggle') toggleGuidance();
-    else if (a === 'retry_approach' && mode === Mode.FAILED && lastFail.retry) { resumeFlying(); mission.retryApproach(); }
-  };
-  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-  addEventListener('pointerdown', () => audio.start(), { once: true });
+  function select(a) {
+    ui.selected = a; cam.follow = a ? a.id : null;
+    if (a) { const r = sim.rt.get(a.id); if (r && r.mesh.visible && cam.dist > 1600) cam.dist = 700; }
+    ui.refresh(true);
+  }
 
-  // Fixed-step simulation (60 Hz), rendering at display rate.
-  let acc = 0, last = performance.now();
-  const STEP = 1 / 60;
+  // --- UI intents ------------------------------------------------------------------
+  ui.on('select', a => select(a));
+  ui.on('order', a => { if (sim.order(a)) { ui.refresh(true); St.save(); } });
+  ui.on('speed', v => { S.settings.speed = v; ui.texts(); St.save(); });
+  ui.on('lang', () => { S.settings.lang = Loc.current === 'ar' ? 'en' : 'ar'; Core.setLang(S.settings.lang); St.save(); });
+  ui.on('overview', () => { select(null); cam.focus(centre, 900); });
+  ui.on('assign', (a, code) => { a.route = code; if (!code && a.state === 'ready') a.state = 'idle'; St.save(); ui.refresh(true); });
+  ui.on('sell', a => {
+    if (!['turn', 'ready', 'idle'].includes(a.state) || S.fleet.length <= 1) return;
+    S.money += St.sellPrice(a); S.fleet = S.fleet.filter(x => x !== a); sim.removeAircraft(a.id);
+    if (ui.selected === a) select(null);
+    St.save(); ui.refresh(true);
+  });
+  ui.on('buy', id => { const a = St.buyAircraft(id); if (a) { ui.toast(t('ty_toast_delivered', { f: a.flightNo })); select(a); } ui.refresh(true); });
+  ui.on('buyGate', () => { St.buyGate(); ui.refresh(true); });
+  ui.on('openRoute', code => { St.openRoute(code); ui.refresh(true); });
+  ui.on('priceChanged', () => { St.save(); ui.refresh(true); });
+  ui.on('autoAtc', () => { S.autoAtc = !S.autoAtc; St.save(); ui.refresh(true); });
+  ui.on('quality', () => { S.settings.quality = S.settings.quality === 'low' ? 'high' : 'low'; applyQuality(renderer, env, S.settings.quality); St.save(); ui.refresh(true); });
+  ui.on('newGame', () => { for (const a of S.fleet) sim.removeAircraft(a.id); St.resetGame(); select(null); ui.texts(); });
+  Loc.listeners.push(() => ui.texts());
+
+  // --- simulation events -> feedback ---------------------------------------------------
+  function drainEvents() {
+    for (const e of sim.events.splice(0)) {
+      const city = e.a.route ? t(DB.dests[e.a.route].name_key) : '';
+      if (e.type === 'departed') { ui.toast(t('ty_toast_departed', { f: e.a.flightNo, c: city })); ui.toast(t('ty_toast_rev', { f: e.a.flightNo, v: moneyShort(e.profit) }), 'money'); }
+      else if (e.type === 'landed') { ui.toast(t('ty_toast_landed', { f: e.a.flightNo })); ui.toast(t('ty_toast_rev', { f: e.a.flightNo, v: moneyShort(e.profit) }), 'money'); }
+      else if (e.type === 'go_around') ui.toast(t('ty_toast_go_around', { f: e.a.flightNo }), 'bad');
+      else if (e.type === 'waiting' && !S.autoAtc) ui.toast(`${e.a.flightNo} · ${t('ty_waiting')}`);
+    }
+  }
+
+  // --- loop ------------------------------------------------------------------------------
+  let last = performance.now(), uiTimer = 0, saveTimer = 0;
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 0.1); last = now;
-    if (!paused) {
-      acc += dt;
-      while (acc >= STEP) { Input.update(STEP); ac.step(STEP); mission.update(STEP); acc -= STEP; }
-    }
-    if (camera === hangarCam) {
-      hangarAngle += dt * 0.18;
-      const lx = Math.cos(hangarAngle) * 26, lz = Math.sin(hangarAngle) * 33, c = Math.cos(home.yaw), s = Math.sin(home.yaw);
-      hangarCam.position.set(hangarPos.x + lx * c + lz * s, 9 + Math.sin(hangarAngle * 0.7) * 2, hangarPos.z - lx * s + lz * c);
-      hangarCam.lookAt(hangarPos.x, 3, hangarPos.z);
-      updateSun(env, new THREE.Vector3(hangarPos.x, 0, hangarPos.z));
-    } else {
-      chase.update(ac.root, dt); updateSun(env, ac.position);
-    }
-    env.sky.position.copy(camera.position);
-    if (mode === Mode.FLYING || mode === Mode.FAILED || mode === Mode.RESULTS) { ui.updateHud(ac, mission, camera, dt, State.settings.guidance && mode === Mode.FLYING); touch.render(); }
-    else ui.clearOverlay();
-    audio.update(ac);
-    renderer.render(scene, camera);
+    const speed = S.settings.speed;
+    if (speed > 0) {
+      // 1 real second = 1 game minute at 1x. Sub-step for stable motion at 4x.
+      const steps = Math.ceil(speed * dt / (1 / 30));
+      for (let i = 0; i < steps; i++) {
+        const dtS = speed * dt / steps;
+        sim.update(dtS, dtS);
+        const closed = St.tickClock(dtS);
+        if (closed) ui.toast(t('ty_toast_day', { d: closed.day, v: moneyShort(closed.revenue - closed.costs) }), closed.revenue >= closed.costs ? 'money' : 'bad');
+      }
+    } else sim.update(0, 0);
+    drainEvents();
+    const fr = ui.selected && sim.rt.get(ui.selected.id);
+    cam.update(dt, cam.follow && fr && fr.mesh.visible ? fr.mesh.position : null);
+    updateSun(env, cam.target);
+    env.sky.position.copy(cam.cam.position);
+    ui.labels(cam.cam);
+    uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); }
+    saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
+    renderer.render(scene, cam.cam);
     requestAnimationFrame(frame);
   }
-  goToGate();
+  ui.texts();
+  if (S.day === 1 && S.gameMin < 6 * 60 + 5) ui.showTip();
   document.getElementById('loading').remove();
+  addEventListener('beforeunload', () => St.save());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) St.save(); });
   requestAnimationFrame(frame);
 
   // Hooks for automated checks (headless browser tests).
-  window.__atlas = { Core, ac, mission, Input, ui, startFlight, goToGate, get mode() { return mode; }, scene, nodes, terrain,
-    setCameraMode: m => chase.setMode(m), openHangar: () => ui.fire('hangar') };
+  window.__atlas = { S, St, sim, ui, cam, select, order: a => sim.order(a), step: (secs) => { const n = Math.round(secs * 30); for (let i = 0; i < n; i++) { sim.update(1 / 30, 1 / 30); St.tickClock(1 / 30); } drainEvents(); } };
 }
 
 // Installed web app: register the offline service worker (only in the built PWA).
