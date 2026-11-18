@@ -1,0 +1,48 @@
+; Engine configuration file.
+; Atlas Air 3D — Godot 4.4 (stable)
+
+config_version=5
+
+[application]
+
+config/name="Atlas Air 3D"
+config/description="Pilot passenger jets and grow an airline from Casablanca."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.4", "Mobile")
+config/icon="res://icon.svg"
+run/low_processor_mode=false
+
+[autoload]
+
+SaveSystem="*res://scripts/core/save_system.gd"
+Loc="*res://scripts/core/loc.gd"
+DataDB="*res://scripts/data/data_db.gd"
+GameState="*res://scripts/core/game_state.gd"
+FlightInput="*res://scripts/core/flight_input.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+window/vsync/vsync_mode=1
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=true
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=1
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1

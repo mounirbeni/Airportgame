@@ -1,0 +1,75 @@
+{
+	"home_airport": "CMN",
+	"start_money": 3000,
+	"airports": [
+		{
+			"code": "CMN",
+			"name_key": "apt_cmn",
+			"center": [0, 0, 0],
+			"yaw_deg": 180.0,
+			"runway_length": 2400.0,
+			"runway_width": 45.0,
+			"rwy_primary": "17",
+			"rwy_opposite": "35",
+			"has_hangar": true,
+			"terminal_color": "#b5583a",
+			"city": "casablanca"
+		},
+		{
+			"code": "RAK",
+			"name_key": "apt_rak",
+			"center": [4000, 0, 13500],
+			"yaw_deg": -90.0,
+			"runway_length": 2400.0,
+			"runway_width": 45.0,
+			"rwy_primary": "10",
+			"rwy_opposite": "28",
+			"has_hangar": false,
+			"terminal_color": "#c0623f",
+			"city": "marrakech"
+		},
+		{
+			"code": "FEZ",
+			"name_key": "apt_fez",
+			"center": [11000, 0, -7000],
+			"yaw_deg": -90.0,
+			"runway_length": 2300.0,
+			"runway_width": 45.0,
+			"rwy_primary": "09",
+			"rwy_opposite": "27",
+			"has_hangar": false,
+			"terminal_color": "#a8603f",
+			"city": "fes"
+		}
+	],
+	"contracts": [
+		{
+			"id": "cmn_rak",
+			"from": "CMN",
+			"to": "RAK",
+			"name_key": "ct_cmn_rak",
+			"brief_key": "ct_cmn_rak_brief",
+			"cost": 1200,
+			"payout": 6000,
+			"tutorial": true,
+			"requires": [],
+			"iaf_distance": 6500.0,
+			"faf_distance": 4000.0,
+			"waypoints": [[0, 450, 4000], [-2500, 600, 8500]]
+		},
+		{
+			"id": "cmn_fez",
+			"from": "CMN",
+			"to": "FEZ",
+			"name_key": "ct_cmn_fez",
+			"brief_key": "ct_cmn_fez_brief",
+			"cost": 1800,
+			"payout": 8500,
+			"tutorial": false,
+			"requires": ["cmn_rak"],
+			"iaf_distance": 6500.0,
+			"faf_distance": 4000.0,
+			"waypoints": [[1200, 450, 4500], [4500, 700, 2000], [4500, 650, -3000]]
+		}
+	]
+}
