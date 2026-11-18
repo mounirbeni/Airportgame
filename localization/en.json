@@ -191,5 +191,9 @@
 	"ty_city_oud": "Oujda",
 	"ty_ac_p70": "Atlas P70 Turboprop",
 	"ty_ac_t2": "Atlas T2 Twinjet",
-	"ty_ac_t3": "Atlas T3 Long-body"
+	"ty_ac_t3": "Atlas T3 Long-body",
+  "ty_network_map": "Route network",
+  "ty_map_open": "Open route",
+  "ty_map_locked": "Locked route",
+  "ty_panel_toggle": "Operations panel"
 }

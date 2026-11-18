@@ -4,9 +4,9 @@ import { TERMINAL_X } from './core.js';
 import { loadTex } from './assets.js';
 
 export function createRenderer(canvas) {
-  const r = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   r.outputColorSpace = THREE.SRGBColorSpace;
-  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.12;
   r.shadowMap.type = THREE.PCFSoftShadowMap;
   return r;
 }
@@ -46,8 +46,8 @@ export function createEnvironment(scene) {
     m.position.y = 2000; m.frustumCulled = false; m.renderOrder = -1; mountains.add(m);
   });
   scene.fog = new THREE.Fog(0xf2b585, 5000, 42000);
-  const hemi = new THREE.HemisphereLight(0xffd1a8, 0x7a5a40, 1.1); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffc68c, 2.4);
+  const hemi = new THREE.HemisphereLight(0xffe2c5, 0x6a7765, 1.12); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffd9af, 2.55);
   sun.shadow.mapSize.set(2048, 2048);
   const sc = sun.shadow.camera; sc.left = -130; sc.right = 130; sc.top = 130; sc.bottom = -130; sc.near = 10; sc.far = 1200;
   sun.shadow.bias = -0.0005;
@@ -58,7 +58,7 @@ export function createEnvironment(scene) {
 export function applyQuality(renderer, env, q) {
   const low = q === 'low';
   renderer.shadowMap.enabled = !low; env.sun.castShadow = !low;
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, low ? 1 : 2) * (low ? 0.75 : 1));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, low ? 1 : 1.65) * (low ? 0.8 : 1));
   renderer.shadowMap.needsUpdate = true;
 }
 
@@ -67,6 +67,34 @@ export function updateSun(env, target) {
   const d = env.sunDir;
   env.sun.position.set(target.x + d.x * 600, target.y + d.y * 600, target.z + d.z * 600);
   env.sun.target.position.copy(target);
+}
+
+function palmCrown() {
+  const positions = [], colors = [];
+  const foliage = [new THREE.Color(0x52643d), new THREE.Color(0x7b8250), new THREE.Color(0x374f34)];
+  for (let frond = 0; frond < 9; frond++) {
+    const angle = frond * Math.PI * 2 / 9;
+    const length = 3.1 + (frond % 3) * 0.45;
+    const point = (u, across) => {
+      const out = length * u, arch = 2.7 * u - 3.9 * u * u;
+      const side = across * Math.sin(Math.PI * u) * 0.66;
+      return [Math.cos(angle) * out - Math.sin(angle) * side, arch + (across === 0 ? 0.22 : 0), Math.sin(angle) * out + Math.cos(angle) * side];
+    };
+    for (let section = 0; section < 5; section++) {
+      const t0 = section / 5, t1 = (section + 1) / 5;
+      for (const edge of [-1, 1]) {
+        const tint = foliage[(frond + (edge === 1 ? 1 : 0)) % foliage.length];
+        for (const [u, side] of [[t0, 0], [t1, 0], [t1, edge], [t0, 0], [t1, edge], [t0, edge]]) {
+          positions.push(...point(u, side)); colors.push(tint.r, tint.g, tint.b);
+        }
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geo.computeVertexNormals();
+  return geo;
 }
 
 export function buildScenery(scene, airports, terrain, low) {
@@ -88,16 +116,31 @@ export function buildScenery(scene, airports, terrain, low) {
   city(1600, 18200, 2600, 520, 0xc76b4d, 6, 16);
   city(14500, -9800, 2200, 380, 0xdbc299, 6, 18);
   const trunks = [], crowns = [];
-  for (const ap of airports) for (let i = 0; i < 90 * dens; i++) {
-    const lz = (rnd() * 2 - 1) * ap.hl, lx = rnd() < 0.4 ? -(120 + rnd() * 280) : TERMINAL_X + 255 + rnd() * 170;
-    const p = ap.toWorld(lx, 0, lz), gy = terrain.heightAt(p.x, p.z), h = 8 + rnd() * 6;
-    trunks.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h / 2, p.z), new THREE.Quaternion(), new THREE.Vector3(1, h, 1)));
-    crowns.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h, p.z), new THREE.Quaternion().setFromAxisAngle(up, rnd() * 6.28), new THREE.Vector3(1, 1, 1)));
+  function addPalm(ap, x, z, height) {
+    const p = ap.toWorld(x, 0, z), ground = terrain.heightAt(p.x, p.z);
+    trunks.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, ground + height / 2, p.z), new THREE.Quaternion(), new THREE.Vector3(1, height, 1)));
+    const scale = 0.8 + height / 55;
+    crowns.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, ground + height, p.z), new THREE.Quaternion().setFromAxisAngle(up, rnd() * 6.28), new THREE.Vector3(scale, scale, scale)));
+  }
+  for (const ap of airports) {
+    for (let i = 0; i < 90 * dens; i++) {
+      const z = (rnd() * 2 - 1) * ap.hl;
+      const x = rnd() < 0.4 ? -(120 + rnd() * 280) : TERMINAL_X + 255 + rnd() * 170;
+      addPalm(ap, x, z, 8 + rnd() * 6);
+    }
+    // Palms along the passenger drop-off and two clusters beyond the car park.
+    for (let z = -140; z <= 140; z += low ? 32 : 16) {
+      if (Math.abs(z) < 12) continue;
+      addPalm(ap, TERMINAL_X + 64, z, 7 + rnd() * 4);
+    }
+    for (const centre of [-132, 137]) for (let i = 0; i < 12 * dens; i++) {
+      addPalm(ap, TERMINAL_X + 213 + rnd() * 76, centre + (rnd() - 0.5) * 70, 6 + rnd() * 6);
+    }
   }
   const tm = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.25, 0.4, 1, 5), new THREE.MeshLambertMaterial({ color: 0x73543a }), trunks.length);
   trunks.forEach((m, i) => tm.setMatrixAt(i, m)); scene.add(tm);
-  const cm = new THREE.InstancedMesh(new THREE.ConeGeometry(4.5, 2.4, 6), new THREE.MeshLambertMaterial({ color: 0x476b38 }), crowns.length);
-  crowns.forEach((m, i) => cm.setMatrixAt(i, m)); cm.castShadow = true; scene.add(cm);
+  const cm = new THREE.InstancedMesh(palmCrown(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), crowns.length);
+  crowns.forEach((m, i) => cm.setMatrixAt(i, m)); cm.castShadow = !low; scene.add(cm);
 }
 
 /** Image-based lighting from the painted sky: reflections on glass, metal and copper. */
@@ -109,6 +152,6 @@ export function useSkyEnvironment(renderer, scene, env) {
     scene.environment = pmrem.fromEquirectangular(tex).texture;
     tex.mapping = THREE.UVMapping;
     pmrem.dispose();
-    env.hemi.intensity = 0.55;
+    env.hemi.intensity = 0.74;
   });
 }

@@ -6,6 +6,23 @@ import { t, TAXIWAY_X, APRON_X, TERMINAL_X, HOLD_X, STAND_X, STAND_Z, LANE_X } f
 
 const Y_PAINT = 0.19;
 const matCache = {};
+const lightHaloMaterial = new Map();
+
+function haloMaterial(color) {
+  if (!lightHaloMaterial.has(color)) lightHaloMaterial.set(color, new THREE.ShaderMaterial({
+    uniforms: { glowColor: { value: new THREE.Color(color) } },
+    vertexShader: `varying vec2 vUv;
+      void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform vec3 glowColor; varying vec2 vUv;
+      void main() { float r = length(vUv - 0.5) * 2.0;
+        float a = (1.0 - smoothstep(0.04, 0.98, r)) * 0.38;
+        gl_FragColor = vec4(glowColor, a);
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+  }));
+  return lightHaloMaterial.get(color);
+}
 function mat(key, color, opts = {}) {
   if (!matCache[key]) matCache[key] = opts.basic ? new THREE.MeshBasicMaterial({ color })
     : new THREE.MeshStandardMaterial({ color, roughness: 0.92, metalness: 0, side: opts.double ? THREE.DoubleSide : THREE.FrontSide });
@@ -38,7 +55,7 @@ export class Airport {
     this.group.rotation.y = def.yaw;
     scene.add(this.group);
     this.paint = {}; this.lights = {}; this.colliders = []; this.papi = [];
-    this.buildPavement(); this.buildMarkings(); this.buildTaxiMarkings(); this.buildLights(); this.buildPapi();
+    this.buildPavement(); this.buildMarkings(); this.buildTaxiMarkings(); this.buildApronPaint(); this.buildLights(); this.buildPapi();
     this.buildTerminal(); this.buildTower(); if (def.has_hangar) this.buildHangar();
     this.flush();
     this.group.updateMatrixWorld(true);
@@ -75,19 +92,26 @@ export class Airport {
   }
   addLight(key, x, y, z) { (this.lights[key] ||= []).push([x, y, z]); }
   flush() {
-    const colors = { white: 0xf2f2eb, yellow: 0xf2bf26, red: 0xbf1f1a };
+    const colors = { white: 0xf2f2eb, yellow: 0xf2bf26, red: 0xbf1f1a, joint: 0x65645b, service: 0xcdd0be };
     const unit = new THREE.BoxGeometry(1, 1, 1), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
     for (const key in this.paint) {
-      const list = this.paint[key], im = new THREE.InstancedMesh(unit, mat('paint_' + key, colors[key]), list.length);
-      list.forEach(([x, z, w, l, yaw], i) => { q.setFromAxisAngle(up, yaw); m4.compose(new THREE.Vector3(x, Y_PAINT, z), q, new THREE.Vector3(w, 0.04, l)); im.setMatrixAt(i, m4); });
+      const list = this.paint[key], y = key === 'joint' ? Y_PAINT - 0.07 : Y_PAINT, im = new THREE.InstancedMesh(unit, mat('paint_' + key, colors[key]), list.length);
+      list.forEach(([x, z, w, l, yaw], i) => { q.setFromAxisAngle(up, yaw); m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(w, 0.04, l)); im.setMatrixAt(i, m4); });
       im.receiveShadow = true; this.group.add(im);
     }
     const lc = { white: 0xfff2cc, green: 0x33ff59, red: 0xff2619, blue: 0x4073ff, amber: 0xffb333 };
-    const bulb = new THREE.SphereGeometry(0.8, 6, 4);
+    const bulb = new THREE.SphereGeometry(0.65, 6, 4);
+    const halo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     for (const key in this.lights) {
       const list = this.lights[key], im = new THREE.InstancedMesh(bulb, mat('light_' + key, lc[key], { basic: true }), list.length);
-      list.forEach(([x, y, z], i) => { m4.makeTranslation(x, y, z); im.setMatrixAt(i, m4); });
-      this.group.add(im);
+      const glow = new THREE.InstancedMesh(halo, haloMaterial(lc[key]), list.length);
+      list.forEach(([x, y, z], i) => {
+        m4.makeTranslation(x, y, z); im.setMatrixAt(i, m4);
+        const size = key === 'white' ? 7 : 6;
+        m4.makeScale(size, 1, size).setPosition(x, Y_PAINT + 0.04, z);
+        glow.setMatrixAt(i, m4);
+      });
+      this.group.add(im, glow);
     }
   }
   buildPavement() {
@@ -95,21 +119,31 @@ export class Airport {
     const shoulder = mat('shoulder_t', 0x736b5c), rwy = mat('asphalt_t', 0x333336), taxi = mat('taxi_t', 0x454545), conc = mat('concrete_t', 0x9e998f);
     const grass = mat('grass_t', 0x8c7a4c);
     for (const m of [grass]) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
-    applyMap(shoulder, 'tex_grass', { tint: 0xd8d0b8 });
-    applyMap(rwy, 'tex_asphalt', { tint: 0xc4c4c4 });
-    applyMap(taxi, 'tex_asphalt');
-    applyMap(conc, 'tex_concrete');
-    applyMap(grass, 'tex_grass');
-    this.tbox([w + 14, 0.2, d.runway_length + 120], [0, 0.03, 0], shoulder, 30);
-    this.tbox([w, 0.3, d.runway_length], [0, 0, 0], rwy, 45);
+    applyMap(shoulder, 'verge_detail', { tint: 0xafa493 });
+    applyMap(rwy, 'runway_detail', { tint: 0xb7b9b9 });
+    applyMap(taxi, 'runway_detail', { tint: 0xd7d3ca });
+    applyMap(conc, 'apron_detail', { tint: 0xd8d2c4 });
+    applyMap(grass, 'verge_detail', { tint: 0xe0d1b6 });
+    // Adjacent strips avoid coplanar overlapping pavement at overview distances.
+    for (const side of [-1, 1]) {
+      this.tbox([7, 0.16, d.runway_length], [side * (w / 2 + 3.5), 0, 0], shoulder, 30);
+      this.tbox([w + 14, 0.16, 60], [0, 0, side * (d.hl + 30)], shoulder, 30);
+    }
+    this.tbox([w, 0.3, d.runway_length], [0, 0, 0], rwy, 32);
     this.tbox([23, 0.24, d.runway_length - 40], [TAXIWAY_X, 0, 0], taxi, 23);
-    for (const z of [d.connZ, -d.connZ, 0]) this.tbox([TAXIWAY_X, 0.24, 23], [TAXIWAY_X / 2, 0, z], taxi, 23);
+    const linkLeft = w / 2, linkRight = TAXIWAY_X - 11.5;
+    for (const z of [d.connZ, -d.connZ, 0]) {
+      this.tbox([linkRight - linkLeft, 0.24, 23], [(linkRight + linkLeft) / 2, 0, z], taxi, 23);
+    }
     const x0 = TAXIWAY_X + 11, x1 = TERMINAL_X - 6;
-    this.tbox([x1 - x0, 0.2, 1040], [(x0 + x1) / 2, 0, 0], conc, 25);
+    this.tbox([x1 - x0, 0.2, 1040], [(x0 + x1) / 2, 0, 0], conc, 18);
     // Grass infield inside the airport's flat zone.
     const zl = d.hl + 700;
-    this.patch(30, TAXIWAY_X - 12, -d.hl - 60, d.hl + 60, grass, 40);
-    this.patch(-420, -30, -zl, zl, grass, 40);
+    const clear = [-(d.hl + 60), -d.connZ - 11.5, -d.connZ + 11.5, -11.5, 11.5, d.connZ - 11.5, d.connZ + 11.5, d.hl + 60];
+    for (let index = 0; index < clear.length; index += 2) {
+      this.patch(30, TAXIWAY_X - 12, clear[index], clear[index + 1], grass, 24);
+    }
+    this.patch(-420, -30, -zl, zl, grass, 24);
   }
   buildMarkings() {
     const d = this.def, hl = d.hl, w = d.runway_width;
@@ -147,6 +181,23 @@ export class Airport {
       for (let dz = -5; dz <= 5; dz += 2) for (const sx of [-1.2, -2.1]) this.addPaint('yellow', HOLD_X + sx, z + dz * 2, 0.35, 2.2);
       this.box([0.4, 1.4, 4], [HOLD_X + 4, 1.2, z + 16], mat('sign_red', 0xb81a14, { basic: true }));
     }
+  }
+  buildApronPaint() {
+    const left = TAXIWAY_X + 13, right = TERMINAL_X - 7, span = right - left;
+    // Thin expansion joints sit on the apron independently of the painted stand guides.
+    for (let z = -510; z <= 510; z += 12) this.addPaint('joint', (left + right) / 2, z, 0.11, span, Math.PI / 2);
+    for (let x = left + 8; x < right; x += 12) this.addPaint('joint', x, 0, 0.11, 1035);
+    for (const side of [-1, 1]) {
+      const x = right - 8 + side * 3.5;
+      for (let z = -260; z <= 260; z += 8) this.addPaint('service', x, z, 0.33, 5);
+    }
+    STAND_Z.forEach((z, index) => {
+      const label = textSprite(String(index + 1).padStart(2, '0'), { flat: true, width: 168, size: 86, outline: null, color: '#efc65c' });
+      label.rotation.x = -Math.PI / 2;
+      label.scale.set(2.8, 2.8, 1);
+      label.position.set(STAND_X - 17, Y_PAINT + 0.065, z - 12);
+      this.group.add(label);
+    });
   }
   buildLights() {
     const d = this.def, hl = d.hl, w = d.runway_width;

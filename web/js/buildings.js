@@ -265,6 +265,20 @@ export function buildApronDetails(g, standZ, standX, laneX, x0) {
   for (let i = 0; i < 60; i++) { m4.makeTranslation(rx, 0.2, -370 + i * 12.5); dash.setMatrixAt(i, m4); }
   g.add(dash);
   mesh(box(110, 0.16, 300), std('parking', 0x4a4a4c, 0.95), g, [rx + 66, 0.08, 0], null, false);
+  const bayPaint = std('bay_paint', 0x9b8f78, 0.94);
+  const bays = new THREE.InstancedMesh(box(5.8, 0.025, 0.12), bayPaint, 8 * 47);
+  let bay = 0;
+  for (let row = 0; row < 8; row++) {
+    for (let i = 0; i < 47; i++) {
+      bays.setMatrixAt(bay++, m4.makeTranslation(rx + 18 + row * 12.5, 0.18, -143 + i * 6.1));
+    }
+  }
+  g.add(bays);
+  const paving = std('landside_paving', 0xb9a78b, 0.92);
+  mesh(box(8, 0.11, 328), paving, g, [rx - 14, 0.055, 0], null, false);
+  const crosswalk = new THREE.InstancedMesh(box(1.25, 0.025, 2.2), bayPaint, 9);
+  for (let i = 0; i < 9; i++) crosswalk.setMatrixAt(i, m4.makeTranslation(rx + (i - 4) * 1.7, 0.2, 0));
+  g.add(crosswalk);
   const cols = [0xe9e6df, 0x1f2a36, 0x8d1f1f, 0x9aa1a8, 0x2f4f3f, 0xd8c39a, 0x30343a];
   const car = new THREE.InstancedMesh(box(1.9, 1.45, 4.4), std('car', 0xffffff, 0.35, 0.5), 220);
   const col = new THREE.Color(); let k = 0, seed = 7;

@@ -17,6 +17,7 @@ if (fs.existsSync(path.join(ROOT, 'web/assets'))) copyDir('web/assets', 'assets'
 copyDir('data', 'data');
 copyDir('localization', 'localization');
 copy('web/manifest.webmanifest', 'manifest.webmanifest');
+copy('web/visual.css', 'visual.css');
 copy('node_modules/three/build/three.module.js', 'vendor/three.module.js');
 
 let html = fs.readFileSync(path.join(ROOT, 'web/index.html'), 'utf8');

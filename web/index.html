@@ -13,8 +13,6 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --ink: #faf3e1; --dim: #cfc6b4; --teal: #0f3f45; --teal2: #1e5c61; --copper: #e08c4c;
@@ -26,8 +24,8 @@
 :root[data-theme="dark"] { --bg: rgba(8, 36, 40, 0.92); }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #c98b5e; color: var(--ink);
-  font-family: "Noto Kufi Arabic", system-ui, sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
-#view { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100lvh; display: block; }
+  font-family: "Noto Kufi Arabic", system-ui, sans-serif; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+#view { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100lvh; display: block; touch-action: none; }
 :root { --top-h: 58px; }
 .hidden { display: none !important; }
 button { font: inherit; color: var(--ink); background: var(--teal2); border: 0; border-radius: 10px; padding: 8px 12px; min-height: 42px; font-size: 14px; cursor: pointer; }
@@ -117,6 +115,7 @@ button .ic { margin-inline-end: 6px; }
 @media (orientation: portrait) { #tabs .ic { display: none; } }
 @media (max-width: 760px), (max-height: 480px) { .hero { aspect-ratio: 16 / 7; } .hero.ac { aspect-ratio: 3 / 1; } }
 </style>
+<link rel="stylesheet" href="visual.css">
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
 </script>
@@ -134,13 +133,13 @@ button .ic { margin-inline-end: 6px; }
   <button id="overview"></button>
   <button id="lang"></button>
 </div>
-<button id="sideToggle">☰</button>
+<button id="sideToggle" type="button" aria-controls="tabBody" aria-expanded="true">☰</button>
 <div id="side">
-  <div id="tabs"></div>
+  <nav id="tabs"></nav>
   <div id="tabBody"></div>
 </div>
 <div id="sel" class="hidden"></div>
-<div id="toasts"></div>
+<div id="toasts" aria-live="polite"></div>
 <div id="tip" class="hidden"><span id="tipText"></span><button id="tipClose">OK</button></div>
 <div id="loading"><img src="assets/ui/airline_logo.webp" alt="Atlas Air" onerror="this.remove()"><span>…</span></div>
 <script type="module" src="js/main.js"></script>
