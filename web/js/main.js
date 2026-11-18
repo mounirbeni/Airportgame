@@ -149,4 +149,9 @@ async function boot() {
     setCameraMode: m => chase.setMode(m), openHangar: () => ui.fire('hangar') };
 }
 
+// Installed web app: register the offline service worker (only in the built PWA).
+if ('serviceWorker' in navigator && document.querySelector('meta[name="atlas-pwa"]')) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW registration failed', e)));
+}
+
 boot().catch(e => { const l = document.getElementById('loading'); if (l) l.textContent = 'Error: ' + e.message; console.error(e); });

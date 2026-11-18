@@ -1,0 +1,12 @@
+{
+  "name": "atlas-air-3d",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Atlas Air 3D — browser / PWA build",
+  "scripts": {
+    "build": "node tools/build-web.mjs"
+  },
+  "dependencies": {
+    "three": "0.160.0"
+  }
+}
