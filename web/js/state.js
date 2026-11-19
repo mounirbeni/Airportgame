@@ -30,7 +30,12 @@ export function makeAircraft(type, route, stand) {
   return { id, type, flightNo: 'AT' + (S.nextFlightNo++), route: route || null, stand, state: 'turn', progress: 0, timer: 0, legOut: true };
 }
 
+let locked = false;
+/** Stop all saving (a downloaded save is about to be loaded by a page reload). */
+export function lockSaves() { locked = true; }
+
 export function save() {
+  if (locked) return;
   try {
     const fleet = S.fleet.map(a => {
       // Persist a stable state: aircraft in motion resume from a sensible point.

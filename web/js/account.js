@@ -68,7 +68,7 @@ export async function signIn(action, username, password) {
   if (r.status !== 200 || !r.token) return { ok: false, error: r.error || 'server_error' };
   setSession(r.token, r.username);
   const s = await api('/api/save');
-  if (s.status === 200 && s.data && s.data.version) { St.writeSnapshot(s.data); return { ok: true, reload: true }; }
+  if (s.status === 200 && s.data && s.data.version) { St.lockSaves(); St.writeSnapshot(s.data); return { ok: true, reload: true }; }
   St.save(); await push(St.localSnapshot());           // new account: keep the current progress
   return { ok: true, reload: false };
 }
