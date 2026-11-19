@@ -18,7 +18,7 @@ const ARC = 0.12;
 const smooth = (a, b, x) => { const k = Math.min(Math.max((x - a) / (b - a), 0), 1); return k * k * (3 - 2 * k); };
 const PLANE = new Path2D('M0,-0.5 L0.06,-0.38 L0.06,-0.12 L0.48,0.08 L0.48,0.15 L0.06,0.05 L0.05,0.33 L0.17,0.42 L0.17,0.48 L0,0.44 L-0.17,0.48 L-0.17,0.42 L-0.05,0.33 L-0.06,0.05 L-0.48,0.15 L-0.48,0.08 L-0.06,-0.12 L-0.06,-0.38 Z');
 const OUT_STATES = ['ready', 'pushback', 'taxi_out', 'holding', 'lineup', 'takeoff'];
-const C = { sea: '#9fcbe0', land: '#ebe7de', morocco: '#e0c59a', border: '#a37d4a', route: 'rgba(15,63,69,0.8)', routeOff: 'rgba(15,63,69,0.35)',
+const C = { sea: '#9fcbe0', land: '#e0c59a', morocco: '#e0c59a', border: '#7a5536', countryLine: 'rgba(140,104,78,0.9)', route: 'rgba(15,63,69,0.8)', routeOff: 'rgba(15,63,69,0.35)',
   trail: '#e89b00', plane: '#ffcc00', planeSel: '#ff7a1a', ground: '#d9dee0' };
 
 /** Quadratic arc between two 2D points [x, y] at k in [0, 1]: point and tangent. Bulges to one side so both legs share it. */
@@ -33,7 +33,7 @@ export class FlightMap {
   constructor(canvas, sim) {
     this.cv = canvas; this.g = canvas.getContext('2d'); this.sim = sim;
     this.alpha = 0; this.far = 0; this.hits = []; this.v = new THREE.Vector3();
-    this.geo = new Geo(DB.mapOutline);
+    this.geo = new Geo(DB.mapOutline, DB.world);
     this.km = {}; for (const a of Object.values(DB.airports)) this.km[a.code] = toKm(a.lonlat);
   }
   resize(w, h) {
@@ -132,10 +132,13 @@ export class FlightMap {
       if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.lineJoin = 'round'; g.stroke(); }
     };
     g.fillStyle = C.sea; g.fillRect(0, 0, this.W, this.H);
-    poly(this.geo.neighbours, C.land, 'rgba(120,120,110,0.35)', 1);
-    poly(this.geo.spain, C.land, 'rgba(120,120,110,0.35)', 1);
-    for (const c of this.geo.canaries) { const [x, y] = P(c.c); g.beginPath(); g.arc(x, y, c.r * V.s, 0, Math.PI * 2); g.fillStyle = C.land; g.fill(); }
-    poly(this.geo.morocco, C.morocco, C.border, 1.6);
+    // World land (all coast loops in one even-odd path: lakes and seas inside land stay open), country borders.
+    g.beginPath();
+    for (const loop of this.geo.coast) loop.forEach((p, i) => { const [x, y] = P(p); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.fillStyle = C.land; g.fill('evenodd');
+    g.strokeStyle = C.countryLine; g.lineWidth = 0.8; g.lineJoin = 'round';
+    for (const l of this.geo.borders) { g.beginPath(); l.forEach((p, i) => { const [x, y] = P(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); }
+    poly(this.geo.morocco, C.morocco, C.border, 1.8);
 
     // Labels: seas, country, cities.
     g.textAlign = 'center'; g.textBaseline = 'middle';
