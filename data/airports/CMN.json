@@ -1,6 +1,15 @@
 {
  "code": "CMN",
- "identity": "International hub laid out like the reference picture: two parallel 3720 m runways on the outer edges (17L departures, 17R arrivals), a wide central apron with a two-pier terminal, cargo apron and fuel farm to the north-east, maintenance hangars to the north-west, and a landside loop road with car parks in front of the terminal.",
+ "identity": "Map-image airport: the whole airfield is one top-down picture (docs/reference/cmn_reference_original.png, straightened and scaled to 1 px = 1 m). Two parallel 2400 m runways on the outer edges (17L departures, 17R arrivals), a central apron with two piers and 14 jet-bridge stands, cargo apron with 4 stands.",
+ "map": {
+  "file": "cmn_map",
+  "w": 1968,
+  "h": 2880,
+  "x": 0,
+  "z": 0,
+  "m_per_px": 1,
+  "grass": "#5e671e"
+ },
  "start_stands": 2,
  "ops": {
   "departure": "17L",
@@ -13,20 +22,20 @@
     "17L",
     "35R"
    ],
-   "x": -1265,
-   "z": 150,
-   "length": 3720,
+   "x": -696,
+   "z": 60,
+   "length": 2400,
    "width": 45,
    "taxiway": {
     "id": "A",
     "side": 1,
-    "offset": 190,
+    "offset": 187,
     "connectors": [
-     1860,
-     600,
-     -360,
-     -1140,
-     -1860
+     1180,
+     571,
+     -13,
+     -586,
+     -1180
     ]
    }
   },
@@ -36,28 +45,28 @@
     "17R",
     "35L"
    ],
-   "x": 1265,
-   "z": -130,
-   "length": 3720,
+   "x": 695,
+   "z": -93,
+   "length": 2380,
    "width": 45,
    "taxiway": {
     "id": "B",
     "side": -1,
-    "offset": 190,
+    "offset": 191,
     "connectors": [
-     1860,
-     -1860
+     1170,
+     -1167
     ],
     "rapid_exits": [
      {
       "for": "17R",
-      "z": 250,
-      "angle": 30
+      "z": 194,
+      "angle": 45
      },
      {
       "for": "17R",
-      "z": -300,
-      "angle": 30
+      "z": -218,
+      "angle": 45
      }
     ]
    }
@@ -66,38 +75,234 @@
  "terminals": [
   {
    "id": "T1",
-   "type": "pier",
-   "style": "modern",
-   "x": 0,
-   "z": 700,
-   "dir": -1,
-   "main": {
-    "w": 900,
-    "d": 100,
-    "h": 24
+   "type": "stands",
+   "lanes": [
+    [
+     [
+      -354,
+      142
+     ],
+     [
+      -354,
+      500
+     ]
+    ],
+    [
+     [
+      -5,
+      142
+     ],
+     [
+      -5,
+      500
+     ]
+    ],
+    [
+     [
+      356,
+      142
+     ],
+     [
+      356,
+      500
+     ]
+    ]
+   ],
+   "apron": {
+    "x0": -480,
+    "x1": 471,
+    "z0": 165,
+    "z1": 630
    },
-   "pier_w": 36,
-   "pier_len": 400,
-   "pier_h": 12,
-   "stands_per_side": 4,
-   "spacing": 95,
-   "piers": [
+   "stands": [
     {
-     "x": -280
+     "x": -282,
+     "z": 231,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -354
     },
     {
-     "x": 280
+     "x": -282,
+     "z": 327,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -354
+    },
+    {
+     "x": -282,
+     "z": 404,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -354
+    },
+    {
+     "x": -282,
+     "z": 474,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -354
+    },
+    {
+     "x": -113,
+     "z": 263,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": -5
+    },
+    {
+     "x": -113,
+     "z": 349,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": -5
+    },
+    {
+     "x": -113,
+     "z": 439,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": -5
+    },
+    {
+     "x": 98,
+     "z": 274,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -5
+    },
+    {
+     "x": 98,
+     "z": 361,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -5
+    },
+    {
+     "x": 98,
+     "z": 451,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": -5
+    },
+    {
+     "x": 267,
+     "z": 206,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": 356
+    },
+    {
+     "x": 267,
+     "z": 319,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": 356
+    },
+    {
+     "x": 267,
+     "z": 396,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": 356
+    },
+    {
+     "x": 267,
+     "z": 469,
+     "nose": [
+      -1,
+      0
+     ],
+     "lane": 356
     }
    ]
   },
   {
    "id": "CARGO",
-   "type": "remote",
-   "x": 635,
-   "z": -700,
-   "stands": 5,
-   "spacing": 60,
-   "nose": 1
+   "type": "stands",
+   "contact": false,
+   "lanes": [
+    [
+     [
+      269,
+      -440
+     ],
+     [
+      269,
+      -13
+     ]
+    ]
+   ],
+   "apron": {
+    "x0": -39,
+    "x1": 486,
+    "z0": -465,
+    "z1": 60
+   },
+   "stands": [
+    {
+     "x": 328,
+     "z": -420,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": 269
+    },
+    {
+     "x": 328,
+     "z": -345,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": 269
+    },
+    {
+     "x": 328,
+     "z": -270,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": 269
+    },
+    {
+     "x": 328,
+     "z": -195,
+     "nose": [
+      1,
+      0
+     ],
+     "lane": 269
+    }
+   ]
   }
  ],
  "taxilines": [
@@ -106,62 +311,12 @@
    "type": "taxiway",
    "pts": [
     [
-     -1075,
-     -80
+     -509,
+     142
     ],
     [
-     1075,
-     -80
-    ]
-   ]
-  },
-  {
-   "id": "E",
-   "type": "taxiway",
-   "pts": [
-    [
-     -1075,
-     -1700
-    ],
-    [
-     -800,
-     -1700
-    ],
-    [
-     -800,
-     190
-    ]
-   ]
-  },
-  {
-   "id": "F",
-   "type": "taxiway",
-   "pts": [
-    [
-     1075,
-     -1900
-    ],
-    [
-     790,
-     -1900
-    ],
-    [
-     790,
-     190
-    ]
-   ]
-  },
-  {
-   "id": "G",
-   "type": "taxilane",
-   "pts": [
-    [
-     -800,
-     190
-    ],
-    [
-     790,
-     190
+     504,
+     142
     ]
    ]
   },
@@ -170,246 +325,22 @@
    "type": "taxilane",
    "pts": [
     [
-     576,
-     -490
+     51,
+     -405
     ],
     [
-     576,
-     -300
+     51,
+     -13
     ],
     [
-     790,
-     -300
+     504,
+     -13
     ]
    ]
   }
  ],
- "aprons": [
-  {
-   "x0": -800,
-   "x1": 790,
-   "z0": -60,
-   "z1": 650
-  },
-  {
-   "x0": -60,
-   "x1": 720,
-   "z0": -910,
-   "z1": -280
-  },
-  {
-   "x0": -788,
-   "x1": -560,
-   "z0": -990,
-   "z1": -740
-  },
-  {
-   "x0": -788,
-   "x1": -660,
-   "z0": -510,
-   "z1": -430
-  }
- ],
- "buildings": [
-  {
-   "type": "tower",
-   "x": -560,
-   "z": 690,
-   "h": 62
-  },
-  {
-   "type": "hangar",
-   "x": -620,
-   "z": -930,
-   "rot": 0,
-   "w": 84,
-   "d": 75
-  },
-  {
-   "type": "hangar",
-   "x": -620,
-   "z": -800,
-   "rot": 0,
-   "w": 84,
-   "d": 75
-  },
-  {
-   "type": "fire_station",
-   "x": -760,
-   "z": -470,
-   "rot": 0
-  },
-  {
-   "type": "cargo",
-   "x": 690,
-   "z": -700,
-   "w": 60,
-   "d": 320,
-   "h": 18
-  },
-  {
-   "type": "fuel_farm",
-   "x": 560,
-   "z": -1220,
-   "tanks": 3
-  },
-  {
-   "type": "admin",
-   "x": -560,
-   "z": 940,
-   "w": 70,
-   "d": 45,
-   "h": 12
-  },
-  {
-   "type": "admin",
-   "x": -560,
-   "z": 1110,
-   "w": 260,
-   "d": 60,
-   "h": 14
-  },
-  {
-   "type": "admin",
-   "x": 560,
-   "z": 1110,
-   "w": 260,
-   "d": 60,
-   "h": 14
-  }
- ],
- "roads": [
-  {
-   "id": "loop",
-   "pts": [
-    [
-     790,
-     800
-    ],
-    [
-     839,
-     808
-    ],
-    [
-     884,
-     831
-    ],
-    [
-     919,
-     866
-    ],
-    [
-     942,
-     911
-    ],
-    [
-     950,
-     960
-    ],
-    [
-     950,
-     1790
-    ],
-    [
-     942,
-     1839
-    ],
-    [
-     919,
-     1884
-    ],
-    [
-     884,
-     1919
-    ],
-    [
-     839,
-     1942
-    ],
-    [
-     790,
-     1950
-    ],
-    [
-     -790,
-     1950
-    ],
-    [
-     -839,
-     1942
-    ],
-    [
-     -884,
-     1919
-    ],
-    [
-     -919,
-     1884
-    ],
-    [
-     -942,
-     1839
-    ],
-    [
-     -950,
-     1790
-    ],
-    [
-     -950,
-     960
-    ],
-    [
-     -942,
-     911
-    ],
-    [
-     -919,
-     866
-    ],
-    [
-     -884,
-     831
-    ],
-    [
-     -839,
-     808
-    ],
-    [
-     -790,
-     800
-    ],
-    [
-     790,
-     800
-    ]
-   ],
-   "width": 16
-  }
- ],
- "parking": [
-  {
-   "x": -190,
-   "z": 935,
-   "w": 330,
-   "d": 160
-  },
-  {
-   "x": 190,
-   "z": 935,
-   "w": 330,
-   "d": 160
-  }
- ],
- "service_roads": [
-  [
-   [
-    -450,
-    775
-   ],
-   [
-    450,
-    775
-   ]
-  ]
- ]
+ "buildings": [],
+ "roads": [],
+ "parking": [],
+ "service_roads": []
 }

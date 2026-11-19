@@ -35,6 +35,7 @@ export function buildLayout(spec) {
     code: spec.code, identity: spec.identity || '', lines: [], runways: [], stands: [], aprons: [],
     terminals: [], buildings: (spec.buildings || []).map(b => ({ ...b })), roads: spec.roads || [], parking: spec.parking || [],
     service: spec.service_roads || [], ops: spec.ops || {}, holds: [], startStands: spec.start_stands || 2,
+    map: spec.map || null,
   };
   const line = (id, type, pts, extra = {}) => L.lines.push({ id, type, width: extra.width || WIDTH[type], pts, ...extra });
 
@@ -51,7 +52,7 @@ export function buildLayout(spec) {
     (tw.connectors || []).forEach((zc, i) => line(`${tw.id}${i + 1}`, 'taxiway', [[x, z + zc], [tx, z + zc]]));
     (tw.rapid_exits || []).forEach((e, i) => {
       const d = e.for === r.ends[0] ? -1 : 1, along = tw.offset / Math.tan((e.angle || 30) * Math.PI / 180);
-      line(`${tw.id}R${i + 1}`, 'taxiway', [[x, z + e.z], [tx, z + e.z + d * along]]);
+      line(`${tw.id}R${i + 1}`, 'taxiway', [[x, z + e.z], [tx, z + e.z + d * along]], { rapid: true });
     });
     if (tw.turn_pads) for (const zp of tw.turn_pads) line(`${r.id}-pad${zp}`, 'taxiway', [[x, z + zp], [x + tw.side * 40, z + zp + Math.sign(zp) * 35]]);
   }
@@ -94,6 +95,11 @@ export function buildLayout(spec) {
       line(`${t.id}-L`, 'taxilane', [[laneX, Math.min(...zs) - 90], [laneX, Math.max(...zs) + 90]]);
       for (const zk of zs) addStand(t, cx, zk, [-side, 0], laneX, t.face, contact);
       L.aprons.push({ x0: Math.min(laneX - side * 30, t.face), x1: Math.max(laneX - side * 30, t.face), z0: Math.min(...zs) - 110, z1: Math.max(...zs) + 110 });
+    } else if (t.type === 'stands') {
+      // Explicit stands (e.g. traced from a map image): each {x, z, nose:[nx,nz], lane:x}; lanes are extra taxilanes.
+      for (const [i, ln] of (t.lanes || []).entries()) line(`${t.id}-L${i + 1}`, 'taxilane', ln);
+      for (const st of t.stands) addStand(t, st.x, st.z, st.nose, st.lane, null, contact);
+      if (t.apron) L.aprons.push(t.apron);
     } else if (t.type === 'remote') {
       const nose = t.nose || 1, n = t.stands, sp = t.spacing || 55;
       const laneX = t.x - nose * (STAND_DEPTH / 2 + LANE_CLEAR);
@@ -141,7 +147,7 @@ function compileGraph(L) {
     let prev = null;
     for (const s of pts) {
       const n = nodeFor(s.p);
-      if (prev !== null && prev !== n) g.addEdge(prev, n, { type: ln.type, width: ln.width, line: ln.id, runway: ln.runway });
+      if (prev !== null && prev !== n) g.addEdge(prev, n, { type: ln.type, width: ln.width, line: ln.id, runway: ln.runway, rapid: ln.rapid });
       prev = n;
     }
   });
@@ -156,6 +162,7 @@ function addHolds(L) {
   for (const n of inter) {
     const rwId = g.edgesOf(n.id).find(e => e.edge.type === 'runway').edge.runway;
     n.runwayNode = rwId;
+    if (g.edgesOf(n.id).some(e => e.edge.rapid)) n.rapid = true;           // angled (rapid) exit: taken at higher speed
     for (const { to, edge } of [...g.edgesOf(n.id)]) {
       if (!AIRCRAFT_TYPES.has(edge.type)) continue;
       const h = edge.len > HOLD_DIST + 15 ? g.splitEdge(edge, n.id, HOLD_DIST) : to;
@@ -200,6 +207,7 @@ function computeBounds(L, spec) {
   for (const b of L.buildings) add(b.x ?? 0, b.z ?? ((b.z0 + b.z1) / 2), Math.max(b.w || 0, b.d || 0, Math.abs((b.z1 ?? 0) - (b.z0 ?? 0))) / 2 + 20);
   for (const r of L.roads) for (const p of r.pts) add(p[0], p[1], r.width || WIDTH.road);
   for (const p of L.parking) add(p.x, p.z, Math.max(p.w, p.d) / 2);
+  if (L.map) { add(L.map.x - L.map.w / 2, L.map.z - L.map.h / 2); add(L.map.x + L.map.w / 2, L.map.z + L.map.h / 2); }
   L.bounds = { x0, x1, z0, z1 };
   void spec;
 }
