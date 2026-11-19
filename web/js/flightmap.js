@@ -16,7 +16,9 @@ const KM_PER_M = 0.02;          // panning / zoom: 1 world metre = 0.02 map km (
 const LOCAL_KM_PER_M = 0.003;   // aircraft near the airport: offset from the airport, shrunk so approaches stay close
 const VIS = 1.3;                // same factor as the camera's pan speed, so dragging the map is 1:1
 const ARC = 0.12;
-const HOLD_SLOTS = 12, HOLD_R = 40;   // holding ring around the home airport (km)
+const HOLD_SLOTS = 12, HOLD_R = 40;
+const SEP_KM = 10;                   // minimum distance between two flying aircraft on the map (radar separation)
+const LANE_KM = 6;                   // lateral lane spacing for flights on the same route and direction   // holding ring around the home airport (km)
 const smooth = (a, b, x) => { const k = Math.min(Math.max((x - a) / (b - a), 0), 1); return k * k * (3 - 2 * k); };
 const PLANE = new Path2D('M0,-0.5 L0.06,-0.38 L0.06,-0.12 L0.48,0.08 L0.48,0.15 L0.06,0.05 L0.05,0.33 L0.17,0.42 L0.17,0.48 L0,0.44 L-0.17,0.48 L-0.17,0.42 L-0.05,0.33 L-0.06,0.05 L-0.48,0.15 L-0.48,0.08 L-0.06,-0.12 L-0.06,-0.38 Z');
 const OUT_STATES = ['ready', 'pushback', 'taxi_out', 'holding', 'lineup', 'takeoff'];
@@ -99,9 +101,9 @@ export class FlightMap {
       const fm = flightMinutes(a.route, a.type), leg = this.legs.get(a.id);
       const fresh = !leg || leg.route !== a.route || leg.out !== a.legOut;
       if (fresh || (pv && pv.state !== 'enroute')) {
-        if (a.legOut) this.legs.set(a.id, { route: a.route, out: true, from: pv && pv.p ? pv.p : this.km[DB.home], to: this.km[a.route], dur: Math.max(a.timer, 1), bulge: ARC });
-        else if (pv && pv.state === 'go_around' && pv.p) this.legs.set(a.id, { route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true });
-        else this.legs.set(a.id, { route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
+        if (a.legOut) this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: true, from: pv && pv.p ? pv.p : this.km[DB.home], to: this.km[a.route], dur: Math.max(a.timer, 1), bulge: ARC });
+        else if (pv && pv.state === 'go_around' && pv.p) this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true });
+        else this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
       }
       const L2 = this.legs.get(a.id);
       if (L2 && !a.legOut && pv && pv.state === 'enroute' && pv.legOut === false && pv.timer !== undefined && a.timer > pv.timer + 0.01 && a.timer <= 1.0001 && !L2.held) { L2.held = true; L2.heldAt = S.day * 1440 + S.gameMin; }   // landing slot refused (the sim resets the timer to 1 min): holding
@@ -109,6 +111,53 @@ export class FlightMap {
     }
     for (const id of [...this.legs.keys()]) if (!S.fleet.some(a => a.id === id)) { this.legs.delete(id); this.prev.delete(id); }
     this.assignHoldSlots();
+    this.layout();
+  }
+  /**
+   * Final displayed positions of every flying aircraft (this.shown): leg position -> lane offset for flights
+   * sharing a route and direction -> glide (no jumps) -> separation: when two aircraft are closer than
+   * SEP_KM, the lower-priority one steers sideways (perpendicular to its track) until the gap is restored,
+   * smoothly over game time, then drifts back to its own path.
+   */
+  layout() {
+    const now = S.day * 1440 + S.gameMin, dt = Math.min(Math.max(now - (this.lastLayout ?? now), 0), 1); this.lastLayout = now;
+    this.off ||= new Map();
+    const items = [];
+    for (const a of S.fleet) {
+      let p = this.farPos(a); if (!p) { this.off.delete(a.id); continue; }
+      // lanes: flights on the same leg (route + direction) get their own parallel lane
+      if (p.L && !p.holding) {
+        const same = S.fleet.filter(o => o.state === 'enroute' && o.route === a.route && o.legOut === a.legOut && this.legs.get(o.id) && !this.legs.get(o.id).held)
+          .sort((u, v) => (this.legs.get(u.id).t0 ?? 0) - (this.legs.get(v.id).t0 ?? 0));
+        const lane = same.indexOf(a);
+        if (lane > 0) {
+          const n = Math.hypot(p.d[0], p.d[1]) || 1, side = lane % 2 ? 1 : -1, amt = Math.ceil(lane / 2) * LANE_KM * Math.sin(Math.PI * Math.min(Math.max(p.k, 0), 1));   // zero at both ends
+          p = { ...p, p: [p.p[0] - p.d[1] / n * amt * side, p.p[1] + p.d[0] / n * amt * side] };
+        }
+      }
+      p = this.glide(a, p);
+      const L = p.L, prio = p.holding ? 0 : 1 + (L && L.t0 !== undefined ? (L.t0 % 100000) / 100000 : 0.5);
+      items.push({ a, p, prio });
+    }
+    items.sort((u, v) => u.prio - v.prio);
+    const want = new Map(items.map(it => [it.a.id, [0, 0]]));
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+        const A = items[i], B = items[j]; if (!A.p.air || !B.p.air) continue;
+        const oa = want.get(A.a.id), ob = want.get(B.a.id);
+        const ax = A.p.p[0] + oa[0], ay = A.p.p[1] + oa[1], bx = B.p.p[0] + ob[0], by = B.p.p[1] + ob[1];
+        const dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy); if (d >= SEP_KM * 1.15) continue;
+        const n = Math.hypot(B.p.d[0], B.p.d[1]) || 1; let px = -B.p.d[1] / n, py = B.p.d[0] / n;   // perpendicular to B's track
+        if (px * dx + py * dy < 0) { px = -px; py = -py; }                                            // steer away from A
+        const push = SEP_KM * 1.15 - d; ob[0] += px * push; ob[1] += py * push;
+      }
+    }
+    this.shown = new Map();
+    for (const it of items) {
+      const cur = this.off.get(it.a.id) || [0, 0], w = want.get(it.a.id), k = Math.min(1, dt / 0.25);
+      const o = [cur[0] + (w[0] - cur[0]) * k, cur[1] + (w[1] - cur[1]) * k]; this.off.set(it.a.id, o);
+      this.shown.set(it.a.id, { a: it.a, p: { ...it.p, p: [it.p.p[0] + o[0], it.p.p[1] + o[1]] } });
+    }
   }
   /**
    * Holding slots: 12 positions on a ring of HOLD_R km around the home airport (every 30°). Each waiting
@@ -258,7 +307,7 @@ export class FlightMap {
 
     // Aircraft (positions once, used for trails, icons and picking).
     const list = [];
-    if (withIcons) for (const a of S.fleet) { const p = this.farPos(a); if (p) list.push({ a, p: this.glide(a, p) }); }
+    if (withIcons && this.shown) for (const v of this.shown.values()) list.push(v);
     const legPath = (L, k0, k1) => {
       g.beginPath();
       for (let i = 0; i <= 30; i++) { const [x, y] = P(arc(L.from, L.to, k0 + (k1 - k0) * i / 30, L.bulge).p); i ? g.lineTo(x, y) : g.moveTo(x, y); }
