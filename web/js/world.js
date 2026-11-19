@@ -56,7 +56,7 @@ export function createEnvironment(scene) {
 
 export function applyQuality(renderer, env, q) {
   const low = q === 'low';
-  renderer.shadowMap.enabled = !low; env.sun.castShadow = !low;
+  renderer.shadowMap.enabled = !low; env.sun.castShadow = !low; env.shadowsAllowed = !low;
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, low ? 1 : 2) * (low ? 0.75 : 1));
   renderer.shadowMap.needsUpdate = true;
 }
@@ -67,6 +67,9 @@ export function updateSun(env, target, viewDist = 300) {
   const d = env.sunDir, ext = Math.min(Math.max(130, viewDist * 0.75), 2600), far = 600 + ext * 2;
   env.sun.position.set(target.x + d.x * far * 0.5, target.y + d.y * far * 0.5, target.z + d.z * far * 0.5);
   env.sun.target.position.copy(target);
+  // Far overview: sun shadows off (a 2k shadow map over kilometres only produces artefacts).
+  const wantShadow = env.shadowsAllowed !== false && viewDist < 1400;
+  if (env.sun.castShadow !== wantShadow) env.sun.castShadow = wantShadow;
   const sc = env.sun.shadow.camera;
   if (Math.abs(sc.right - ext) > ext * 0.05) {
     sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = far + ext; sc.updateProjectionMatrix();
