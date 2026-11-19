@@ -156,6 +156,7 @@
 	"map_sea_med": "Mediterranean Sea",
 	"map_country": "Morocco",
 	"ty_map_holding": "Holding for landing",
+	"ty_map_holding_short": "holding",
 	"ty_act_map": "Map",
 	"ty_map_ground": "On the ground at {c}",
 	"ty_act_overview": "Airport view",

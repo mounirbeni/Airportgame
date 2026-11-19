@@ -16,6 +16,7 @@ const KM_PER_M = 0.02;          // panning / zoom: 1 world metre = 0.02 map km (
 const LOCAL_KM_PER_M = 0.003;   // aircraft near the airport: offset from the airport, shrunk so approaches stay close
 const VIS = 1.3;                // same factor as the camera's pan speed, so dragging the map is 1:1
 const ARC = 0.12;
+const HOLD_SLOTS = 12, HOLD_R = 40;   // holding ring around the home airport (km)
 const smooth = (a, b, x) => { const k = Math.min(Math.max((x - a) / (b - a), 0), 1); return k * k * (3 - 2 * k); };
 const PLANE = new Path2D('M0,-0.5 L0.06,-0.38 L0.06,-0.12 L0.48,0.08 L0.48,0.15 L0.06,0.05 L0.05,0.33 L0.17,0.42 L0.17,0.48 L0,0.44 L-0.17,0.48 L-0.17,0.42 L-0.05,0.33 L-0.06,0.05 L-0.48,0.15 L-0.48,0.08 L-0.06,-0.12 L-0.06,-0.38 Z');
 const OUT_STATES = ['ready', 'pushback', 'taxi_out', 'holding', 'lineup', 'takeoff'];
@@ -103,10 +104,33 @@ export class FlightMap {
         else this.legs.set(a.id, { route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
       }
       const L2 = this.legs.get(a.id);
-      if (L2 && !a.legOut && pv && pv.state === 'enroute' && pv.legOut === false && pv.timer !== undefined && a.timer > pv.timer + 0.01 && a.timer <= 1.0001) L2.held = true;   // landing slot refused (the sim resets the timer to 1 min): holding
+      if (L2 && !a.legOut && pv && pv.state === 'enroute' && pv.legOut === false && pv.timer !== undefined && a.timer > pv.timer + 0.01 && a.timer <= 1.0001 && !L2.held) { L2.held = true; L2.heldAt = S.day * 1440 + S.gameMin; }   // landing slot refused (the sim resets the timer to 1 min): holding
       this.prev.set(a.id, { state: a.state, legOut: a.legOut, timer: a.timer, p: this.prev.get(a.id) && this.prev.get(a.id).p });
     }
     for (const id of [...this.legs.keys()]) if (!S.fleet.some(a => a.id === id)) { this.legs.delete(id); this.prev.delete(id); }
+    this.assignHoldSlots();
+  }
+  /**
+   * Holding slots: 12 positions on a ring of HOLD_R km around the home airport (every 30°). Each waiting
+   * aircraft gets its own slot (the free one closest to the direction it arrives from) and keeps it
+   * until it is cleared, so waiting aircraft never sit on top of each other.
+   */
+  assignHoldSlots() {
+    const H = this.km[DB.home], held = [];
+    for (const a of S.fleet) { const L = this.legs.get(a.id); if (L && L.held && a.state === 'enroute' && !a.legOut) held.push({ a, L }); else if (L) L.slot = undefined; }
+    const used = new Set(held.filter(h => h.L.slot !== undefined).map(h => h.L.slot));
+    for (const { L } of held.sort((u, v) => u.L.heldAt - v.L.heldAt)) {
+      if (L.slot !== undefined) continue;
+      const want = Math.atan2(L.from[1] - H[1], L.from[0] - H[0]);
+      let best = -1, bd = Infinity;
+      for (let i = 0; i < HOLD_SLOTS; i++) {
+        if (used.has(i)) continue;
+        const ang = i * 2 * Math.PI / HOLD_SLOTS, d = Math.abs(Math.atan2(Math.sin(ang - want), Math.cos(ang - want)));
+        if (d < bd) { bd = d; best = i; }
+      }
+      if (best < 0) best = held.indexOf(held.find(h => h.L === L)) % HOLD_SLOTS;   // more than 12 waiting: share
+      L.slot = best; used.add(best);
+    }
   }
   /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg: [from, to], k, outstation, local, L (the leg)}. */
   farPos(a) {
@@ -120,11 +144,9 @@ export class FlightMap {
     if (!L) return null;
     const k = Math.min(Math.max(1 - a.timer / L.dur, 0), 1);
     if (!a.legOut && L.held) {                       // waiting for a landing slot: holding pattern at the entry
-      const back = arc(L.from, L.to, 0.97, L.bulge).p, bx = back[0] - L.to[0], by = back[1] - L.to[1], bn = Math.hypot(bx, by) || 1;
-      const stack = S.fleet.filter(o => o.route === a.route && o.state === 'enroute' && !o.legOut && this.legs.get(o.id) && this.legs.get(o.id).held).findIndex(o => o === a);
-      const dist = 10 + 9 * Math.max(stack, 0), c = [L.to[0] + bx / bn * dist, L.to[1] + by / bn * dist];   // holding fix on its own inbound route
+      const H = this.km[home], sa = (L.slot || 0) * 2 * Math.PI / HOLD_SLOTS, c = [H[0] + Math.cos(sa) * HOLD_R, H[1] + Math.sin(sa) * HOLD_R];   // its own slot
       const seed = [...String(a.id)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 997, 7);
-      const ang = (S.day * 1440 + S.gameMin) / 0.7 + seed, R = 4;            // one circuit every ~4.4 game minutes
+      const ang = (S.day * 1440 + S.gameMin) / 0.7 + seed, R = 3;            // one circuit every ~4.4 game minutes
       return { p: [c[0] + Math.cos(ang) * R, c[1] + Math.sin(ang) * R], d: [-Math.sin(ang), Math.cos(ang)], air: true, leg: [a.route, home], k: 1, L, holding: true };
     }
     const q = arc(L.from, L.to, k, L.bulge);
@@ -269,6 +291,14 @@ export class FlightMap {
       const [x, y] = P(p.p), ang = Math.atan2(p.d[0], p.d[1]);
       planes.push({ a, x, y, ang, air: p.air, sub: p.outstation ? t('ty_map_ground', { c: p.leg[0] }) : p.holding ? t('ty_map_holding') : p.leg[0] + '→' + p.leg[1] });
     }
+    const ringPx = HOLD_R * V.s, holdingNow = list.filter(({ a, p }) => p.holding && a !== selected);
+    if (ringPx < 60 && holdingNow.length) {
+      const keep = new Set(holdingNow.map(h => h.a));
+      for (let i = planes.length - 1; i >= 0; i--) if (keep.has(planes[i].a)) planes.splice(i, 1);
+      const [x, y] = P(this.km[home]), txt = '✈ ' + holdingNow.length + ' ' + t('ty_map_holding_short');
+      g.font = '700 12px system-ui, sans-serif'; const w = g.measureText(txt).width + 12, bx = x - w - 14 * sc, by = y - 10;
+      this.badge(bx, by, txt); apRects.push([bx, by, w, 20]);                   // labels keep clear of the badge
+    }
     this.icons(planes, selected, apRects);
     for (const [code, l] of Object.entries(ground)) { const [x, y] = P(this.km[code]); this.badge(x + 12 * sc, y - 26 * sc, '✈ ' + l.length); }
   }
@@ -291,14 +321,22 @@ export class FlightMap {
     const g = this.g, sc = this.scale, taken = [...reserved];
     const free = (x, y, w, h) => !taken.some(r => x < r[0] + r[2] && x + w > r[0] && y < r[1] + r[3] && y + h > r[1]);
     const rank = q => (q.a === selected ? 0 : q.air ? 1 : 2);
-    for (const q of planes.sort((u, v) => rank(u) - rank(v))) {
-      const sel = q.a === selected, size = (sel ? 34 : 28) * sc * (q.air ? 1 : 0.8);
+    const list = planes.sort((u, v) => rank(u) - rank(v)).map(q => ({ q, sel: q.a === selected, size: (q.a === selected ? 34 : 28) * sc * (q.air ? 1 : 0.8) }));
+    for (const { q, size } of list) taken.push([q.x - size * 0.45, q.y - size * 0.45, size * 0.9, size * 0.9]);   // icons are reserved first
+    for (const { q, sel, size } of [...list].reverse()) {          // selected drawn last (on top)
       g.save(); g.translate(q.x, q.y); g.rotate(q.ang); g.scale(size, size);
       g.lineWidth = 0.09; g.strokeStyle = 'rgba(20,20,20,0.9)'; g.fillStyle = sel ? C.planeSel : q.air ? C.plane : C.ground;
       g.fill(PLANE); g.stroke(PLANE); g.restore();
       this.hits.push({ a: q.a, x: q.x, y: q.y, r: Math.max(22, size * 0.7) });
-      const tx = q.x + size * 0.55, ty = q.y - size * 0.1, w = this.tagWidth(q.a.flightNo, q.sub);
-      if (sel || free(tx, ty - 15, w, 30)) { taken.push([tx, ty - 15, w, 30]); this.tag(tx, ty, q.a.flightNo, q.sub, sel); }
+    }
+    for (const { q, sel, size } of list) {                         // tags: selected first, never over an icon or another tag
+      const w = this.tagWidth(q.a.flightNo, q.sub), ty = q.y - size * 0.1;
+      const spots = [[q.x + size * 0.55, ty], [q.x - size * 0.55 - w, ty], [q.x - w / 2, q.y - size * 0.55 - 17], [q.x - w / 2, q.y + size * 0.55 + 17]];
+      const own = [q.x - size * 0.45, q.y - size * 0.45, size * 0.9, size * 0.9];
+      const idx = taken.findIndex(r => r[0] === own[0] && r[1] === own[1]); const mine = idx >= 0 ? taken.splice(idx, 1)[0] : null;
+      const spot = spots.find(([x, y]) => free(x, y - 15, w, 30)) || (sel ? spots[0] : null);
+      if (mine) taken.push(mine);
+      if (spot) { taken.push([spot[0], spot[1] - 15, w, 30]); this.tag(spot[0], spot[1], q.a.flightNo, q.sub, sel); }
     }
   }
   badge(x, y, txt) {
