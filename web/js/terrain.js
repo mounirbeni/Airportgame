@@ -83,7 +83,7 @@ export class Terrain {
     if (h > 1650 + n * 150) c.lerp(new THREE.Color(0.95, 0.94, 0.92), Math.min((h - 1650) / 250, 1));
     if (h < -1) c.setRGB(0.6, 0.54, 0.42);
     const g = this.nearAirport(x, z);
-    if (g > 0) c.lerp(new THREE.Color(0x6e8c52), g * 0.92);
+    if (g > 0) c.lerp(new THREE.Color(0x496631), g * 0.92);   // mean colour of tex_airfield_grass
     return c;
   }
   build(scene, low) {
