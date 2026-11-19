@@ -18,6 +18,7 @@ const VIS = 1.3;                // same factor as the camera's pan speed, so dra
 const ARC = 0.12;
 const HOLD_SLOTS = 12, HOLD_R = 40;
 const SEP_KM = 10;                   // minimum distance between two flying aircraft on the map (radar separation)
+const STEER_KM_PER_MIN = 14;         // max sideways steering speed (km per game minute)
 const LANE_KM = 6;                   // lateral lane spacing for flights on the same route and direction   // holding ring around the home airport (km)
 const smooth = (a, b, x) => { const k = Math.min(Math.max((x - a) / (b - a), 0), 1); return k * k * (3 - 2 * k); };
 const PLANE = new Path2D('M0,-0.5 L0.06,-0.38 L0.06,-0.12 L0.48,0.08 L0.48,0.15 L0.06,0.05 L0.05,0.33 L0.17,0.42 L0.17,0.48 L0,0.44 L-0.17,0.48 L-0.17,0.42 L-0.05,0.33 L-0.06,0.05 L-0.48,0.15 L-0.48,0.08 L-0.06,-0.12 L-0.06,-0.38 Z');
@@ -102,7 +103,7 @@ export class FlightMap {
       const fresh = !leg || leg.route !== a.route || leg.out !== a.legOut;
       if (fresh || (pv && pv.state !== 'enroute')) {
         if (a.legOut) this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: true, from: pv && pv.p ? pv.p : this.km[DB.home], to: this.km[a.route], dur: Math.max(a.timer, 1), bulge: ARC });
-        else if (pv && pv.state === 'go_around' && pv.p) this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true });
+        else if (pv && pv.state === 'go_around' && pv.p) { const now0 = S.day * 1440 + S.gameMin; this.legs.set(a.id, { t0: now0, route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true, held: a.timer > 10, heldAt: now0 }); }
         else this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
       }
       const L2 = this.legs.get(a.id);
@@ -140,22 +141,27 @@ export class FlightMap {
       items.push({ a, p, prio });
     }
     items.sort((u, v) => u.prio - v.prio);
-    const want = new Map(items.map(it => [it.a.id, [0, 0]]));
+    const want = new Map(items.map(it => [it.a.id, [0, 0]])), steering = new Set(); this.side ||= new Map();
     for (let pass = 0; pass < 3; pass++) {
       for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
         const A = items[i], B = items[j]; if (!A.p.air || !B.p.air) continue;
         const oa = want.get(A.a.id), ob = want.get(B.a.id);
         const ax = A.p.p[0] + oa[0], ay = A.p.p[1] + oa[1], bx = B.p.p[0] + ob[0], by = B.p.p[1] + ob[1];
-        const dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy); if (d >= SEP_KM * 1.15) continue;
+        const dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy); if (d >= SEP_KM * 1.6) continue;
         const n = Math.hypot(B.p.d[0], B.p.d[1]) || 1; let px = -B.p.d[1] / n, py = B.p.d[0] / n;   // perpendicular to B's track
-        if (px * dx + py * dy < 0) { px = -px; py = -py; }                                            // steer away from A
-        const push = SEP_KM * 1.15 - d; ob[0] += px * push; ob[1] += py * push;
+        let side = this.side.get(B.a.id);                                                              // keep the side once chosen (no flip as A passes)
+        if (side === undefined) { side = px * dx + py * dy < 0 ? -1 : 1; this.side.set(B.a.id, side); }
+        steering.add(B.a.id); px *= side; py *= side;
+        const push = SEP_KM * 1.6 - d; ob[0] += px * push; ob[1] += py * push;
       }
     }
+    for (const id of [...this.side.keys()]) if (!steering.has(id)) { const o = this.off.get(id); if (!o || Math.hypot(o[0], o[1]) < 0.5) this.side.delete(id); }   // released once back on its path
     this.shown = new Map();
     for (const it of items) {
-      const cur = this.off.get(it.a.id) || [0, 0], w = want.get(it.a.id), k = Math.min(1, dt / 0.25);
-      const o = [cur[0] + (w[0] - cur[0]) * k, cur[1] + (w[1] - cur[1]) * k]; this.off.set(it.a.id, o);
+      const w = want.get(it.a.id), cur = this.off.get(it.a.id) || w, k = Math.min(1, dt / 0.12);   // just appeared: start already separated
+      let ox = (w[0] - cur[0]) * k, oy = (w[1] - cur[1]) * k; const step = Math.hypot(ox, oy), cap = STEER_KM_PER_MIN * dt;   // a gradual sideways turn
+      if (step > cap) { ox *= cap / step; oy *= cap / step; }
+      const o = [cur[0] + ox, cur[1] + oy]; this.off.set(it.a.id, o);
       this.shown.set(it.a.id, { a: it.a, p: { ...it.p, p: [it.p.p[0] + o[0], it.p.p[1] + o[1]] } });
     }
   }
