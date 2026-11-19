@@ -19,7 +19,7 @@ const ARC = 0.12;
 const smooth = (a, b, x) => { const k = Math.min(Math.max((x - a) / (b - a), 0), 1); return k * k * (3 - 2 * k); };
 const PLANE = new Path2D('M0,-0.5 L0.06,-0.38 L0.06,-0.12 L0.48,0.08 L0.48,0.15 L0.06,0.05 L0.05,0.33 L0.17,0.42 L0.17,0.48 L0,0.44 L-0.17,0.48 L-0.17,0.42 L-0.05,0.33 L-0.06,0.05 L-0.48,0.15 L-0.48,0.08 L-0.06,-0.12 L-0.06,-0.38 Z');
 const OUT_STATES = ['ready', 'pushback', 'taxi_out', 'holding', 'lineup', 'takeoff'];
-const C = { sea: '#9fcbe0', land: '#e0c59a', morocco: '#e0c59a', border: '#7a5536', countryLine: 'rgba(140,104,78,0.9)', route: 'rgba(15,63,69,0.8)', routeOff: 'rgba(15,63,69,0.35)',
+const C = { sea: '#9fcbe0', land: '#e0c59a', morocco: '#e0c59a', border: '#7a5536', countryLine: 'rgba(140,104,78,0.9)', route: 'rgba(15,63,69,0.16)', routeOff: 'rgba(15,63,69,0.08)',
   trail: '#e89b00', plane: '#ffcc00', planeSel: '#ff7a1a', ground: '#d9dee0' };
 
 /** Quadratic arc between two 2D points [x, y] at k in [0, 1]: point and tangent. Bulges to one side so both legs share it. */
@@ -165,7 +165,7 @@ export class FlightMap {
       const open = !!S.routes[d.code], b = [this.km[d.code][0] - hk[0], this.km[d.code][1] - hk[1]], n = Math.hypot(...b);
       const A = this.project3(hw.x, hw.z, cam), B = this.project3(hw.x + b[0] / n * 80000, hw.z - b[1] / n * 80000, cam);
       if (!A.ok || !B.ok) continue;
-      g.setLineDash(open ? [] : [6, 6]); g.lineWidth = open ? 2.2 : 1.2; g.strokeStyle = open ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.35)';
+      g.setLineDash(open ? [] : [4, 6]); g.lineWidth = 1; g.strokeStyle = open ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)';
       g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke();
     }
     g.setLineDash([]);
@@ -229,7 +229,7 @@ export class FlightMap {
     for (const d of Object.values(DB.dests)) {
       if (!this.km[d.code]) continue;
       const open = !!S.routes[d.code];
-      g.setLineDash(open ? [] : [6, 6]); g.lineWidth = open ? 2 : 1.2; g.strokeStyle = open ? C.route : C.routeOff;
+      g.setLineDash(open ? [] : [4, 6]); g.lineWidth = 1; g.strokeStyle = open ? C.route : C.routeOff;
       path(HK, this.km[d.code], 0, 1);
     }
     g.setLineDash([]);
@@ -248,9 +248,11 @@ export class FlightMap {
       if (sel) {
         g.lineWidth = 4; g.strokeStyle = C.planeSel; legPath(p.L, 0, k);
         g.setLineDash([4, 6]); g.lineWidth = 2.5; legPath(p.L, k, 1); g.setLineDash([]);
-      } else {
-        g.lineWidth = 3; g.strokeStyle = 'rgba(232,155,0,0.75)'; legPath(p.L, Math.max(0, k - 0.12), k);
-      }
+        for (const code of p.leg) {                 // ring the departure and destination airports
+          if (!this.km[code]) continue; const [x, y] = P(this.km[code]);
+          g.beginPath(); g.arc(x, y, 13 * this.scale, 0, Math.PI * 2); g.lineWidth = 3; g.strokeStyle = C.planeSel; g.stroke();
+        }
+      }   // other aircraft: no path drawn until selected
     }
 
     // Airports.
