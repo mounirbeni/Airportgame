@@ -59,7 +59,7 @@ export class Terrain {
     let h = this.raw(x, z);
     for (const f of this.flats) {
       const l = f.a.toLocal(x, 0, z);
-      const m = 650, ddx = Math.max(f.b.x0 - m - l.x, l.x - f.b.x1 - m, 0), ddz = Math.max(f.b.z0 - m - l.z, l.z - f.b.z1 - m, 0);
+      const m = 760, ddx = Math.max(f.b.x0 - m - l.x, l.x - f.b.x1 - m, 0), ddz = Math.max(f.b.z0 - m - l.z, l.z - f.b.z1 - m, 0);
       h = lerp(-1.5, h, smooth(0, 1500, Math.sqrt(ddx * ddx + ddz * ddz)));   // airport ground sits just under the airfield layer
     }
     return h;

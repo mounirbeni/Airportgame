@@ -20,6 +20,31 @@ export function textSprite(text, { size = 64, color = '#faf3e1', outline = '#0f3
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })); sp.scale.set(width / size, 2, 1); return sp;
 }
 
+/** Greyscale mottling for the airfield grass (mean stored so the role colour is kept). */
+let noiseTex = null;
+function groundNoise() {
+  if (noiseTex) return noiseTex;
+  const W = 256, cv = document.createElement('canvas'); cv.width = cv.height = W;
+  const g = cv.getContext('2d'), img = g.createImageData(W, W);
+  let seed = 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const grid = n => { const a = new Float32Array(n * n); for (let i = 0; i < a.length; i++) a[i] = rnd(); return a; };
+  const oct = [[4, 0.45], [8, 0.3], [32, 0.15], [128, 0.1]].map(([n, w]) => ({ n, w, a: grid(n) }));
+  const sample = (o, u, v) => { const x = u * o.n, y = v * o.n, i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, n = o.n;
+    const at = (a, b) => o.a[((b % n + n) % n) * n + ((a % n + n) % n)], s = t => t * t * (3 - 2 * t);
+    const top = at(i, j) + (at(i + 1, j) - at(i, j)) * s(fx), bot = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * s(fx);
+    return top + (bot - top) * s(fy); };
+  let sum = 0;
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+    let v = 0; for (const o of oct) v += sample(o, i / W, j / W) * o.w;
+    const c = Math.round(255 * (0.78 + 0.26 * v)), k = (j * W + i) * 4;
+    img.data[k] = c; img.data[k + 1] = Math.round(c * 1.02); img.data[k + 2] = Math.round(c * 0.94); img.data[k + 3] = 255; sum += c / 255;
+  }
+  g.putImageData(img, 0, 0);
+  noiseTex = new THREE.CanvasTexture(cv); noiseTex.wrapS = noiseTex.wrapT = THREE.RepeatWrapping;
+  noiseTex.userData.mean = sum / (W * W);
+  return noiseTex;
+}
+
 function edgeMask(fx, fz) {
   const W = 256, cv = document.createElement('canvas'); cv.width = cv.height = W;
   const g = cv.getContext('2d'), img = g.createImageData(W, W), sm = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
@@ -41,7 +66,7 @@ export class Airport {
     scene.add(this.group);
     this.batches = {}; this.paint = {}; this.lights = {}; this.animated = [];
     this.buildGround(); this.buildRunways(); this.buildTaxiways(); this.buildAprons();
-    this.buildMarkings(); this.buildLights(); this.buildPapi(); this.buildBuildings(); this.buildLandside();
+    this.buildMarkings(); this.buildLights(); this.buildPapi(); this.buildBuildings(); this.buildLandside(); this.buildPerimeter();
     this.flush();
     this.group.updateMatrixWorld(true);
   }
@@ -81,13 +106,16 @@ export class Airport {
 
   // --- ground & pavement ---------------------------------------------------------------------
   buildGround() {
-    const b = this.L.bounds, m = 420, w = b.x1 - b.x0 + 2 * m, d = b.z1 - b.z0 + 2 * m;
+    // Airfield = layout bounds + runway strip / end safety area (fully opaque),
+    // then a soft band that fades into the surrounding terrain.
+    const b = this.L.bounds, side = 220, end = 330, fade = 380;
+    const w = b.x1 - b.x0 + 2 * (side + fade), d = b.z1 - b.z0 + 2 * (end + fade);
     const geo = new THREE.PlaneGeometry(w, d);
     geo.setAttribute('uv1', geo.attributes.uv.clone());          // 0..1 for the soft edge mask
-    tileUV(geo, w / 120, d / 120);
-    // Soft edges: the airfield fades into the surrounding terrain (no hard rectangle).
-    const material = mat('ground.airfield');
-    if (!material.alphaMap) { material.alphaMap = edgeMask(0.14, 0.1); material.alphaMap.channel = 1; material.transparent = true; }
+    tileUV(geo, w / 430, d / 430);
+    const material = mat('ground.airfield').clone();
+    material.map = groundNoise(); material.color.multiplyScalar(1 / material.map.userData.mean);
+    material.alphaMap = edgeMask(fade / w, fade / d); material.alphaMap.channel = 1; material.transparent = true;
     const g = new THREE.Mesh(geo, material); g.rotation.x = -Math.PI / 2; g.renderOrder = -1;
     g.position.set((b.x0 + b.x1) / 2, Y.airfield, (b.z0 + b.z1) / 2); g.receiveShadow = true; this.group.add(g);
   }
@@ -266,6 +294,39 @@ export class Airport {
     }
   }
 
+  /** Airside boundary: perimeter service road + security fence with gates where landside roads cross. */
+  buildPerimeter() {
+    const b = this.L.bounds, side = 200, end = 315;
+    const c = [[b.x0 - side, b.z0 - end], [b.x1 + side, b.z0 - end], [b.x1 + side, b.z1 + end], [b.x0 - side, b.z1 + end]];
+    const roads = [];
+    for (const r of this.L.roads) for (let i = 0; i < r.pts.length - 1; i++) roads.push([r.pts[i], r.pts[i + 1]]);
+    const cross = (p, q, a, bb) => {      // param t along p->q where segment a->bb crosses, or null
+      const r = [q[0] - p[0], q[1] - p[1]], s2 = [bb[0] - a[0], bb[1] - a[1]], den = r[0] * s2[1] - r[1] * s2[0];
+      if (Math.abs(den) < 1e-9) return null;
+      const t = ((a[0] - p[0]) * s2[1] - (a[1] - p[1]) * s2[0]) / den, u = ((a[0] - p[0]) * r[1] - (a[1] - p[1]) * r[0]) / den;
+      return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+    };
+    const fenceRole = 'fence', postGeo = new THREE.BoxGeometry(0.12, 2.6, 0.12);
+    for (let i = 0; i < 4; i++) {
+      const p = c[i], q = c[(i + 1) % 4], len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      const dx = (q[0] - p[0]) / len, dz = (q[1] - p[1]) / len, nx = -dz, nz = dx;     // inward normal (corners run counter-clockwise)
+      // service road 12 m inside the fence
+      const ri = 12, rp = [p[0] + nx * ri + dx * ri, p[1] + nz * ri + dz * ri], rq = [q[0] + nx * ri - dx * ri, q[1] + nz * ri - dz * ri];
+      this.strip('road.asphalt', rp, rq, 6, Y.apron, 0.06);
+      // fence, with a 24 m gate wherever a landside road crosses it
+      const gaps = roads.map(([a, bb]) => cross(p, q, a, bb)).filter(t => t !== null).map(t => [t * len - 12, t * len + 12]);
+      let from = 0;
+      for (const [g0, g1] of [...gaps.sort((u, v) => u[0] - v[0]), [len, len]]) {
+        const a0 = from, a1 = Math.min(g0, len);
+        if (a1 - a0 > 1) {
+          const A = [p[0] + dx * a0, p[1] + dz * a0], B = [p[0] + dx * a1, p[1] + dz * a1];
+          this.batch('fence.mesh', new THREE.BoxGeometry(0.04, 2.2, a1 - a0), xform((A[0] + B[0]) / 2, 1.3, (A[1] + B[1]) / 2, Math.atan2(dx, dz)));
+          for (let t = a0; t <= a1; t += 8) this.batch(fenceRole, postGeo.clone(), xform(p[0] + dx * t, 1.3, p[1] + dz * t, 0));
+        }
+        from = Math.max(from, g1);
+      }
+    }
+  }
   update(dt) { for (const h of this.animated) h.rotation.y += dt * 1.2; }
   /** Level of detail: small ground lights only render when the camera is close enough to resolve them. */
   lod(viewDist) { const on = viewDist < 2200; for (const im of this.lightMeshes || []) if (im.visible !== on) im.visible = on; }

@@ -36,6 +36,8 @@ export const ROLES = {
   'building.dark':        { color: 0x1b1e21, rough: 0.7 },
   'hangar.wall':          { color: 0xd1c7b3, rough: 0.75, metal: 0.2, map: 'hangar_texture', double: true },
   'hangar.roof':          { color: 0x0f4045, rough: 0.5, metal: 0.5, double: true },
+  'fence':                { color: 0x8a8f94, rough: 0.5, metal: 0.6 },
+  'fence.mesh':           { color: 0x5d6266, rough: 0.6, metal: 0.4, double: true, opacity: 0.35 },
   'tank':                 { color: 0xeeeeea, rough: 0.5, metal: 0.4 },
   // Vehicles
   'vehicle.gse':      { color: 0xe8a325, rough: 0.55, metal: 0.1 },
@@ -64,6 +66,7 @@ export function mat(role, tint) {
     if (tint !== undefined) color.set(tint).lerp(new THREE.Color('#d8b796'), 0.42);
     m = new THREE.MeshStandardMaterial({ color, roughness: r.rough ?? 0.8, metalness: r.metal ?? 0,
       envMapIntensity: r.env ?? 1, side: r.double ? THREE.DoubleSide : THREE.FrontSide });
+    if (r.opacity !== undefined) { m.transparent = true; m.opacity = r.opacity; m.depthWrite = false; }
     if (r.emissive) { m.emissive = new THREE.Color(r.emissive); m.emissiveIntensity = r.emissiveIntensity || 1; }
     if (r.offset) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
     if (r.layer) { m.polygonOffset = true; m.polygonOffsetFactor = -r.layer; m.polygonOffsetUnits = -2 * r.layer; }
