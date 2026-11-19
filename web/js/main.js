@@ -138,7 +138,7 @@ async function boot() {
     drainEvents();
     const fr = ui.selected && sim.rt.get(ui.selected.id);
     cam.update(dt, cam.follow && fr && fr.mesh.visible ? fr.mesh.position : null);
-    updateSun(env, cam.target);
+    updateSun(env, cam.target, cam.dist);
     env.sky.position.copy(cam.cam.position);
     env.mountains.position.set(cam.cam.position.x, -300, cam.cam.position.z);
     ui.labels(cam.cam);

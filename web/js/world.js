@@ -62,10 +62,16 @@ export function applyQuality(renderer, env, q) {
 }
 
 // Keep the shadow frustum centred on the aircraft; the sun sits low in the west.
-export function updateSun(env, target) {
-  const d = env.sunDir;
-  env.sun.position.set(target.x + d.x * 600, target.y + d.y * 600, target.z + d.z * 600);
+/** Keep the sun's shadow frustum centred on the view and sized to the camera distance. */
+export function updateSun(env, target, viewDist = 300) {
+  const d = env.sunDir, ext = Math.min(Math.max(130, viewDist * 0.75), 2600), far = 600 + ext * 2;
+  env.sun.position.set(target.x + d.x * far * 0.5, target.y + d.y * far * 0.5, target.z + d.z * far * 0.5);
   env.sun.target.position.copy(target);
+  const sc = env.sun.shadow.camera;
+  if (Math.abs(sc.right - ext) > ext * 0.05) {
+    sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = far + ext; sc.updateProjectionMatrix();
+    env.sun.shadow.bias = -0.0005 * (ext / 130);
+  }
 }
 
 export function buildScenery(scene, airports, terrain, low) {
