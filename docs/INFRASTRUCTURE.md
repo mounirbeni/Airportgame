@@ -153,20 +153,6 @@ The procedural model is hidden only when the GLB has loaded, so a missing file n
 
 **What not to change for visuals:** `infra/*`, the airport specs (these are the functional layout) and `sim.js`.
 
-## 7b. Map-image airports (CMN)
-
-An airport can be drawn from **one top-down picture** instead of procedural geometry. Add to the spec:
-
-```jsonc
-"map": { "file": "cmn_map", "w": 1968, "h": 2880, "x": 0, "z": 0, "m_per_px": 1, "grass": "#5e671e" }
-```
-
-- **The file:** `web/assets/maps/<file>.webp`, `w` × `h` metres, centred on (`x`, `z`) in the airport-local frame. Image up = local −Z.
-- **What is drawn:** only the picture and the surrounding grass (tinted `grass`). Runways, taxiways, buildings and lights are not drawn, because they are in the picture.
-- **The layout is traced on the picture:** runways, taxiways and `taxilines` follow its painted lines. Stands use the terminal type `stands`, with explicit `{x, z, nose, lane}` per stand plus `lanes` (apron taxilanes).
-- **Check alignment:** draw the graph over the picture (see `PROJECT_LOG`).
-- **Picture requirements:** a strictly vertical (orthographic) top view. Runways perfectly straight and parallel, a known scale, and high resolution (≥ 1 px per 0.25 m for close zoom).
-
 ## 8. Adding a new airport
 
 1. Create `data/airports/XXX.json`; copy the closest existing airport.

@@ -1,7 +1,7 @@
 // Airport renderer: draws one airport from its generated layout
 // (web/js/infra/layout.js). Geometry only — materials come from style.js roles.
 import * as THREE from 'three';
-import { tileUV, loadTex } from './assets.js';
+import { tileUV } from './assets.js';
 import { mat } from './style.js';
 import { procTex } from './proctex.js';
 import { GeoBatch, xform } from './infra/merge.js';
@@ -40,13 +40,9 @@ export class Airport {
     this.group.position.set(def.cx, 0, def.cz);
     this.group.rotation.y = def.yaw;
     scene.add(this.group);
-    this.batches = {}; this.paint = {}; this.lights = {}; this.animated = []; this.papi = [];
-    this.buildGround();
-    if (this.L.map) this.buildMapImage();          // the whole airport is one top-down picture
-    else {
-      this.buildRunways(); this.buildTaxiways(); this.buildAprons();
-      this.buildMarkings(); this.buildLights(); this.buildPapi(); this.buildBuildings(); this.buildLandside(); this.buildPerimeter();
-    }
+    this.batches = {}; this.paint = {}; this.lights = {}; this.animated = [];
+    this.buildGround(); this.buildRunways(); this.buildTaxiways(); this.buildAprons();
+    this.buildMarkings(); this.buildLights(); this.buildPapi(); this.buildBuildings(); this.buildLandside(); this.buildPerimeter();
     this.flush();
     this.group.updateMatrixWorld(true);
   }
@@ -94,19 +90,10 @@ export class Airport {
     geo.setAttribute('uv1', geo.attributes.uv.clone());          // 0..1 for the soft edge mask
     tileUV(geo, w / 260, d / 260);
     const material = mat('ground.airfield').clone();
-    if (this.L.map && this.L.map.grass) material.color.set(this.L.map.grass);
     material.map = procTex('grass'); material.color.multiplyScalar(1 / material.map.userData.mean);
     material.alphaMap = edgeMask(fade / w, fade / d); material.alphaMap.channel = 1; material.transparent = true;
     const g = new THREE.Mesh(geo, material); g.rotation.x = -Math.PI / 2; g.renderOrder = -1;
     g.position.set((b.x0 + b.x1) / 2, Y.airfield, (b.z0 + b.z1) / 2); g.receiveShadow = true; this.group.add(g);
-  }
-  /** Map-image airport: a top-down picture (1 px = map.m_per_px metres) laid on the ground; the layout graph is traced on it. */
-  buildMapImage() {
-    const m = this.L.map, geo = new THREE.PlaneGeometry(m.w, m.h);
-    const material = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, depthWrite: false });
-    loadTex(m.file, { sub: 'maps', wrap: false }).then(tex => { if (!tex) return; tex.generateMipmaps = true; material.map = tex; material.needsUpdate = true; });
-    const g = new THREE.Mesh(geo, material); g.rotation.x = -Math.PI / 2; g.renderOrder = 0;
-    g.position.set(m.x, Y.apron, m.z); g.receiveShadow = true; this.group.add(g);
   }
   buildRunways() {
     for (const rw of this.L.runways) {

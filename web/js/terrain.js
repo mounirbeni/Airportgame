@@ -56,11 +56,6 @@ export class Terrain {
     return lerp(-45, h, smooth(-2200, 250, this.coast(x, z)));
   }
   /** 1 on and around an airfield, fading to 0 over 1.5 km (grass belt matching the airfield ground). */
-  nearOne(f, x, z) {
-    const l = f.a.toLocal(x, 0, z);
-    const m = 760, ddx = Math.max(f.b.x0 - m - l.x, l.x - f.b.x1 - m, 0), ddz = Math.max(f.b.z0 - m - l.z, l.z - f.b.z1 - m, 0);
-    return 1 - smooth(0, 1500, Math.sqrt(ddx * ddx + ddz * ddz));
-  }
   nearAirport(x, z) {
     let w = 0;
     for (const f of this.flats) {
@@ -87,11 +82,8 @@ export class Terrain {
     if (h > 700) c.lerp(new THREE.Color(0.55, 0.49, 0.45), Math.min((h - 700) / 700, 1));
     if (h > 1650 + n * 150) c.lerp(new THREE.Color(0.95, 0.94, 0.92), Math.min((h - 1650) / 250, 1));
     if (h < -1) c.setRGB(0.6, 0.54, 0.42);
-    // Grass belt around each airfield; a map-image airport uses its picture's grass colour so the edges blend.
-    for (const f of this.flats) {
-      const g = this.nearOne(f, x, z);
-      if (g > 0) c.lerp(new THREE.Color(f.a.layout && f.a.layout.map && f.a.layout.map.grass || 0x6e8c52), g * 0.92);
-    }
+    const g = this.nearAirport(x, z);
+    if (g > 0) c.lerp(new THREE.Color(0x6e8c52), g * 0.92);
     return c;
   }
   build(scene, low) {

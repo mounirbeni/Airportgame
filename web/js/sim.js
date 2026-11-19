@@ -146,10 +146,10 @@ export class Sim {
   planRollout(a, r) {
     const g = this.L.graph, st = this.stand(a), [tx, tz] = this.arr.threshold, d = this.arr.dir;
     const l = this.localOf(r), sNow = (l.x - tx) * d[0] + (l.z - tz) * d[1];
+    const need = (r.speed ** 2 - 12 ** 2) / (2 * DECEL * 0.8);
     let route = null, exitNode = null;
     for (const ex of this.arr.exits) {
       const n = g.nodes[ex], sEx = (n.x - tx) * d[0] + (n.z - tz) * d[1];
-      const need = (r.speed ** 2 - (n.rapid ? 20 : 12) ** 2) / (2 * DECEL * 0.8);   // rapid exits are designed for ~40 kt
       if (sEx < sNow + need) continue;
       route = taxiRoute(this.L, ex, st.node); if (route) { exitNode = n; break; }
     }
