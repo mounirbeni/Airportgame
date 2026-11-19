@@ -16,7 +16,7 @@ export class TycoonCamera {
     dom.addEventListener('wheel', e => { e.preventDefault(); this.zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
     dom.addEventListener('contextmenu', e => e.preventDefault());
   }
-  zoom(f) { this.dist = Math.min(Math.max(this.dist * f, 45), 16000); }
+  zoom(f) { this.dist = Math.min(Math.max(this.dist * f, 45), 70000); }
   focus(p, dist) { this.target.set(p.x, 0, p.z); if (dist) this.dist = dist; }
   down(e) {
     this.dom.setPointerCapture(e.pointerId);
@@ -57,8 +57,9 @@ export class TycoonCamera {
     this.cam.position.set(this.target.x + Math.sin(this.yaw) * h, this.target.y + Math.sin(this.pitch) * this.dist, this.target.z + Math.cos(this.yaw) * h);
     this.cam.lookAt(this.target);
     // Depth precision: push the near plane out when zoomed out (avoids z-fighting at km range).
-    const near = Math.min(Math.max(this.dist * 0.008, 0.5), 30);
-    if (Math.abs(near - this.cam.near) > this.cam.near * 0.1) { this.cam.near = near; this.cam.updateProjectionMatrix(); }
+    const near = Math.min(Math.max(this.dist * 0.008, 0.5), 120);
+    const far = Math.max(60000, this.dist * 3);
+    if (Math.abs(near - this.cam.near) > this.cam.near * 0.1 || Math.abs(far - this.cam.far) > this.cam.far * 0.1) { this.cam.near = near; this.cam.far = far; this.cam.updateProjectionMatrix(); }
   }
   resize() { this.cam.aspect = innerWidth / innerHeight; this.cam.updateProjectionMatrix(); }
 }

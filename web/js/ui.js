@@ -25,6 +25,7 @@ export class UI {
     $('sideToggle').addEventListener('click', () => $('side').classList.toggle('collapsed'));
     $('lang').addEventListener('click', () => this.fire('lang'));
     $('overview').addEventListener('click', () => this.fire('overview'));
+    $('mapBtn').addEventListener('click', () => this.fire('map'));
     $('tabBody').addEventListener('pointerdown', e => e.stopPropagation());
     // Keep panels below the real top-bar height (it wraps on narrow screens).
     const setTop = () => document.documentElement.style.setProperty('--top-h', Math.ceil($('top').getBoundingClientRect().bottom) + 'px');
@@ -36,7 +37,7 @@ export class UI {
   texts() {
     document.title = t('app_title');
     $('top').querySelector('.title').textContent = t('app_title');
-    $('lang').textContent = t('ui_lang_toggle'); $('overview').textContent = t('ty_act_overview');
+    $('lang').textContent = t('ui_lang_toggle'); $('overview').textContent = t('ty_act_overview'); $('mapBtn').textContent = t('ty_act_map');
     $('tipText').textContent = t('ty_tip');
     const sp = $('speed'); sp.innerHTML = '';
     for (const v of [0, 1, 2, 4, 8]) sp.append(btn(v === 0 ? 'II' : v + '×', () => this.fire('speed', v), S.settings.speed === v ? 'on' : ''));
@@ -197,7 +198,7 @@ export class UI {
     const cv = $('view'), host = $('labels'), W = cv.clientWidth || innerWidth, H = cv.clientHeight || innerHeight, v = new THREE.Vector3();
     const seen = new Set();
     for (const a of S.fleet) {
-      const r = this.sim.rt.get(a.id); if (!r || !r.mesh.visible) continue;
+      const r = this.sim.rt.get(a.id); if (!r || !r.mesh.visible || this.mapMode) continue;
       seen.add(a.id);
       let tag = this.tags.get(a.id);
       if (!tag) { tag = el('div', 'tag'); tag.addEventListener('pointerdown', e => { e.stopPropagation(); this.fire('select', a); }); host.append(tag); this.tags.set(a.id, tag); }

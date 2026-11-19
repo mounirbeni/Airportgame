@@ -145,6 +145,8 @@
 	"ty_act_depart": "Push back & taxi",
 	"ty_act_takeoff": "Clear for takeoff",
 	"ty_act_land": "Clear to land",
+	"ty_act_map": "Map",
+	"ty_map_ground": "On the ground at {c}",
 	"ty_act_overview": "Airport view",
 	"ty_why_runway": "Runway busy",
 	"ty_why_gate": "No free gate",

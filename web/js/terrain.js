@@ -42,7 +42,7 @@ export class Terrain {
   constructor(airports) {
     this.base = makeSimplex(1977); this.detail = makeSimplex(4242); this.ridge = makeSimplex(9001);
     this.flats = airports.map(a => ({ a, b: a.layout ? a.layout.bounds : { x0: -1000, x1: 1000, z0: -1800, z1: 1800 } }));
-    this.size = 52000; this.cx = 6000; this.cz = 3000;
+    this.size = 90000; this.cx = 6000; this.cz = 3000;
   }
   coast(x, z) { return x - (-9000 + 0.45 * (-z) + this.base(z * 0.5 * 0.00022, 0.022) * 1500); }
   raw(x, z) {
@@ -87,7 +87,7 @@ export class Terrain {
     return c;
   }
   build(scene, low) {
-    const n = low ? 110 : 170, step = this.size / n, x0 = this.cx - this.size / 2, z0 = this.cz - this.size / 2;
+    const n = low ? 150 : 240, step = this.size / n, x0 = this.cx - this.size / 2, z0 = this.cz - this.size / 2;
     const pos = new Float32Array((n + 1) * (n + 1) * 3), col = new Float32Array(pos.length), idx = [];
     let k = 0;
     for (let iz = 0; iz <= n; iz++) for (let ix = 0; ix <= n; ix++) {

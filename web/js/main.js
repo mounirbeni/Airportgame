@@ -13,6 +13,7 @@ import { TycoonCamera } from './camera.js';
 import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery, useSkyEnvironment } from './world.js';
 import { setAnisotropy } from './assets.js';
 import * as Acc from './account.js';
+import { FlightMap } from './flightmap.js';
 
 // Time model: aircraft move at real speeds x MOVE_SCALE; the clock runs at
 // GAME_MIN_PER_SEC game minutes per real second (at 1x).
@@ -39,6 +40,7 @@ async function boot() {
   const home = DB.airports[DB.home];
   const sim = new Sim(scene, home);
   const ui = new UI(sim);
+  const flightMap = new FlightMap(document.getElementById('map'), sim);
   const acctUI = Acc.mountAccountUI();
   const ap0 = home.layout.aprons[0], centre = home.toWorld((ap0.x0 + ap0.x1) / 2, 0, (ap0.z0 + ap0.z1) / 2);
   // Gates the player can own are limited by the home airport's stands.
@@ -78,6 +80,8 @@ async function boot() {
   // --- picking -------------------------------------------------------------------
   const ray = new THREE.Raycaster();
   cam.onTap = (x, y) => {
+    const onMap = flightMap.pick(x, y);
+    if (onMap || flightMap.alpha > 0.6) return select(onMap, true);   // map mode: icons are the targets
     const rc = canvas.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2((x - rc.left) / rc.width * 2 - 1, -((y - rc.top) / rc.height) * 2 + 1), cam.cam);
     const meshes = [...sim.rt.values()].filter(r => r.mesh.visible).map(r => r.mesh);
@@ -86,9 +90,9 @@ async function boot() {
     let o = hit.object; while (o && !o.userData.acId) o = o.parent;
     select(o ? S.fleet.find(a => a.id === o.userData.acId) : null);
   };
-  function select(a) {
-    ui.selected = a; cam.follow = a ? a.id : null;
-    if (a) { const r = sim.rt.get(a.id); if (r && r.mesh.visible && cam.dist > 1600) cam.dist = 700; }
+  function select(a, fromMap) {
+    ui.selected = a; cam.follow = a && !fromMap ? a.id : null;
+    if (a && !fromMap) { const r = sim.rt.get(a.id); if (r && r.mesh.visible && cam.dist > 1600) cam.dist = 700; }
     ui.refresh(true);
   }
 
@@ -97,7 +101,16 @@ async function boot() {
   ui.on('order', a => { if (sim.order(a)) { ui.refresh(true); St.save(); } });
   ui.on('speed', v => { S.settings.speed = v; ui.texts(); St.save(); });
   ui.on('lang', () => { S.settings.lang = Loc.current === 'ar' ? 'en' : 'ar'; Core.setLang(S.settings.lang); St.save(); });
-  ui.on('overview', () => { select(null); cam.focus(centre, 900); });
+  ui.on('overview', () => { select(null); cam.focus(centre, 900); cam.pitch = 0.55; });
+  // Whole network, north up: frame every airport.
+  ui.on('map', () => {
+    select(null);
+    const ps = Object.values(DB.airports).map(a => a.toWorld(0, 0, 0));
+    const x0 = Math.min(...ps.map(p => p.x)), x1 = Math.max(...ps.map(p => p.x)), z0 = Math.min(...ps.map(p => p.z)), z1 = Math.max(...ps.map(p => p.z));
+    const asp = cam.cam.aspect || 1, span = Math.max((z1 - z0) * 1.45, (x1 - x0) * 1.45 / asp);
+    cam.focus({ x: (x0 + x1) / 2, z: (z0 + z1) / 2 }, span / (2 * Math.tan(cam.cam.fov * Math.PI / 360)));
+    cam.yaw = 0; cam.pitch = 1.35;
+  });
   ui.on('assign', (a, code) => { a.route = code; if (!code && a.state === 'ready') a.state = 'idle'; St.save(); ui.refresh(true); });
   ui.on('sell', a => {
     if (!['turn', 'ready', 'idle'].includes(a.state) || S.fleet.length <= 1) return;
@@ -147,6 +160,9 @@ async function boot() {
     updateSun(env, cam.target, cam.dist);
     env.sky.position.copy(cam.cam.position);
     env.mountains.position.set(cam.cam.position.x, -300, cam.cam.position.z);
+    env.mountains.visible = cam.dist < 9000;                                   // horizon strip only near the ground
+    scene.fog.near = Math.max(6000, cam.dist * 0.9); scene.fog.far = Math.max(42000, cam.dist * 3);
+    flightMap.draw(cam.cam, cam.dist, ui.selected); ui.mapMode = flightMap.alpha > 0.5;
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
@@ -162,7 +178,7 @@ async function boot() {
   requestAnimationFrame(frame);
 
   // Hooks for automated checks (headless browser tests).
-  window.__atlas = { S, St, sim, ui, cam, select, airports: DB.airports, nodes, order: a => sim.order(a), step: (secs) => { const n = Math.round(secs * 30); for (let i = 0; i < n; i++) { sim.update(MOVE_SCALE / 30, GAME_MIN_PER_SEC / 30); St.tickClock(GAME_MIN_PER_SEC / 30); } drainEvents(); } };
+  window.__atlas = { S, St, sim, ui, cam, select, flightMap, airports: DB.airports, nodes, order: a => sim.order(a), step: (secs) => { const n = Math.round(secs * 30); for (let i = 0; i < n; i++) { sim.update(MOVE_SCALE / 30, GAME_MIN_PER_SEC / 30); St.tickClock(GAME_MIN_PER_SEC / 30); } drainEvents(); } };
 }
 
 // Installed web app: register the offline service worker (only in the built PWA).

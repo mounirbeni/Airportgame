@@ -27,6 +27,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #c98b5e; color: var(--ink);
   font-family: "Noto Kufi Arabic", system-ui, sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
+#map { position: fixed; top: 0; left: 0; pointer-events: none; display: none; }
 #view { position: fixed; top: 0; left: 0; width: 100vw; height: calc(100vh + var(--vfix)); height: calc(100lvh + var(--vfix)); display: block; }
 :root { --top-h: 58px; }
 .hidden { display: none !important; }
@@ -96,7 +97,8 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
   #top .chip { font-size: 13px; padding: 5px 8px; }
   #top .spacer { display: none; }
   #speed { order: 5; } #overview { order: 6; margin-inline-start: auto; } #lang { order: 7; }
-  #speed button, #overview, #lang { min-height: 34px; padding: 4px 10px; font-size: 13px; }
+  #mapBtn { order: 6; }
+  #speed button, #mapBtn, #overview, #lang { min-height: 34px; padding: 4px 10px; font-size: 13px; }
   #sideToggle { display: none !important; }
   #side, #side.collapsed { display: flex; top: auto; inset-inline: calc(8px + var(--safe-l)) calc(8px + var(--safe-r)); width: auto;
     bottom: calc(8px + var(--safe-b)); height: 42vh; height: 42svh; border-radius: 16px; }
@@ -144,6 +146,7 @@ button .ic { margin-inline-end: 6px; }
   fix(); addEventListener('resize', fix); addEventListener('orientationchange', function () { setTimeout(fix, 300); });
 })();
 </script>
+<canvas id="map"></canvas>
 <div id="labels"></div>
 <div id="top">
   <div class="title"></div>
@@ -153,6 +156,7 @@ button .ic { margin-inline-end: 6px; }
   <div class="row" id="speed"></div>
   <div class="spacer"></div>
   <button id="acct"></button>
+  <button id="mapBtn"></button>
   <button id="overview"></button>
   <button id="lang"></button>
 </div>

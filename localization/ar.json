@@ -145,6 +145,8 @@
 	"ty_act_depart": "دفع للخلف والسير",
 	"ty_act_takeoff": "إذن الإقلاع",
 	"ty_act_land": "إذن الهبوط",
+	"ty_act_map": "الخريطة",
+	"ty_map_ground": "على الأرض في {c}",
 	"ty_act_overview": "منظر المطار",
 	"ty_why_runway": "المدرج مشغول",
 	"ty_why_gate": "لا توجد بوابة شاغرة",
