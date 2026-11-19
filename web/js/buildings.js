@@ -185,7 +185,8 @@ export function fireStation(parent, x, z, rot = 0) {
   for (let i = 0; i < 4; i++) mesh(box(0.3, 6, 8), mat('building.door'), g, [-7.1, 3, -15 + i * 10], null, false);
   mesh(box(5, 18, 5), wall, g, [14, 9, 18]);
   mesh(box(28, 0.6, 46), mat('building.roof'), g, [6, 9.3, 0]);
-  for (const zz of [-10, 5]) fireTruck(g, -16, zz, -Math.PI / 2);
+  // Trucks parked in front of the doors; kept visible when a GLB replaces the building (they have their own slot).
+  g.userData.keep = [-10, 5].map(zz => fireTruck(g, -22, zz, -Math.PI / 2));
   return g;
 }
 

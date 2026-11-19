@@ -264,7 +264,7 @@ export class Airport {
         case 'admin': grp = Kit.admin(g, b.x, b.z, b.w, b.d, b.h); auto = b.w; break;
       }
       // Designer GLB slots: "<CODE>.<type>" (airport-specific) or "building.<type>".
-      if (grp) attachModel(grp, [b.model, `${code}.${b.type}`, `building.${b.type}`].filter(Boolean), { autoSize: auto });
+      if (grp) attachModel(grp, [b.model, `${code}.${b.type}`, `building.${b.type}`].filter(Boolean), { autoSize: auto, keep: grp.userData.keep });
     }
     L.stands.forEach((s, i) => {
       if (s.bridgeRoot) Kit.jetBridge(g, s.bridgeRoot, s.door);

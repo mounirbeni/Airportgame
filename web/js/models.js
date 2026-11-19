@@ -16,8 +16,23 @@ function loader() {
   if (!loaderPromise) loaderPromise = import('three/addons/loaders/GLTFLoader.js').then(m => new m.GLTFLoader());
   return loaderPromise;
 }
+// Texture sharing across GLB files: models from one asset pack embed the same images
+// (same name and size = same pixels). Each file would otherwise upload its own copy to the GPU.
+const sharedTex = new Map();
+const TEX_PROPS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap'];
+function shareTextures(root) {
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) for (const k of TEX_PROPS) {
+      const t = m[k]; if (!t || !t.name || !t.image) continue;
+      const key = [t.name, t.image.width, t.image.height, t.colorSpace, t.flipY, t.wrapS, t.wrapT].join('|');
+      if (!sharedTex.has(key)) sharedTex.set(key, t); else if (sharedTex.get(key) !== t) m[k] = sharedTex.get(key);
+    }
+  });
+  return root;
+}
 function loadGLB(file) {
-  if (!glbCache.has(file)) glbCache.set(file, loader().then(l => new Promise((res, rej) => l.load(file, g => res(g.scene), undefined, rej))));
+  if (!glbCache.has(file)) glbCache.set(file, loader().then(l => new Promise((res, rej) => l.load(file, g => res(shareTextures(g.scene)), undefined, rej))));
   return glbCache.get(file);
 }
 

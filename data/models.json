@@ -2,28 +2,28 @@
   "_doc": "Model slots. Set a slot to a GLB path (relative to the web root, e.g. 'assets/models/a320.glb') to replace the built-in procedural model. The GLB is scaled to the real size given by 'fit' and placed on the ground. Leave null to keep the procedural model. See docs/INFRASTRUCTURE.md.",
   "slots": {
     "aircraft.jet": {
-      "file": null,
+      "file": "assets/models/aircraft_t2.glb",
       "fit": {
         "axis": "z",
         "size": 37.6
       }
     },
     "aircraft.jet_large": {
-      "file": null,
+      "file": "assets/models/aircraft_t3.glb",
       "fit": {
         "axis": "z",
         "size": 44.5
       }
     },
     "aircraft.turboprop": {
-      "file": null,
+      "file": "assets/models/aircraft_p70.glb",
       "fit": {
         "axis": "z",
         "size": 27.2
       }
     },
     "vehicle.tug": {
-      "file": null,
+      "file": "assets/models/vehicle_tug.glb",
       "fit": {
         "axis": "z",
         "size": 5.2
@@ -93,105 +93,105 @@
       }
     },
     "CMN.terminal_main": {
-      "file": null,
+      "file": "assets/models/CMN_terminal_main.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "building.jet_bridge": {
-      "file": null,
+      "file": "assets/models/jet_bridge.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "building.light_mast": {
-      "file": null,
+      "file": "assets/models/light_mast.glb",
       "fit": {
         "axis": "y",
         "size": "auto"
       }
     },
     "vehicle.baggage_cart": {
-      "file": null,
+      "file": "assets/models/vehicle_baggage_cart.glb",
       "fit": {
         "axis": "z",
         "size": 3.0
       }
     },
     "vehicle.fuel_truck": {
-      "file": null,
+      "file": "assets/models/vehicle_fuel_truck.glb",
       "fit": {
         "axis": "z",
         "size": 10.0
       }
     },
     "vehicle.stairs_truck": {
-      "file": null,
+      "file": "assets/models/vehicle_stairs_truck.glb",
       "fit": {
         "axis": "z",
         "size": 8.0
       }
     },
     "vehicle.fire_truck": {
-      "file": null,
+      "file": "assets/models/vehicle_fire_truck.glb",
       "fit": {
         "axis": "z",
         "size": 11.0
       }
     },
     "CMN.pier": {
-      "file": null,
+      "file": "assets/models/CMN_pier.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "CMN.tower": {
-      "file": null,
+      "file": "assets/models/CMN_tower.glb",
       "fit": {
         "axis": "y",
         "size": "auto"
       }
     },
     "CMN.hangar": {
-      "file": null,
+      "file": "assets/models/CMN_hangar.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "CMN.fire_station": {
-      "file": null,
+      "file": "assets/models/CMN_fire_station.glb",
       "fit": {
         "axis": "z",
         "size": 44
       }
     },
     "CMN.cargo": {
-      "file": null,
+      "file": "assets/models/CMN_cargo.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "CMN.fuel_farm": {
-      "file": null,
+      "file": "assets/models/CMN_fuel_farm.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "CMN.admin_small": {
-      "file": null,
+      "file": "assets/models/CMN_admin_small.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "CMN.admin_long": {
-      "file": null,
+      "file": "assets/models/CMN_admin_long.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
