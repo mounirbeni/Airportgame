@@ -64,11 +64,11 @@ export class FlightMap {
   glide(a, p) {
     this.disp ||= new Map();
     const now = S.day * 1440 + S.gameMin, d = this.disp.get(a.id);        // game minutes: works at every game speed
-    if (!d || now - d.seen > 3 || now < d.seen) { this.disp.set(a.id, { p: p.p, seen: now, from: null }); return p; }
-    if (!d.from && Math.hypot(p.p[0] - d.p[0], p.p[1] - d.p[1]) > 8) { d.from = d.p; d.t0 = now; }
+    if (!d || now - d.seen > 12 || now < d.seen) { this.disp.set(a.id, { p: p.p, seen: now, from: null }); return p; }
+    if (!d.from) { const gap = Math.hypot(p.p[0] - d.p[0], p.p[1] - d.p[1]); if (gap > 8) { d.from = d.p; d.t0 = now; d.dur = Math.max(1, gap / 8); } }   // ~8 km per game minute, close to cruise
     let out = p.p;
     if (d.from) {
-      const k = Math.min((now - d.t0) / 1.5, 1), e = k * k * (3 - 2 * k);
+      const k = Math.min((now - d.t0) / d.dur, 1), e = k * k * (3 - 2 * k);
       out = [d.from[0] + (p.p[0] - d.from[0]) * e, d.from[1] + (p.p[1] - d.from[1]) * e];
       if (k >= 1) d.from = null;
     }
