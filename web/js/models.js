@@ -23,7 +23,7 @@ function loadGLB(file) {
 
 /**
  * Replace the procedural content of `target` with the slot's GLB (if any).
- * opts: { autoSize: number (used when fit.size is "auto"), groundY, keep: [objects to keep visible] }
+ * opts: { autoSize: number (used when fit.size is "auto"), groundY, keep: [objects to keep visible], yaw: extra rotation of the GLB }
  */
 export function attachModel(target, ids, opts = {}) {
   const id = (Array.isArray(ids) ? ids : [ids]).find(hasModel);
@@ -39,7 +39,8 @@ export function attachModel(target, ids, opts = {}) {
     const c = box.getCenter(new THREE.Vector3()).multiplyScalar(k);
     obj.position.set(-c.x, (opts.groundY ?? 0) - box.min.y * k, -c.z);
     for (const ch of [...target.children]) if (!(opts.keep || []).includes(ch)) ch.visible = false;
-    target.add(obj);
+    if (opts.yaw) { const holder = new THREE.Group(); holder.rotation.y = opts.yaw; holder.add(obj); target.add(holder); }
+    else target.add(obj);
   }).catch(e => console.warn('Model slot', id, 'failed:', e));
   return true;
 }

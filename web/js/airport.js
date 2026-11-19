@@ -1,7 +1,7 @@
 // Airport renderer: draws one airport from its generated layout
 // (web/js/infra/layout.js). Geometry only — materials come from style.js roles.
 import * as THREE from 'three';
-import { tileUV } from './assets.js';
+import { tileUV, loadTex } from './assets.js';
 import { mat } from './style.js';
 import { procTex } from './proctex.js';
 import { GeoBatch, xform } from './infra/merge.js';
@@ -92,12 +92,13 @@ export class Airport {
     const material = mat('ground.airfield').clone();
     material.map = procTex('grass'); material.color.multiplyScalar(1 / material.map.userData.mean);
     material.alphaMap = edgeMask(fade / w, fade / d); material.alphaMap.channel = 1; material.transparent = true;
+    loadTex('tex_airfield_grass').then(tex => { if (!tex) return; material.map = tex; material.color.set(0xffffff); material.needsUpdate = true; });
     const g = new THREE.Mesh(geo, material); g.rotation.x = -Math.PI / 2; g.renderOrder = -1;
     g.position.set((b.x0 + b.x1) / 2, Y.airfield, (b.z0 + b.z1) / 2); g.receiveShadow = true; this.group.add(g);
   }
   buildRunways() {
     for (const rw of this.L.runways) {
-      this.strip('pavement.shoulder', [rw.x, rw.z + rw.half + 60], [rw.x, rw.z - rw.half - 60], rw.width + 14, Y.runway - 0.04, 0.2);
+      this.strip('pavement.shoulder', [rw.x, rw.z + rw.half + 60], [rw.x, rw.z - rw.half - 60], rw.width + 14, Y.runway - 0.04, 0.2, 23);
       this.strip('pavement.runway', [rw.x, rw.z + rw.half], [rw.x, rw.z - rw.half], rw.width, Y.runway, 0.3, 45);
     }
   }
@@ -252,7 +253,7 @@ export class Airport {
       let grp = null, auto;
       switch (b.type) {
         case 'terminal_main': grp = Kit.terminalMain(g, b, tint); this.nameSign(b); auto = b.front && b.front.axis === 'z' ? b.w : b.d; break;
-        case 'pier': grp = Kit.pier(g, b, tint); auto = Math.abs(b.z1 - b.z0); break;
+        case 'pier': grp = Kit.pier(g, b, tint); auto = Math.abs(b.z1 - b.z0); b.model ||= `${code}.pier`; break;
         case 'tower': grp = Kit.tower(g, b.x, b.z, b.h); auto = b.h + 10; break;
         case 'hangar': grp = Kit.hangar(g, b.x, b.z, b.rot, b.w, b.d); auto = b.d || 70; break;
         case 'fire_station': grp = Kit.fireStation(g, b.x, b.z, b.rot); break;
@@ -263,7 +264,7 @@ export class Airport {
         case 'admin': grp = Kit.admin(g, b.x, b.z, b.w, b.d, b.h); auto = b.w; break;
       }
       // Designer GLB slots: "<CODE>.<type>" (airport-specific) or "building.<type>".
-      if (grp) attachModel(grp, [`${code}.${b.type}`, `building.${b.type}`], { autoSize: auto });
+      if (grp) attachModel(grp, [b.model, `${code}.${b.type}`, `building.${b.type}`].filter(Boolean), { autoSize: auto });
     }
     L.stands.forEach((s, i) => {
       if (s.bridgeRoot) Kit.jetBridge(g, s.bridgeRoot, s.door);
@@ -293,7 +294,7 @@ export class Airport {
     for (const r of this.L.roads) {
       for (let i = 0; i < r.pts.length - 1; i++) {
         const a = r.pts[i], b = r.pts[i + 1];
-        this.strip('road.asphalt', a, b, r.width || 12, 0.12, 0.2);
+        this.strip('road.asphalt', a, b, r.width || 12, 0.12, 0.2, 12);
         const len = Math.hypot(b[0] - a[0], b[1] - a[1]), dx = (b[0] - a[0]) / len, dz = (b[1] - a[1]) / len;
         for (let t = 6; t < len - 3; t += 12) this.addPaint('white', a[0] + dx * t, a[1] + dz * t, 0.25, 4, Math.atan2(dx, dz));
       }
@@ -301,7 +302,7 @@ export class Airport {
     }
     for (const p of this.L.parking) Kit.parkingLot(this.group, p);
     for (const sr of this.L.service) for (let i = 0; i < sr.length - 1; i++) {
-      this.strip('road.asphalt', sr[i], sr[i + 1], 7, Y.apron + 0.03, 0.06);
+      this.strip('road.asphalt', sr[i], sr[i + 1], 7, Y.apron + 0.03, 0.06, 12);
       const a = sr[i], b = sr[i + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]), dx = (b[0] - a[0]) / len, dz = (b[1] - a[1]) / len;
       for (const s of [-1, 1]) for (let t = 2; t < len - 2; t += 6) this.addPaint('white', a[0] + dx * t - dz * s * 3.3, a[1] + dz * t + dx * s * 3.3, 0.2, 3, Math.atan2(dx, dz));
     }
@@ -325,7 +326,7 @@ export class Airport {
       const dx = (q[0] - p[0]) / len, dz = (q[1] - p[1]) / len, nx = -dz, nz = dx;     // inward normal (corners run counter-clockwise)
       // service road 12 m inside the fence
       const ri = 12, rp = [p[0] + nx * ri + dx * ri, p[1] + nz * ri + dz * ri], rq = [q[0] + nx * ri - dx * ri, q[1] + nz * ri - dz * ri];
-      this.strip('road.asphalt', rp, rq, 6, Y.apron, 0.06);
+      this.strip('road.asphalt', rp, rq, 6, Y.apron, 0.06, 12);
       // fence, with a 24 m gate wherever a landside road crosses it
       const gaps = roads.map(([a, bb]) => cross(p, q, a, bb)).filter(t => t !== null).map(t => [t * len - 12, t * len + 12]);
       let from = 0;

@@ -13,13 +13,13 @@ import { procTex } from './proctex.js';
 export const ROLES = {
   // Pavement and ground (tile = texture repeat size in metres)
   // layer = draw order of flat ground surfaces (depth bias, avoids flicker at long range)
-  'pavement.runway':   { color: 0x545250, rough: 0.9, proc: 'asphalt', layer: 4 },
-  'pavement.taxiway':  { color: 0x575553, rough: 0.9, proc: 'asphalt', layer: 3 },
-  'pavement.apron':    { color: 0xaeafae, rough: 0.85, proc: 'concrete', layer: 2 },
-  'pavement.shoulder': { color: 0x838180, rough: 0.95, proc: 'asphalt', layer: 1 },
+  'pavement.runway':   { color: 0x545250, rough: 0.9, proc: 'asphalt', layer: 4 , map: 'tex_runway_asphalt' },
+  'pavement.taxiway':  { color: 0x575553, rough: 0.9, proc: 'asphalt', layer: 3 , map: 'tex_taxiway_asphalt' },
+  'pavement.apron':    { color: 0xaeafae, rough: 0.85, proc: 'concrete', layer: 2 , map: 'tex_apron_concrete' },
+  'pavement.shoulder': { color: 0x838180, rough: 0.95, proc: 'asphalt', layer: 1 , map: 'tex_shoulder' },
   'ground.airfield':   { color: 0x6e8c52, rough: 1.0 },
-  'road.asphalt':      { color: 0x5a5856, rough: 0.95, proc: 'asphalt', layer: 2 },
-  'road.parking':      { color: 0x6a6d70, rough: 0.95, layer: 2 },
+  'road.asphalt':      { color: 0x5a5856, rough: 0.95, proc: 'asphalt', layer: 2 , map: 'tex_road' },
+  'road.parking':      { color: 0x6a6d70, rough: 0.95, layer: 2, map: 'tex_parking' },
   'paint.white':       { color: 0xf2f2eb, rough: 0.7, layer: 6 },
   'paint.yellow':      { color: 0xf2bf26, rough: 0.7, layer: 6 },
   'paint.red':         { color: 0xbf1f1a, rough: 0.7, layer: 6 },

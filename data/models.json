@@ -1,19 +1,201 @@
 {
   "_doc": "Model slots. Set a slot to a GLB path (relative to the web root, e.g. 'assets/models/a320.glb') to replace the built-in procedural model. The GLB is scaled to the real size given by 'fit' and placed on the ground. Leave null to keep the procedural model. See docs/INFRASTRUCTURE.md.",
   "slots": {
-    "aircraft.jet":        { "file": null, "fit": { "axis": "z", "size": 37.6 } },
-    "aircraft.jet_large":  { "file": null, "fit": { "axis": "z", "size": 44.5 } },
-    "aircraft.turboprop":  { "file": null, "fit": { "axis": "z", "size": 27.2 } },
-    "vehicle.tug":         { "file": null, "fit": { "axis": "z", "size": 5.2 } },
-    "building.tower":      { "file": null, "fit": { "axis": "y", "size": "auto" } },
-    "building.hangar":     { "file": null, "fit": { "axis": "x", "size": "auto" } },
-    "building.fire_station": { "file": null, "fit": { "axis": "z", "size": 44 } },
-    "building.cargo":      { "file": null, "fit": { "axis": "z", "size": "auto" } },
-    "building.fuel_farm":  { "file": null, "fit": { "axis": "x", "size": "auto" } },
-    "building.parking_garage": { "file": null, "fit": { "axis": "x", "size": "auto" } },
-    "building.admin":      { "file": null, "fit": { "axis": "x", "size": "auto" } },
-    "building.terminal_main": { "file": null, "fit": { "axis": "z", "size": "auto" } },
-    "building.pier":       { "file": null, "fit": { "axis": "z", "size": "auto" } },
-    "CMN.terminal_main":   { "file": null, "fit": { "axis": "z", "size": "auto" } }
+    "aircraft.jet": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 37.6
+      }
+    },
+    "aircraft.jet_large": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 44.5
+      }
+    },
+    "aircraft.turboprop": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 27.2
+      }
+    },
+    "vehicle.tug": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 5.2
+      }
+    },
+    "building.tower": {
+      "file": null,
+      "fit": {
+        "axis": "y",
+        "size": "auto"
+      }
+    },
+    "building.hangar": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "building.fire_station": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 44
+      }
+    },
+    "building.cargo": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "building.fuel_farm": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "building.parking_garage": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "building.admin": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "building.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "building.pier": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "CMN.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "building.jet_bridge": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "building.light_mast": {
+      "file": null,
+      "fit": {
+        "axis": "y",
+        "size": "auto"
+      }
+    },
+    "vehicle.baggage_cart": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 3.0
+      }
+    },
+    "vehicle.fuel_truck": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 10.0
+      }
+    },
+    "vehicle.stairs_truck": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 8.0
+      }
+    },
+    "vehicle.fire_truck": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 11.0
+      }
+    },
+    "CMN.pier": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "CMN.tower": {
+      "file": null,
+      "fit": {
+        "axis": "y",
+        "size": "auto"
+      }
+    },
+    "CMN.hangar": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "CMN.fire_station": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": 44
+      }
+    },
+    "CMN.cargo": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "CMN.fuel_farm": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "CMN.admin_small": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "CMN.admin_long": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    }
   }
 }

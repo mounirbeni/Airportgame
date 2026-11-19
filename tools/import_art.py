@@ -23,6 +23,11 @@ RULES = {
     'terminal_roof': ('tex', (1024, 512), 'webp', 78),
     'hangar_texture': ('tex', (1024, 512), 'webp', 78),
     'tower_texture': ('tex', (512, 512), 'webp', 78),
+    # ground textures (docs/ASSET_REQUESTS.md section 2): kept at the requested size
+    'tex_runway_asphalt': ('tex', (2048, 2048), 'webp', 85),
+    'tex_taxiway_asphalt': ('tex', (2048, 2048), 'webp', 85),
+    'tex_apron_concrete': ('tex', (2048, 2048), 'webp', 85),
+    'tex_airfield_grass': ('tex', (2048, 2048), 'webp', 85),
 }
 PREFIX_RULES = [
     ('icon_', ('ui', (160, 160), 'webp', 88)),

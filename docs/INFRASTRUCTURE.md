@@ -140,6 +140,9 @@ Terminal styles: `moroccan` (real arch openings, zellige frieze, domed pavilion 
 - **Aircraft:** `aircraft.jet`, `aircraft.jet_large`, `aircraft.turboprop`.
 - **Vehicles:** `vehicle.tug`.
 - **Buildings:** `building.<type>` for every building type, or `<CODE>.<type>` for one airport only (for example `CMN.terminal_main`).
+- **One building only:** give it `"model": "<slot>"` in the airport spec (for example `CMN.admin_long`). This is for buildings of the same type with different proportions.
+- **Jet bridge, light mast, vehicles:** `building.jet_bridge`, `building.light_mast`, `vehicle.baggage_cart`, `vehicle.fuel_truck`, `vehicle.stairs_truck`, `vehicle.fire_truck`.
+- **Ground textures:** files named in `web/js/style.js` (`tex_runway_asphalt`, …) and `tex_airfield_grass`. They are loaded automatically when present in `web/assets/tex/`.
 
 The model is scaled so its bounding box matches `fit.size` on `fit.axis`. `"auto"` uses the real size from the airport spec. The model is then centred on the slot and placed on the ground.
 

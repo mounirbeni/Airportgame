@@ -259,7 +259,8 @@
    "z": 940,
    "w": 70,
    "d": 45,
-   "h": 12
+   "h": 12,
+   "model": "CMN.admin_small"
   },
   {
    "type": "admin",
@@ -267,7 +268,8 @@
    "z": 1110,
    "w": 260,
    "d": 60,
-   "h": 14
+   "h": 14,
+   "model": "CMN.admin_long"
   },
   {
    "type": "admin",
@@ -275,7 +277,8 @@
    "z": 1110,
    "w": 260,
    "d": 60,
-   "h": 14
+   "h": 14,
+   "model": "CMN.admin_long"
   }
  ],
  "roads": [

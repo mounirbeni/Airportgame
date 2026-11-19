@@ -125,22 +125,24 @@ export function pier(parent, b, tint) {
 /** Telescoping jet bridge from a building face point `root` to the aircraft door `door` ([x, z]). */
 export function jetBridge(parent, root, door) {
   const metal = mat('building.metal'), steel = mat('vehicle.steel'), glass = mat('building.glass');
-  const r = new THREE.Vector3(root[0], 5.2, root[1]), dv = new THREE.Vector3(door[0], 5.2, door[1]);
-  const dir = dv.clone().sub(r), L = dir.length(), yaw = Math.atan2(dir.x, dir.z);
-  mesh(cyl(2.4, 2.4, 4.4, 16), metal, parent, [r.x, 5.2, r.z]);
-  mesh(cyl(0.7, 0.7, 3.2, 10), steel, parent, [r.x, 1.6, r.z]);
-  const t = new THREE.Group(); t.position.copy(r); t.rotation.y = yaw; parent.add(t);
-  let off = 2.2;
+  const dx = door[0] - root[0], dz = door[1] - root[1], L = Math.hypot(dx, dz);
+  // Group centred between building face and door; local +Z points from the building to the aircraft.
+  const g = group(parent, (root[0] + door[0]) / 2, (root[1] + door[1]) / 2, Math.atan2(dx, dz)), z0 = -L / 2, y = 5.2;
+  mesh(cyl(2.4, 2.4, 4.4, 16), metal, g, [0, y, z0]);
+  mesh(cyl(0.7, 0.7, 3.2, 10), steel, g, [0, 1.6, z0]);
+  let off = z0 + 2.2;
   for (const [w, hh, frac] of [[3.4, 3.2, 0.55], [3.1, 2.9, 0.45]]) {
     const l = Math.max(1, (L - 5.2) * frac);
-    mesh(box(w, hh, l), metal, t, [0, 0, off + l / 2]);
-    for (const s of [-1, 1]) mesh(box(0.05, 0.9, Math.max(0.5, l - 1)), glass, t, [s * (w / 2 + 0.01), 0.4, off + l / 2], null, false);
+    mesh(box(w, hh, l), metal, g, [0, y, off + l / 2]);
+    for (const s of [-1, 1]) mesh(box(0.05, 0.9, Math.max(0.5, l - 1)), glass, g, [s * (w / 2 + 0.01), y + 0.4, off + l / 2], null, false);
     off += l - 0.4;
   }
-  mesh(box(4.2, 3.6, 3.4), metal, t, [0, 0, L - 1.6]);
-  mesh(box(4.4, 3.8, 0.4), mat('building.dark'), t, [0, 0, L + 0.2]);
-  mesh(box(0.6, 3.4, 0.6), steel, t, [0, -3.2, L - 3.5]);
-  for (const s of [-1, 1]) mesh(cyl(0.5, 0.5, 0.4, 12), mat('vehicle.tyre'), t, [s * 0.8, -4.8, L - 3.5], [0, 0, Math.PI / 2]);
+  mesh(box(4.2, 3.6, 3.4), metal, g, [0, y, L / 2 - 1.6]);
+  mesh(box(4.4, 3.8, 0.4), mat('building.dark'), g, [0, y, L / 2 + 0.2]);
+  mesh(box(0.6, 3.4, 0.6), steel, g, [0, y - 3.2, L / 2 - 3.5]);
+  for (const s of [-1, 1]) mesh(cyl(0.5, 0.5, 0.4, 12), mat('vehicle.tyre'), g, [s * 0.8, y - 4.8, L / 2 - 3.5], [0, 0, Math.PI / 2]);
+  attachModel(g, 'building.jet_bridge', { autoSize: L });
+  return g;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -238,9 +240,12 @@ export function admin(parent, x, z, w = 60, d = 30, h = 18) {
 }
 
 export function lightMast(parent, x, z, h = 26) {
-  mesh(cyl(0.35, 0.55, h, 10), mat('vehicle.steel'), parent, [x, h / 2, z]);
-  mesh(box(1.6, 0.8, 4.5), mat('building.dark'), parent, [x, h + 0.2, z]);
-  mesh(box(1.3, 0.1, 4), mat('light.lamp'), parent, [x, h - 0.25, z], null, false);
+  const g = group(parent, x, z);
+  mesh(cyl(0.35, 0.55, h, 10), mat('vehicle.steel'), g, [0, h / 2, 0]);
+  mesh(box(1.6, 0.8, 4.5), mat('building.dark'), g, [0, h + 0.2, 0]);
+  mesh(box(1.3, 0.1, 4), mat('light.lamp'), g, [0, h - 0.25, 0], null, false);
+  attachModel(g, 'building.light_mast', { autoSize: h + 0.6 });
+  return g;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -263,6 +268,7 @@ export function baggageTrain(parent, x, z, yaw, n = 3) {
     mesh(box(1.8, 0.2, 3), mat('vehicle.steel'), c, [0, 0.7, 0]);
     mesh(box(1.7, 1.2, 2.6), mat('vehicle.white'), c, [0, 1.4, 0]);
     wheels(c, [[-0.8, -1], [0.8, -1], [-0.8, 1], [0.8, 1]], 0.3, 0.25);
+    attachModel(c, 'vehicle.baggage_cart');
   }
   return t;
 }
@@ -272,6 +278,7 @@ export function fuelTruck(parent, x, z, yaw) {
   mesh(cyl(1.25, 1.25, 7, 16), mat('tank'), t, [0, 2, -1], [Math.PI / 2, 0, 0]);
   mesh(box(2.6, 0.5, 10), mat('building.dark'), t, [0, 0.7, 1]);
   wheels(t, [[-1.2, 4], [1.2, 4], [-1.2, -0.5], [1.2, -0.5], [-1.2, -3], [1.2, -3]], 0.55, 0.4);
+  attachModel(t, 'vehicle.fuel_truck', { yaw: Math.PI });
   return t;
 }
 export function stairsTruck(parent, x, z, yaw) {
@@ -280,6 +287,7 @@ export function stairsTruck(parent, x, z, yaw) {
   mesh(box(1.6, 0.3, 6.5), mat('vehicle.steel'), t, [0, 3.2, -1], [0.45, 0, 0]);
   mesh(box(1.8, 0.2, 1.6), mat('vehicle.steel'), t, [0, 4.6, -3.9]);
   wheels(t, [[-1.05, -1.8], [1.05, -1.8], [-1.05, 1.8], [1.05, 1.8]], 0.45, 0.35);
+  attachModel(t, 'vehicle.stairs_truck');
   return t;
 }
 export function fireTruck(parent, x, z, yaw) {
@@ -288,6 +296,7 @@ export function fireTruck(parent, x, z, yaw) {
   mesh(box(2.8, 1.2, 0.2), mat('vehicle.glass'), t, [0, 2.9, 5.5], null, false);
   mesh(box(0.6, 0.6, 3), mat('vehicle.white'), t, [0, 4.1, 1], [-0.25, 0, 0]);
   wheels(t, [[-1.4, 3.5], [1.4, 3.5], [-1.4, -1], [1.4, -1], [-1.4, -3.5], [1.4, -3.5]], 0.62, 0.5);
+  attachModel(t, 'vehicle.fire_truck', { yaw: Math.PI });
   return t;
 }
 
@@ -309,6 +318,6 @@ export function carRows(parent, x0, w, y, z0, d, rowGap = 12) {
   car.count = k; car.castShadow = true; parent.add(car);
 }
 export function parkingLot(parent, p) {
-  mesh(box(p.w, 0.16, p.d), mat('road.parking'), parent, [p.x, 0.08, p.z], null, false);
+  mesh(tileUV(box(p.w, 0.16, p.d), p.w / 12, p.d / 12), mat('road.parking'), parent, [p.x, 0.08, p.z], null, false);
   carRows(parent, p.x - p.w / 2, p.w, 0.16, p.z - p.d / 2 + 4, p.d - 8, 12.5);
 }

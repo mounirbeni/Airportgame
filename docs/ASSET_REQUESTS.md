@@ -1,158 +1,171 @@
-# Atlas Air 3D — طلبات الرسومات والمجسمات (للمصمّم)
+# Atlas Air 3D — طلب الرسومات والمجسمات (أمر التنفيذ)
 
-هذا الملف هو **قائمة الطلبات** لكل ما تحتاجه اللعبة من رسومات. أنت (أو المصمّم) تُنتج الملفات بهذه المواصفات، وأنا أضعها في مكانها في اللعبة فقط.
-كل مجسم له: اسم الملف، القياسات الحقيقية بالمتر، الاتجاه، نقطة الأصل، الحدّ الأقصى للتفاصيل، والأمر الجاهز (Prompt) لأداة التوليد.
+**الطريقة:** مخطط المطار ثابت بالمتر (أنا المسؤول عنه). أنت تبني كل مجسم وخامة **بالقياس المكتوب هنا بالضبط**، وأنا أضع الملف في مكانه **كما هو**: بلا قصّ، بلا تتبّع، بلا تعديل.
+كل منفذ (Slot) موصول في الكود ومُختبَر: الملف يُحجَّم إلى قياسه الحقيقي، ويُوضع في مكانه، ويُوجَّه تلقائيًا.
 
-> الأوامر مكتوبة بالإنجليزية لأن أدوات التوليد (صور / 3D) تفهمها أفضل. القياسات هي المرجع: إذا خرج المجسم بحجم مختلف، أعيد تحجيمه تلقائيًا إلى القياس المكتوب هنا.
+**المرجع البصري (الشكل المطلوب):** `docs/reference/cmn_reference_look.png` — صورتك. نأخذ منها **الطابع** (المبنى الحديث الفضي بالزجاج، الجسور، الألوان، العشب، الإضاءة الدافئة)، لا القياسات.
+**المخطط الدقيق (القياسات والمواضع):**
+
+| الملف | المحتوى | المقياس |
+|---|---|---|
+| `docs/reference/cmn_master_plan.png` | المطار كاملًا: المدارج، الممرات، الساحات، الطرق، كل مبنى برمزه (B1…B10) | 1 بكسل = 2 م، شبكة 200 م |
+| `docs/reference/cmn_apron_detail.png` | المبنى B1، الذراعان B2، المواقف S1–S16، الجسور | 1 بكسل = 0.5 م، شبكة 50 م |
+| `docs/reference/cmn_north_detail.png` | الحظائر، المطافئ، الشحن، الوقود | 1 بكسل = 0.5 م، شبكة 50 م |
+
+الخط الأحمر على أي مبنى في المخطط = **الواجهة / الأبواب**.
 
 ---
 
-## 0. قواعد عامة لكل المجسمات (مهم)
+## 0. قواعد إلزامية لكل مجسم
 
 | البند | القاعدة |
 |---|---|
-| الصيغة | **GLB** (glTF 2.0 ثنائي)، ملف واحد لكل مجسم، الخامات (Textures) مضمّنة داخله |
-| الوحدة | **المتر** (1 وحدة = 1 م) |
+| الصيغة | **GLB** (glTF 2.0)، ملف واحد لكل مجسم، الخامات مضمّنة |
+| الوحدة | **1 وحدة = 1 متر**، بالقياس الحقيقي المكتوب |
 | المحاور | **Y للأعلى** |
-| نقطة الأصل (Pivot) | في **منتصف قاعدة المجسم على الأرض** (y = 0 عند العجلات / أساس المبنى) |
-| اتجاه الطائرات والمركبات | **المقدّمة نحو −Z** |
-| اتجاه المباني | **الواجهة الرئيسية نحو −X** (الجهة المطلّة على الساحة / المدرج) |
-| الخامات | PBR: BaseColor + Normal + ORM (Occlusion/Roughness/Metallic) |
-| حجم الخامات | طائرات ومبانٍ كبيرة: 2048×2048 · مركبات ومبانٍ صغيرة: 1024×1024 |
-| عدد المثلثات (حدّ أقصى) | طائرة 40k · مبنى كبير 60k · مبنى صغير 15k · مركبة 6k |
-| النوافذ / الزجاج | مادة منفصلة اسمها يحتوي `glass` (أجعلها عاكسة وشفافة جزئيًا) |
-| الإضاءة | **لا** إضاءة مخبوزة قوية ولا ظلال مرسومة في الخامة (اللعبة تضيف الشمس والظلال) |
-| الخلفية | بلا أرضية وبلا خلفية داخل الملف |
-| الهوية | شركة الطيران خيالية: **Atlas Air**. أبيض مع ذيل أخضر مزرق (#0f3f45) ونجمة نحاسية (#e08c4c). لا شعارات حقيقية |
-
-**التسليم:** أرسل الملفات بالأسماء المكتوبة أدناه (مثال `aircraft_t2.glb`). أضعها في `web/assets/models/` وأربطها في `data/models.json`.
+| نقطة الأصل | **منتصف القاعدة على الأرض** (y = 0 عند أساس المبنى / العجلات) |
+| الطائرات والمركبات | **المقدّمة نحو −Z** |
+| المباني | **الواجهة (الأبواب / جهة الطائرات) نحو −X** إلا إذا كُتب غير ذلك |
+| الخامات | PBR: BaseColor + Normal + ORM. المباني الكبيرة 2048²، الصغيرة 1024² |
+| حدّ المثلثات | مبنى كبير 60k · مبنى صغير 15k · طائرة 40k · مركبة 6k · جسر 5k |
+| الزجاج | مادة منفصلة اسمها يحتوي `glass` |
+| الإضاءة | **بلا ظلال مرسومة وبلا إضاءة مخبوزة** في الخامات (اللعبة تضيف الشمس والظلال) |
+| ممنوع داخل الملف | أرضية، خلفية، طائرات أو سيارات ملتصقة بالمبنى |
 
 ---
 
-## 1. الطائرات (3 مجسمات) — المنافذ جاهزة في الكود
+## 1. مباني مطار الدار البيضاء CMN (الأولوية الأولى)
 
-### 1.1 `aircraft_t2.glb` — Atlas T2 (فئة A320، طائرة نفاثة ضيقة البدن)
-- **المنفذ:** `aircraft.jet` · **التحجيم على:** الطول (Z) = **37.6 م**
-- **القياسات:** طول 37.6 · امتداد الجناحين 35.8 · ارتفاع حتى قمة الذيل 11.8 · قطر جسم الطائرة 3.95 · محركان تحت الجناحين · ارتفاع الباب الأمامي عن الأرض ≈ 3.4
-- **العجلات:** على الأرض (y = 0)، العجلة الأمامية تحت قمرة القيادة، المقدّمة نحو −Z
-- **Prompt:**
-  > Low-poly but detailed 3D model of a generic twin-engine narrow-body airliner (A320-class proportions: 37.6 m long, 35.8 m wingspan, 11.8 m tall), fictional "Atlas Air" livery: glossy white fuselage, dark teal (#0f3f45) vertical tail with a copper eight-pointed star, thin copper cheatline, "ATLAS AIR" lettering on the forward fuselage, grey wing and engine nacelles, landing gear down, passenger windows and doors as texture detail, PBR materials, game-ready, clean topology, no background, no ground plane.
+الطابع لكل المباني: **حديث كما في الصورة المرجعية**. سقف معدني فضي، واجهات زجاجية زرقاء مخضرّة، وإطارات رمادية داكنة. الإضاءة الداخلية الدافئة اختيارية في الخامة (Emissive).
 
-### 1.2 `aircraft_t3.glb` — Atlas T3 (فئة A321، أطول)
-- **المنفذ:** `aircraft.jet_large` · **التحجيم على:** الطول (Z) = **44.5 م**
-- **القياسات:** طول 44.5 · امتداد 35.8 · ارتفاع 11.8 · قطر الجسم 3.95 · نفس الهوية
-- **Prompt:** نفس أمر T2 مع استبدال القياسات بـ `44.5 m long` و `stretched fuselage with four pairs of doors`.
+| الرمز | الملف | المنفذ | القياس (م): X (عمق) × Z (طول) × Y (ارتفاع) | الواجهة | العدد في المطار |
+|---|---|---|---|---|---|
+| **B1** | `CMN_terminal_main.glb` | `CMN.terminal_main` | **100 × 900 × 24** | −X (جهة الطائرات) | 1 |
+| **B2** | `CMN_pier.glb` | `CMN.pier` | **36 × 400 × 12** | الطرف +Z يلتصق بـ B1 | 2 |
+| **B3** | `jet_bridge.glb` | `building.jet_bridge` | **3.4 × 12.5 × 6** | الطرف −Z عند جدار B2، الطرف +Z (الكابينة) عند باب الطائرة | 16 |
+| **B4** | `CMN_tower.glb` | `CMN.tower` | قاعدة ≈ 14 × 14، **الارتفاع الكلي 72** مع الهوائي (كابينة زجاجية على ارتفاع ≈ 50، قطرها ≈ 20) | — | 1 |
+| **B5** | `CMN_hangar.glb` | `CMN.hangar` | **75 × 84 × 29** (جدار 20 + قوس 9) | −X (البوابة الكبيرة) | 2 |
+| **B6** | `CMN_fire_station.glb` | `CMN.fire_station` | **26 × 44 × 9** + برج تدريب 5 × 5 × 18 | −X (4 أبواب شاحنات) | 1 |
+| **B7** | `CMN_cargo.glb` | `CMN.cargo` | **60 × 320 × 18** | −X (أبواب تحميل كل 20 م) | 1 |
+| **B8** | `CMN_fuel_farm.glb` | `CMN.fuel_farm` | **62 × 62**: 3 خزانات (قطر 20، ارتفاع 14) داخل جدار حماية ارتفاعه 1.6 | — | 1 |
+| **B9** | `CMN_admin_small.glb` | `CMN.admin_small` | **70 × 45 × 12** ← هنا الطول على X | −Z (نحو المبنى) | 1 |
+| **B10** | `CMN_admin_long.glb` | `CMN.admin_long` | **260 × 60 × 14** ← هنا الطول على X | −Z (نحو المبنى) | 2 |
+| — | `light_mast.glb` | `building.light_mast` | عمود ارتفاعه الكلي **26.6** ورأس إنارة 1.6 × 4.5 | — | حول الساحات |
 
-### 1.3 `aircraft_p70.glb` — Atlas P70 (فئة ATR 72، مروحية توربينية)
-- **المنفذ:** `aircraft.turboprop` · **التحجيم على:** الطول (Z) = **27.2 م**
-- **القياسات:** طول 27.2 · امتداد 27.0 · ارتفاع 7.7 · جناح علوي · ذيل على شكل T · محرّكان بمراوح 6 شفرات
-- **Prompt:**
-  > Low-poly detailed 3D model of a generic high-wing twin-turboprop regional airliner (ATR 72-class: 27.2 m long, 27 m wingspan, 7.7 m tall, T-tail, two six-blade propellers), fictional "Atlas Air" livery: white fuselage, dark teal (#0f3f45) tail with copper star, landing gear down, PBR, game-ready, no background.
+**تفاصيل يجب احترامها:**
+- **B1:**
+  - الذراعان B2 يلتصقان بالواجهة −X عند **z = −280 و z = +280** (من منتصف المبنى).
+  - في الوسط قاعة زجاجية مرتفعة كما في الصورة المرجعية.
+  - الواجهة الخلفية +X تطلّ على طريق السيارات، وفيها مداخل ومظلّة.
+- **B2:**
+  - في كل جانب طويل (±X) **4 فتحات للجسور**.
+  - أول فتحة على بُعد **45 م** من الطرف +Z، ثم فتحة كل **95 م**.
+  - لا شيء بارز أكثر من 1 م خارج العرض 36.
+- **B3:**
+  - مجسم واحد يتكرر 16 مرة؛ اللعبة توجّهه من جدار الذراع إلى باب الطائرة.
+  - الأسطوانة الدوّارة (قطر 4.8) عند −Z.
+  - النفق زجاجي الجانبين.
+  - الكابينة (4.2 × 3.4) عند +Z، وأرضيتها على ارتفاع **3.4 م** (ارتفاع باب الطائرة)، وتحتها عجلتان.
+- **B8:** الخزانات الثلاثة على شبكة 2 × 2 بتباعد 26 م (الخانة الرابعة فارغة).
+
+### الأوامر الجاهزة (Prompts)
+
+> **B1:** Game-ready low-poly 3D model of a large modern airport passenger terminal, exactly 900 m long (Z axis), 100 m deep (X axis), 24 m tall. Curved silver standing-seam metal roof, central raised glass hall with a large glazed curtain wall, blue-green tinted glass facades with dark grey mullions, airside facade facing −X with two pier connection points at z = −280 m and z = +280 m, landside facade (+X) with entrances and a canopy over the curb. Style matching a contemporary international airport, PBR materials, origin at the centre of the footprint on the ground, Y up, no ground plane, no background, no aircraft.
+
+> **B2:** Game-ready low-poly 3D model of an airport concourse pier, 36 m wide (X), 400 m long (Z), 12 m tall, silver metal roof, continuous glazing on both long sides, four boarding-bridge door openings on each long side (first at 45 m from the +Z end, then every 95 m), +Z end connects flush to the main terminal, PBR, origin at footprint centre on the ground, Y up, no ground.
+
+> **B3:** Game-ready 3D model of an airport passenger boarding bridge (jet bridge), total length 12.5 m along Z: cylindrical rotunda (4.8 m diameter) at the −Z end, telescopic tunnel with glass side windows, operator cab head 4.2 × 3.4 m at the +Z end with cab floor 3.4 m above ground, a supporting column with two wheels under the cab, grey metal, PBR, origin at the middle of its length on the ground, Y up.
+
+> **B4:** Game-ready 3D model of a modern airport control tower, total height 72 m including antenna mast, slender concrete shaft, faceted glass control cab (≈20 m diameter) at ≈50 m height, white and light-grey, PBR, origin at base centre, Y up.
+
+> **B5:** Game-ready 3D model of an aircraft maintenance hangar, 75 m deep (X), 84 m wide (Z), 29 m tall (20 m walls + 9 m barrel-vault roof), full-width sliding doors on the −X face, silver metal cladding, PBR, origin at footprint centre, Y up.
+
+> **B6:** Game-ready 3D model of an airport fire and rescue station, 26 × 44 m footprint, 9 m tall, four large red vehicle doors on the −X face, a 5 × 5 × 18 m training tower at one corner, PBR, origin at footprint centre, Y up, no vehicles.
+
+> **B7:** Game-ready 3D model of an air cargo warehouse, 60 m deep (X), 320 m long (Z), 18 m tall, loading dock doors every 20 m on the −X face, ribbed metal cladding, PBR, origin at footprint centre, Y up.
+
+> **B8:** Game-ready 3D model of an airport fuel farm, 62 × 62 m footprint, three white cylindrical tanks (20 m diameter, 14 m tall) on a 2 × 2 grid with 26 m spacing (one empty cell), concrete bund wall 1.6 m high around them, pipes and a small pump house, PBR, origin at footprint centre, Y up.
+
+> **B9 / B10:** Game-ready 3D model of a modern low airport office building, [70 × 45 × 12 m | 260 × 60 × 14 m] (length along X), glass ribbon windows, main entrance on the −Z face, flat roof with HVAC units, PBR, origin at footprint centre, Y up.
 
 ---
 
-## 2. مركبات الخدمة الأرضية
+## 2. خامات الأرضيات (CMN وكل المطارات)
 
-| الملف | المنفذ | الطول × العرض × الارتفاع (م) | الحالة |
-|---|---|---|---|
-| `vehicle_tug.glb` | `vehicle.tug` | 5.2 × 2.4 × 1.6 (منخفض جدًا، كابينة صغيرة) | المنفذ جاهز |
-| `vehicle_baggage_tractor.glb` | — | 3.0 × 1.5 × 1.9 | أربطه عند التسليم |
-| `vehicle_baggage_cart.glb` | — | 3.0 × 1.6 × 1.7 (عربة أمتعة مغطاة) | أربطه عند التسليم |
-| `vehicle_fuel_truck.glb` | — | 10.0 × 2.6 × 3.2 (صهريج وقود طيران) | أربطه عند التسليم |
-| `vehicle_stairs_truck.glb` | — | 8.0 × 2.4 × 4.6 (سلّم صعود متحرك) | أربطه عند التسليم |
-| `vehicle_fire_truck.glb` | — | 11.0 × 3.0 × 3.6 (شاحنة إطفاء مطارات ARFF، 6 عجلات) | أربطه عند التسليم |
-| `vehicle_car.glb` | — | 4.4 × 1.8 × 1.5 (سيارة عادية، لون أبيض محايد) | أربطه عند التسليم |
-| `vehicle_bus.glb` | — | 12.0 × 2.6 × 3.1 (حافلة نقل ركاب داخل الساحة) | أربطه عند التسليم |
+صور **قابلة للتكرار بلا حدود ظاهرة (Seamless)**، منظور **من الأعلى تمامًا**، **بلا ظلال وبلا خطوط طلاء** (اللعبة ترسم العلامات بنفسها). كل صورة تغطي مساحة حقيقية ثابتة؛ اللعبة تكرّرها بهذا المقاس بالضبط.
 
-**ألوان:** مركبات الخدمة صفراء برتقالية (#e8a325)، الإطفاء أحمر (#c81e1e)، الصهريج أبيض.
-**Prompt (قالب):**
-> Low-poly 3D model of an airport [TYPE], [L] m long, [W] m wide, [H] m tall, [COLOR] paint, realistic proportions, PBR materials, game-ready, front facing −Z, no background, no ground plane.
+| الرمز | الملف | المساحة التي تغطيها الصورة | الحجم | الوصف |
+|---|---|---|---|---|
+| T1 | `tex_runway_asphalt.png` | **45 × 45 م** (كامل عرض المدرج) | 2048² | أسفلت رمادي غامق، آثار إطارات خفيفة في المنتصف |
+| T2 | `tex_taxiway_asphalt.png` | **23 × 23 م** | 2048² | أسفلت رمادي أفتح قليلًا |
+| T3 | `tex_shoulder.png` | **23 × 23 م** | 1024² | أسفلت رمادي فاتح خشن (أكتاف المدارج والممرات) |
+| T4 | `tex_apron_concrete.png` | **25 × 25 م** = **4 × 4 بلاطات** (6.25 م) | 2048² | خرسانة فاتحة، فواصل داكنة رفيعة، بقع زيت خفيفة |
+| T5 | `tex_airfield_grass.png` | **260 × 260 م** | 2048² | عشب أخضر طبيعي متدرّج كما في الصورة المرجعية |
+| T6 | `tex_road.png` | **12 × 12 م** | 1024² | أسفلت طرق |
+| T7 | `tex_parking.png` | **12 × 12 م** | 1024² | أسفلت موقف سيارات، **بلا خطوط** |
+
+> Prompt (مثال T4): Seamless tileable top-down texture of light grey airport apron concrete, exactly 4 × 4 square slabs with thin dark expansion joints, subtle oil stains and tyre marks, flat even lighting, no shadows, no perspective, no paint lines, photorealistic, 2048 × 2048.
 
 ---
 
-## 3. الجسر الجوي (Jet bridge) — قطع منفصلة
+## 3. الطائرات (لكل المطارات)
 
-الجسر يتغيّر طوله حسب الموقف، لذلك أحتاجه **3 قطع**:
-
-| الملف | الوصف | القياس (م) |
+| الملف | المنفذ | القياس (م) |
 |---|---|---|
-| `jetbridge_rotunda.glb` | الأسطوانة الثابتة عند المبنى | قطر 4 · ارتفاع 6 (الأرضية على ارتفاع 4) |
-| `jetbridge_tunnel.glb` | مقطع النفق (أكرّره وأمدّه) | طول **10** · عرض 2.8 · ارتفاع 3 · على عمود في منتصفه |
-| `jetbridge_cab.glb` | الكابينة التي تلتصق بباب الطائرة | 4 × 4 × 3.2 · مع عجلتين تحتها |
+| `aircraft_t2.glb` | `aircraft.jet` | طول **37.6** · امتداد 35.8 · ارتفاع 11.8 (فئة A320) |
+| `aircraft_t3.glb` | `aircraft.jet_large` | طول **44.5** · امتداد 35.8 · ارتفاع 11.8 (فئة A321) |
+| `aircraft_p70.glb` | `aircraft.turboprop` | طول **27.2** · امتداد 27.0 · ارتفاع 7.7 (فئة ATR 72، جناح علوي، ذيل T) |
 
-> Prompt: Low-poly 3D airport passenger boarding bridge part: [rotunda / straight telescopic tunnel segment 10 m long, 2.8 m wide, 3 m tall, glass side windows, grey metal / cab head 4 × 4 × 3.2 m with rubber canopy], PBR, game-ready, no background.
+- **المقدّمة والعجلات:** المقدّمة نحو −Z، والعجلات على y = 0.
+- **ارتفاع الباب الأمامي الأيسر:** حوالي 3.4 م (يلتقي بالجسر B3).
+- **الهوية:** شركة خيالية **Atlas Air**:
+  - جسم أبيض لامع.
+  - ذيل أخضر مزرق `#0f3f45` عليه نجمة نحاسية `#e08c4c`.
+  - بلا شعارات حقيقية.
+
+> Prompt (T2): Game-ready 3D model of a generic twin-engine narrow-body airliner, 37.6 m long, 35.8 m wingspan, 11.8 m tall, nose towards −Z, landing gear down with wheels at y = 0, fictional "Atlas Air" livery: glossy white fuselage, dark teal (#0f3f45) tail with a copper eight-pointed star, "ATLAS AIR" titles, PBR, no background.
 
 ---
 
-## 4. المباني — قياسات كل مطار
+## 4. مركبات الساحة (لكل المطارات)
 
-كل مبنى يمكن تصميمه **عامًا لكل المطارات** (`building.<type>`) أو **خاصًا بمطار واحد** (`<CODE>.<type>`، مثل `CMN.terminal_main`). الطابع: مغربي حديث (أقواس، زليج، نحاس، جدران بلون التراب) إلا طنجة TNG حديثة بالزجاج.
-
-### 4.1 مباني الركاب (Terminal) — الأهم
-
-| المطار | الملف | العرض (X) × العمق (Z) × الارتفاع (م) | الطابع |
+| الملف | المنفذ | الطول × العرض × الارتفاع (م) | ملاحظة |
 |---|---|---|---|
-| CMN الدار البيضاء | `CMN_terminal_main.glb` | 560 × 90 × 24 (الواجهة الطويلة المطلّة على الساحة: اصنعها نحو −X، وأنا أدوّر المبنى عند الوضع) | مغربي، قبة نحاسية في الوسط |
-| CMN | `CMN_pier.glb` ×2 | 36 × **520** × 12 (رصيف طويل تخرج منه الجسور) | مغربي |
-| RAK مراكش | `RAK_terminal_main.glb` | 70 × 640 × 18 (مبنى طولي) | مغربي، لون أحمر مراكشي #c0623f |
-| AGA أكادير | `AGA_terminal_main.glb` | 60 × 520 × 16 | مغربي ساحلي |
-| FEZ فاس | `FEZ_terminal_main.glb` | 50 × 260 × 14 | مغربي تقليدي، زليج |
-| OUD وجدة | `OUD_terminal_main.glb` | 44 × 180 × 12 | مغربي بسيط |
-| TNG طنجة | `TNG_terminal_main.glb` | 320 × 70 × 20 | **حديث، زجاج** |
-| TNG | `TNG_pier.glb` | 32 × 450 × 11 | حديث |
+| `vehicle_tug.glb` | `vehicle.tug` | 5.2 × 2.4 × 1.6 | جرّار دفع الطائرات، أصفر برتقالي `#e8a325` |
+| `vehicle_baggage_cart.glb` | `vehicle.baggage_cart` | 3.0 × 1.6 × 1.7 | عربة أمتعة مغطاة، ذراع السحب نحو +Z |
+| `vehicle_fuel_truck.glb` | `vehicle.fuel_truck` | 10.0 × 2.6 × 3.2 | صهريج وقود أبيض |
+| `vehicle_stairs_truck.glb` | `vehicle.stairs_truck` | 8.0 × 2.4 × 4.6 | قمة السلّم نحو −Z |
+| `vehicle_fire_truck.glb` | `vehicle.fire_truck` | 11.0 × 3.0 × 3.6 | شاحنة إطفاء مطارات، حمراء `#c81e1e` |
 
-**مواضع الأبواب:** الجسور تلتصق بالواجهة كل 60 م تقريبًا. لا تضع تفاصيل بارزة أكثر من 2 م خارج القياس.
-
-> Prompt (CMN): Low-poly 3D model of a large modern Moroccan-style airport passenger terminal, 560 m long, 90 m deep, 24 m tall, earth-red walls (#b5583a), arched glass facade facing the apron, zellige tile bands, a copper dome at the centre, flat roof with technical equipment, airside facade with evenly spaced boarding gates every 60 m, PBR materials, game-ready, no background, no ground.
-
-### 4.2 مباني التشغيل
-
-| الملف | القياس (م) | ملاحظات |
-|---|---|---|
-| `building_tower.glb` | قاعدة ≈ 12 × 12 · **الارتفاع حسب المطار**: CMN 62 · TNG 55 · RAK 48 · AGA 45 · FEZ 36 · OUD 32 | برج مراقبة، كابينة زجاجية علوية قطرها ≈ 14. أرسل نسخة واحدة وأنا أحجّمها لكل مطار |
-| `building_hangar.glb` | 90 × 75 · ارتفاع 29 (جدار 20 + قوس 9) · RAK/TNG: 80 × 70 | بوابة كبيرة على الواجهة −X |
-| `building_fire_station.glb` | 28 × 46 × 9 · برج تدريب 5 × 5 × 18 | 4 أبواب مركبات على الواجهة |
-| `building_cargo.glb` | 60 × 300 × 18 (CMN) | مستودع شحن، أبواب تحميل كل 20 م |
-| `building_fuel_tank.glb` | خزان: قطر 18 · ارتفاع 14 | أكرّره (CMN 6 خزانات، OUD 2) |
-| `building_parking_garage.glb` | CMN 300 × 90 × 5 طوابق (3.2 م للطابق) · TNG 220 × 70 × 4 | مرآب سيارات متعدد الطوابق |
-| `building_admin.glb` | CMN 80 × 40 × 30 · RAK 70 × 40 × 18 · AGA 60 × 36 × 16 | مبنى إدارة |
-| `building_radar.glb` | برج 20 م + هوائي دوّار 9 × 2.2 | **الهوائي قطعة منفصلة** اسمها `antenna` (أجعله يدور) |
-| `building_light_mast.glb` | ارتفاع 26 · رأس إضاءة 4.5 م | عمود إنارة الساحة |
+كل المركبات: **المقدّمة نحو −Z**، العجلات على y = 0.
 
 ---
 
-## 5. خامات الأرضيات (صور 2D قابلة للتكرار Seamless)
+## 5. ما لا تحتاج صنعه
 
-| الملف | الحجم | المساحة الحقيقية للصورة | الوصف |
-|---|---|---|---|
-| `tex_runway_asphalt.png` | 2048² | 45 × 45 م | أسفلت رمادي غامق محايد، حبيبات دقيقة، بلا خطوط |
-| `tex_taxiway_asphalt.png` | 1024² | 23 × 23 م | أسفلت أفتح قليلًا |
-| `tex_shoulder.png` | 1024² | 23 × 23 م | أسفلت رمادي فاتح للأكتاف |
-| `tex_apron_concrete.png` | 2048² | 25 × 25 م | **2 × 2 بلاطات** خرسانية فاتحة مع فواصل داكنة رفيعة |
-| `tex_grass.png` | 2048² | 260 × 260 م | عشب أخضر طبيعي متدرّج (منظور من الأعلى) |
-| `tex_road.png` | 1024² | 12 × 12 م | أسفلت طرق |
-
-**قاعدة مهمة:** الخامة **بلا ظلال وبلا إضاءة**، منظور **من الأعلى تمامًا**، وتتكرّر بلا حدود ظاهرة.
-
-> Prompt (مثال): Seamless tileable top-down texture of light grey airport apron concrete, exactly 2 × 2 square slabs with thin dark expansion joints, subtle stains and tyre marks, flat even lighting, no shadows, no perspective, photorealistic, 2048 × 2048.
-
----
-
-## 6. عناصر صغيرة (اختياري)
-
-| الملف | القياس (م) |
+| العنصر | السبب |
 |---|---|
-| `sign_taxiway.glb` (لوحة إرشاد صفراء/سوداء) | 2.5 × 0.3 × 1.2 |
-| `sign_stand_number.png` (A01…A30) | 512 × 256، أصفر على أسود |
-| `windsock.glb` | عمود 6 م + كُمّ 3.6 م |
-| `fence_segment.glb` (سياج أمني) | طول 8 · ارتفاع 2.6 · مع سلك شائك |
-| `palm_tree.glb` | ارتفاع 10–14 |
+| علامات المدارج والممرات والمواقف، والأضواء، وPAPI | اللعبة ترسمها بدقة من المخطط |
+| الأشجار والسيارات في المواقف | آلاف النسخ تُرسم معًا للأداء |
+| السياج والطرق | تُبنى من المخطط وتأخذ خامة T6 |
 
 ---
 
-## 7. ما أفعله أنا عند استلام الملفات
+## 6. التسليم وما أفعله
 
-1. أضعها في `web/assets/models/` (أو `web/assets/tex/` للخامات).
-2. أربط كل ملف بمنفذه في `data/models.json` (والمنافذ غير الموجودة أضيفها في الكود).
-3. اللعبة تحجّم كل مجسم إلى القياس الحقيقي وتضعه على الأرض في مكانه.
-4. أرسل لك صورًا للنتيجة، ثم أنشر.
+| ما ترسله | أين أضعه | ما أفعله |
+|---|---|---|
+| المجسمات `.glb` بالأسماء أعلاه | `web/assets/models/` | أكتب اسم الملف في منفذه في `data/models.json` (سطر واحد لكل ملف) |
+| الخامات `.png` بالأسماء أعلاه | `web/assets/tex/` | أحوّلها إلى WebP بـ `tools/import_art.py` |
+
+لا تعديل على الكود ولا على المخطط. ثم أرسل لك صورًا من اللعبة للتأكيد، وأنشر عند موافقتك.
+
+**يمكن التسليم على دفعات:** كل ملف يعمل وحده فور وضعه، وما لم يصل بعد يبقى بالشكل الحالي.
+
+**إن خرج ملف بقياس أو اتجاه مختلف:** أخبرك بالقياس الفعلي وأرجعه إليك لتصحيحه. لا أعدّله أنا.
+
+---
+
+## 7. باقي المطارات (بعد CMN)
+
+مخططاتها جاهزة في `data/airports/`. أرسل لك أمرًا مماثلًا لكل مطار حين ننتهي من CMN.
