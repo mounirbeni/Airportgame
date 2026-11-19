@@ -88,6 +88,10 @@ export function legEconomics(destCode, typeId) {
   const revenue = pax * price, cost = d.km * ty.fuel_per_km + ty.maint_per_flight + DB.ty.landing_fee;
   return { pax, revenue, cost, profit: revenue - cost };
 }
+/** Account perks (set by the server for a player, e.g. infinite money). */
+export const Perks = { infiniteMoney: false };
+export const INF_MONEY = 1e12;
+export function applyPerks() { if (Perks.infiniteMoney && S.money < INF_MONEY) S.money = INF_MONEY; }
 export function earn(v) { S.money += v; S.today.revenue += v; }
 export function spend(v) { S.money -= v; S.today.costs += v; }
 export function addRep(v) { S.rep = Math.max(0, Math.min(100, S.rep + v)); }

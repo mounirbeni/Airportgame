@@ -2,7 +2,7 @@
 // selected-aircraft card, labels over aircraft and toasts.
 import * as THREE from 'three';
 import { DB, t, money, moneyShort, Loc } from './core.js';
-import { S, typeOf, flightMinutes, expectedLoad, legEconomics, canBuyAircraft, sellPrice, dailyCosts, clockText } from './state.js';
+import { S, Perks, typeOf, flightMinutes, expectedLoad, legEconomics, canBuyAircraft, sellPrice, dailyCosts, clockText } from './state.js';
 import { NEEDS_ORDER, statusText } from './sim.js';
 
 const $ = id => document.getElementById(id);
@@ -51,7 +51,7 @@ export class UI {
 
   // --- top bar + periodic refresh ----------------------------------------------------
   top() {
-    $('money').textContent = moneyShort(S.money);
+    $('money').textContent = Perks.infiniteMoney ? t('money_fmt', { v: '∞' }) : moneyShort(S.money);
     $('money').className = 'chip ' + (S.money < 0 ? 'bad' : '');
     this.chip('rep', 'reputation', t('ty_rep', { v: Math.round(S.rep) }));
     this.chip('clock', 'clock', t('ty_day', { d: S.day, t: clockText() }));

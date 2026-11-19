@@ -40,7 +40,7 @@ export function bearer(req) {
 export async function currentPlayer(req) {
   const t = bearer(req);
   if (!t) return null;
-  const rows = await sql`SELECT p.id, p.username FROM sessions s JOIN players p ON p.id = s.player_id
+  const rows = await sql`SELECT p.id, p.username, p.perks FROM sessions s JOIN players p ON p.id = s.player_id
                          WHERE s.token_hash = ${tokenHash(t)} AND s.expires_at > now()`;
   return rows[0] || null;
 }
