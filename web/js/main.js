@@ -163,7 +163,7 @@ async function boot() {
     env.mountains.visible = cam.dist < 9000;                                   // horizon strip only near the ground
     scene.fog.near = Math.max(6000, cam.dist * 0.9); scene.fog.far = Math.max(42000, cam.dist * 3);
     if (flightMap.far > 0.5) cam.yaw += (Math.round(cam.yaw / (2 * Math.PI)) * 2 * Math.PI - cam.yaw) * Math.min(1, dt * 6);   // geographic map: north up
-    flightMap.draw(cam, ui.selected); ui.mapMode = flightMap.alpha > 0.5;
+    flightMap.draw(cam, ui.selected); ui.mapMode = flightMap.alpha > 0.15;
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }

@@ -10,7 +10,8 @@ import { makeTug } from './buildings.js';
 import { taxiRoute } from './infra/layout.js';
 
 const Y_GROUND = GEAR_H + 0.2;
-const TAXI_MAX = 20, PUSH_SPEED = 3.5, APPROACH_SPEED = 72, FINAL_DIST = 6500, GO_AROUND_DIST = 1900;
+const TAXI_MAX = 20, PUSH_SPEED = 3.5, APPROACH_SPEED = 72, GO_AROUND_DIST = 1900;
+export const FINAL_DIST = 6500;
 const ACCEL = 1.6, DECEL = 2.8, LAT_ACC = 1.6, CORNER_R = 32;
 export const NEEDS_ORDER = { ready: 'ty_act_depart', holding: 'ty_act_takeoff', approach: 'ty_act_land' };
 

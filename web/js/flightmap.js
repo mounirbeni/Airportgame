@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { DB, t } from './core.js';
 import { S, flightMinutes } from './state.js';
 import { Geo, toKm, CITIES, SEAS } from './geo.js';
+import { FINAL_DIST } from './sim.js';
 
 const NEAR_FADE = [2600, 5200], FAR_FADE = [11000, 16000];
 const KM_PER_M = 0.02;          // panning / zoom: 1 world metre = 0.02 map km (game distances are compressed ~1:50)
@@ -59,25 +60,64 @@ export class FlightMap {
     return { x: hw.x + ((x0 + x1) / 2 - hk[0]) / KM_PER_M, z: hw.z - ((y0 + y1) / 2 - hk[1]) / KM_PER_M, dist };
   }
   /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg, k, outstation, local}. */
+  /** Map point of a world position near the home airport (aircraft visible in 3D). */
+  localKm(x, z) { const H = this.km[DB.home], hw = this.homeWorld(); return [H[0] + (x - hw.x) * LOCAL_KM_PER_M, H[1] - (z - hw.z) * LOCAL_KM_PER_M]; }
+  /** Map point where arrivals start their final approach (where the 3D approach begins). */
+  approachEntry() {
+    const sim = this.sim, [tx, tz] = sim.arr.threshold, d = sim.arr.dir, w = sim.ap.toWorld(tx - d[0] * FINAL_DIST, 0, tz - d[1] * FINAL_DIST);
+    return this.localKm(w.x, w.z);
+  }
+  /**
+   * Continuous flight legs. Every time an aircraft leaves the 3D view (takeoff, go-around) or turns
+   * round at the outstation, the leg it starts is recorded: from the exact point where it was, to the
+   * next point it must reach, over the leg's time. Positions are then interpolated on that leg, so the
+   * aircraft never jumps: a departure starts where the climb-out ended, an arrival ends where the
+   * 3D approach begins, a go-around flies back to the approach entry.
+   */
+  track() {
+    this.legs ||= new Map(); this.prev ||= new Map();
+    for (const a of S.fleet) {
+      const pv = this.prev.get(a.id), r = this.sim.rt.get(a.id);
+      if (r && r.mesh.visible) { this.prev.set(a.id, { state: a.state, legOut: a.legOut, p: this.localKm(r.mesh.position.x, r.mesh.position.z) }); continue; }
+      if (a.state !== 'enroute' || !a.route || !this.km[a.route]) { this.prev.set(a.id, { state: a.state, legOut: a.legOut }); continue; }
+      const fm = flightMinutes(a.route, a.type), leg = this.legs.get(a.id);
+      const fresh = !leg || leg.route !== a.route || leg.out !== a.legOut;
+      if (fresh || (pv && pv.state !== 'enroute')) {
+        if (a.legOut) this.legs.set(a.id, { route: a.route, out: true, from: pv && pv.p ? pv.p : this.km[DB.home], to: this.km[a.route], dur: Math.max(a.timer, 1), bulge: ARC });
+        else if (pv && pv.state === 'go_around' && pv.p) this.legs.set(a.id, { route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true });
+        else this.legs.set(a.id, { route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
+      }
+      this.prev.set(a.id, { state: a.state, legOut: a.legOut, p: this.prev.get(a.id) && this.prev.get(a.id).p });
+    }
+    for (const id of [...this.legs.keys()]) if (!S.fleet.some(a => a.id === id)) { this.legs.delete(id); this.prev.delete(id); }
+  }
+  /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg: [from, to], k, outstation, local, L (the leg)}. */
   farPos(a) {
-    const home = DB.home, H = this.km[home], r = this.sim.rt.get(a.id);
+    const home = DB.home, r = this.sim.rt.get(a.id);
     if (r && r.mesh.visible) {
-      const hw = this.homeWorld(), p = r.mesh.position, y = r.yaw || 0;
-      const leg = OUT_STATES.includes(a.state) ? [home, a.route] : [a.route, home];
-      return { p: [H[0] + (p.x - hw.x) * LOCAL_KM_PER_M, H[1] - (p.z - hw.z) * LOCAL_KM_PER_M], d: [-Math.sin(y), Math.cos(y)], air: r.alt > 5, leg, k: leg[0] === home ? 0 : 1, local: true };
+      const y = r.yaw || 0, leg = OUT_STATES.includes(a.state) ? [home, a.route] : [a.route, home];
+      return { p: this.localKm(r.mesh.position.x, r.mesh.position.z), d: [-Math.sin(y), Math.cos(y)], air: r.alt > 5, leg, k: 0, local: true };
     }
     if (a.state !== 'enroute' || !a.route || !this.km[a.route]) return null;
-    const fm = flightMinutes(a.route, a.type), D = this.km[a.route];
-    if (a.legOut) { const k = Math.min(Math.max(1 - a.timer / fm, 0), 1), q = arc(H, D, k); return { p: q.p, d: q.d, air: true, leg: [home, a.route], k }; }
-    if (a.timer > fm) { const q = arc(H, D, 1); return { p: q.p, d: [-q.d[0], -q.d[1]], air: false, leg: [a.route, home], k: 0, outstation: true }; }
-    const k = Math.min(Math.max(1 - a.timer / fm, 0), 1), q = arc(H, D, 1 - k);
-    return { p: q.p, d: [-q.d[0], -q.d[1]], air: true, leg: [a.route, home], k };
+    const L = this.legs && this.legs.get(a.id), fm = flightMinutes(a.route, a.type);
+    if (!a.legOut && a.timer > fm && !(L && L.circuit)) {               // turning round at the outstation
+      return { p: this.km[a.route], d: [0, 1], air: false, leg: [a.route, home], k: 0, outstation: true };
+    }
+    if (!L) return null;
+    const k = Math.min(Math.max(1 - a.timer / L.dur, 0), 1);
+    if (!a.legOut && a.timer <= 1.0001 && (k > 0.95 || L.circuit)) {                       // waiting for a landing slot: holding pattern at the entry
+      const ang = performance.now() / 4000 + a.id * 1.3, R = 7;
+      return { p: [L.to[0] + Math.cos(ang) * R, L.to[1] + Math.sin(ang) * R], d: [-Math.sin(ang), Math.cos(ang)], air: true, leg: [a.route, home], k: 1, L, holding: true };
+    }
+    const q = arc(L.from, L.to, k, L.bulge);
+    return { p: q.p, d: q.d, air: true, leg: a.legOut ? [home, a.route] : [a.route, home], k, L };
   }
 
   draw(cam3, selected) {
     const view = document.getElementById('view');
     const W = view.clientWidth || innerWidth, H = view.clientHeight || innerHeight;
     if (W !== this.W || H !== this.H) { this.W = W; this.H = H; this.resize(W, H); }
+    this.track();
     const dist = cam3.dist;
     this.far = smooth(FAR_FADE[0], FAR_FADE[1], dist);
     const near = smooth(NEAR_FADE[0], NEAR_FADE[1], dist) * (1 - this.far);
@@ -87,8 +127,9 @@ export class FlightMap {
     if (this.alpha <= 0.01) { this.cv.style.display = 'none'; return; }
     this.cv.style.display = 'block';
     this.scale = Math.min(1.25, Math.max(0.8, W / 900));
-    if (near > 0.01) { g.globalAlpha = near; this.drawNear(cam3.cam, selected); }
-    if (this.far > 0.01) { g.globalAlpha = this.far; this.drawFar(cam3, selected); }
+    const farIcons = this.far >= near;            // aircraft icons from one layer only: never twice
+    if (near > 0.01) { g.globalAlpha = near; this.drawNear(cam3.cam, selected, !farIcons); }
+    if (this.far > 0.01) { g.globalAlpha = this.far; this.drawFar(cam3, selected, farIcons); }
     g.globalAlpha = 1;
   }
 
@@ -97,7 +138,7 @@ export class FlightMap {
     this.v.set(x, 0, z).project(cam);
     return { x: (this.v.x + 1) / 2 * this.W, y: (1 - this.v.y) / 2 * this.H, ok: this.v.z < 1 };
   }
-  drawNear(cam, selected) {
+  drawNear(cam, selected, withIcons = true) {
     const g = this.g, home = DB.home, hw = this.homeWorld(), hk = this.km[home];
     // Routes leave the home airport in their real bearing (taken from the geographic map).
     g.lineCap = 'round';
@@ -112,6 +153,7 @@ export class FlightMap {
     g.setLineDash([]);
     const s = this.project3(hw.x, hw.z, cam);
     if (s.ok) this.airportMark(s.x, s.y, home, true, true, 'dark');
+    if (!withIcons) return;
     const planes = [];
     for (const a of S.fleet) {
       const r = this.sim.rt.get(a.id); if (!r || !r.mesh.visible) continue;
@@ -124,7 +166,7 @@ export class FlightMap {
   }
 
   // --- far layer: the geographic map --------------------------------------------------------------------
-  drawFar(cam3, selected) {
+  drawFar(cam3, selected, withIcons = true) {
     const g = this.g, V = this.view(cam3), home = DB.home, sc = this.scale;
     const P = ([x, y]) => [V.sx + (x - V.cx) * V.s, V.sy - (y - V.cy) * V.s];
     const poly = (pts, fill, stroke, lw) => {
@@ -176,15 +218,21 @@ export class FlightMap {
 
     // Aircraft (positions once, used for trails, icons and picking).
     const list = [];
-    for (const a of S.fleet) { const p = this.farPos(a); if (p) list.push({ a, p }); }
+    if (withIcons) for (const a of S.fleet) { const p = this.farPos(a); if (p) list.push({ a, p }); }
+    const legPath = (L, k0, k1) => {
+      g.beginPath();
+      for (let i = 0; i <= 30; i++) { const [x, y] = P(arc(L.from, L.to, k0 + (k1 - k0) * i / 30, L.bulge).p); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+      g.stroke();
+    };
     for (const { a, p } of list) {
-      if (p.local || p.outstation || !p.air) continue;
-      const sel = selected === a, out = p.leg[0] === home, D = this.km[out ? p.leg[1] : p.leg[0]], kNow = out ? p.k : 1 - p.k;
-      g.lineWidth = sel ? 4 : 3; g.strokeStyle = sel ? C.planeSel : C.trail;
-      out ? path(HK, D, 0, kNow) : path(HK, D, kNow, 1);
-      g.setLineDash([4, 6]); g.lineWidth = sel ? 2.5 : 1.6;
-      out ? path(HK, D, kNow, 1) : path(HK, D, 0, kNow);
-      g.setLineDash([]);
+      if (!p.L || !p.air) continue;
+      const sel = selected === a, k = p.holding ? 1 : p.k;
+      if (sel) {
+        g.lineWidth = 4; g.strokeStyle = C.planeSel; legPath(p.L, 0, k);
+        g.setLineDash([4, 6]); g.lineWidth = 2.5; legPath(p.L, k, 1); g.setLineDash([]);
+      } else {
+        g.lineWidth = 3; g.strokeStyle = 'rgba(232,155,0,0.75)'; legPath(p.L, Math.max(0, k - 0.12), k);
+      }
     }
 
     // Airports.
@@ -199,7 +247,7 @@ export class FlightMap {
     for (const { a, p } of list) {
       if (!p.air && a !== selected) { const c = p.outstation ? p.leg[0] : home; (ground[c] ||= []).push(a); continue; }
       const [x, y] = P(p.p), ang = Math.atan2(p.d[0], p.d[1]);
-      planes.push({ a, x, y, ang, air: p.air, sub: p.outstation ? t('ty_map_ground', { c: p.leg[0] }) : p.leg[0] + '→' + p.leg[1] });
+      planes.push({ a, x, y, ang, air: p.air, sub: p.outstation ? t('ty_map_ground', { c: p.leg[0] }) : p.holding ? t('ty_map_holding') : p.leg[0] + '→' + p.leg[1] });
     }
     this.icons(planes, selected, apRects);
     for (const [code, l] of Object.entries(ground)) { const [x, y] = P(this.km[code]); this.badge(x + 12 * sc, y - 26 * sc, '✈ ' + l.length); }

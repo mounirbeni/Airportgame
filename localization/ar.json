@@ -155,6 +155,7 @@
 	"map_sea_atlantic": "المحيط الأطلسي",
 	"map_sea_med": "البحر الأبيض المتوسط",
 	"map_country": "المغرب",
+	"ty_map_holding": "في الانتظار للهبوط",
 	"ty_act_map": "الخريطة",
 	"ty_map_ground": "على الأرض في {c}",
 	"ty_act_overview": "منظر المطار",
