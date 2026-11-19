@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { tileUV } from './assets.js';
 import { mat } from './style.js';
+import { procTex } from './proctex.js';
 import { GeoBatch, xform } from './infra/merge.js';
 import * as Kit from './buildings.js';
 import { attachModel } from './models.js';
@@ -18,31 +19,6 @@ export function textSprite(text, { size = 64, color = '#faf3e1', outline = '#0f3
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
   if (flat) return new THREE.Mesh(new THREE.PlaneGeometry(width / size, 2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })); sp.scale.set(width / size, 2, 1); return sp;
-}
-
-/** Greyscale mottling for the airfield grass (mean stored so the role colour is kept). */
-let noiseTex = null;
-function groundNoise() {
-  if (noiseTex) return noiseTex;
-  const W = 256, cv = document.createElement('canvas'); cv.width = cv.height = W;
-  const g = cv.getContext('2d'), img = g.createImageData(W, W);
-  let seed = 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-  const grid = n => { const a = new Float32Array(n * n); for (let i = 0; i < a.length; i++) a[i] = rnd(); return a; };
-  const oct = [[4, 0.45], [8, 0.3], [32, 0.15], [128, 0.1]].map(([n, w]) => ({ n, w, a: grid(n) }));
-  const sample = (o, u, v) => { const x = u * o.n, y = v * o.n, i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, n = o.n;
-    const at = (a, b) => o.a[((b % n + n) % n) * n + ((a % n + n) % n)], s = t => t * t * (3 - 2 * t);
-    const top = at(i, j) + (at(i + 1, j) - at(i, j)) * s(fx), bot = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * s(fx);
-    return top + (bot - top) * s(fy); };
-  let sum = 0;
-  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
-    let v = 0; for (const o of oct) v += sample(o, i / W, j / W) * o.w;
-    const c = Math.round(255 * (0.78 + 0.26 * v)), k = (j * W + i) * 4;
-    img.data[k] = c; img.data[k + 1] = Math.round(c * 1.02); img.data[k + 2] = Math.round(c * 0.94); img.data[k + 3] = 255; sum += c / 255;
-  }
-  g.putImageData(img, 0, 0);
-  noiseTex = new THREE.CanvasTexture(cv); noiseTex.wrapS = noiseTex.wrapT = THREE.RepeatWrapping;
-  noiseTex.userData.mean = sum / (W * W);
-  return noiseTex;
 }
 
 function edgeMask(fx, fz) {
@@ -112,9 +88,9 @@ export class Airport {
     const w = b.x1 - b.x0 + 2 * (side + fade), d = b.z1 - b.z0 + 2 * (end + fade);
     const geo = new THREE.PlaneGeometry(w, d);
     geo.setAttribute('uv1', geo.attributes.uv.clone());          // 0..1 for the soft edge mask
-    tileUV(geo, w / 430, d / 430);
+    tileUV(geo, w / 260, d / 260);
     const material = mat('ground.airfield').clone();
-    material.map = groundNoise(); material.color.multiplyScalar(1 / material.map.userData.mean);
+    material.map = procTex('grass'); material.color.multiplyScalar(1 / material.map.userData.mean);
     material.alphaMap = edgeMask(fade / w, fade / d); material.alphaMap.channel = 1; material.transparent = true;
     const g = new THREE.Mesh(geo, material); g.rotation.x = -Math.PI / 2; g.renderOrder = -1;
     g.position.set((b.x0 + b.x1) / 2, Y.airfield, (b.z0 + b.z1) / 2); g.receiveShadow = true; this.group.add(g);
@@ -132,11 +108,13 @@ export class Airport {
       const a = this.nodeXZ(e.a), b = this.nodeXZ(e.b);
       const role = e.type === 'taxiway' ? 'pavement.taxiway' : 'pavement.apron';
       this.strip(role, a, b, e.width, Y.taxi, 0.25, e.type === 'taxiway' ? 23 : 25);
+      if (e.type === 'taxiway') this.strip('pavement.shoulder', a, b, e.width + 15, Y.taxi - 0.04, 0.2, 23);   // paved shoulders 7.5 m
       for (const n of [e.a, e.b]) { const j = joints.get(n) || { w: 0, role }; if (e.width >= j.w) joints.set(n, { w: e.width, role }); }
     }
     for (const [n, j] of joints) {
       const node = g.nodes[n]; if (node.runwayNode) continue;
-      this.batch(j.role, new THREE.CylinderGeometry(j.w / 2 + 2, j.w / 2 + 2, 0.25, 20), xform(node.x, Y.taxi - 0.125, node.z));
+      this.batch(j.role, new THREE.CylinderGeometry(j.w / 2 + 2, j.w / 2 + 2, 0.25, 24), xform(node.x, Y.taxi - 0.125, node.z));
+      if (j.role === 'pavement.taxiway') this.batch('pavement.shoulder', new THREE.CylinderGeometry(j.w / 2 + 9, j.w / 2 + 9, 0.2, 24), xform(node.x, Y.taxi - 0.14, node.z));
     }
   }
   buildAprons() {
@@ -151,6 +129,7 @@ export class Airport {
     const L = this.L, g = L.graph;
     for (const rw of L.runways) this.runwayMarkings(rw);
     for (const e of g.liveEdges()) if (e.type !== 'runway') this.paintLine('yellow', this.nodeXZ(e.a), this.nodeXZ(e.b), 0.3);
+    this.centrelineArcs();
     // Runway-holding position markings: two solid (taxiway side) + two dashed (runway side).
     for (const h of L.holds) {
       const hn = g.nodes[h.node], en = g.nodes[h.entry];
@@ -166,6 +145,40 @@ export class Airport {
       const n = s.nose, l = [n[1], -n[0]], nx = s.x + n[0] * 20, nz = s.z + n[1] * 20, yawL = Math.atan2(l[0], l[1]);
       this.addPaint('yellow', nx, nz, 0.5, 6, yawL);
       for (const side of [-1, 1]) this.addPaint('white', s.x + l[0] * side * 20, s.z + l[1] * side * 20, 0.3, 44, Math.atan2(n[0], n[1]));
+      // lane-side boundary with chamfered corners, red equipment restraint line behind the nose
+      const bx = s.x - n[0] * 22, bz = s.z - n[1] * 22;
+      this.addPaint('white', bx + n[0] * 0, bz + n[1] * 0, 0.3, 28, yawL);
+      for (const side of [-1, 1]) this.paintLine('white', [bx + l[0] * side * 14, bz + l[1] * side * 14], [s.x + l[0] * side * 20 - n[0] * 16, s.z + l[1] * side * 20 - n[1] * 16], 0.3);
+      this.addPaint('red', s.x + n[0] * 25, s.z + n[1] * 25, 0.3, 60, yawL);
+      // stand number sign on the ground at the lane end (yellow on black)
+      const num = (s.terminal === 'T1' || !s.terminal ? 'A' : s.terminal[0]) + String(s.id.replace(/\D/g, '')).padStart(2, '0');
+      const box = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.05, 9), mat('building.dark'));
+      box.position.set(bx - n[0] * 4, Y.paint + 0.02, bz - n[1] * 4); box.rotation.y = yawL; this.group.add(box);
+      const lab = textSprite(num, { size: 96, color: '#f2bf26', outline: null, flat: true, width: 256 });
+      lab.scale.set(3.2, 3.2, 1); lab.rotation.set(-Math.PI / 2, Math.atan2(-n[0], -n[1]), 0, 'YXZ');
+      lab.position.set(bx - n[0] * 4, Y.paint + 0.06, bz - n[1] * 4); this.group.add(lab);
+    }
+  }
+  /** Curved taxiway centreline lead-in lines at every junction (radius 32 m, as the aircraft paths). */
+  centrelineArcs() {
+    const g = this.L.graph, R = 32;
+    for (let id = 0; id < g.nodes.length; id++) {
+      const N = g.nodes[id]; if (!N) continue;
+      const nb = g.edgesOf(id).filter(x => !x.edge.removed).map(({ to, edge: e }) => { const o = g.nodes[to]; const dx = o.x - N.x, dz = o.z - N.z, len = Math.hypot(dx, dz); return { u: [dx / len, dz / len], len, rw: e.type === 'runway' }; });
+      for (let i = 0; i < nb.length; i++) for (let j = i + 1; j < nb.length; j++) {
+        const A = nb[i], B = nb[j]; if (A.rw && B.rw) continue;
+        const cos = A.u[0] * B.u[0] + A.u[1] * B.u[1], th = Math.acos(Math.min(Math.max(cos, -1), 1));
+        if (th < 0.5 || th > 2.8) continue;                     // nearly straight through or a hairpin
+        const t = Math.min(R / Math.tan(th / 2), A.len * 0.5, B.len * 0.5), r = t * Math.tan(th / 2);
+        const bis = [A.u[0] + B.u[0], A.u[1] + B.u[1]], bl = Math.hypot(bis[0], bis[1]);
+        const C = [N.x + bis[0] / bl * r / Math.sin(th / 2), N.z + bis[1] / bl * r / Math.sin(th / 2)];
+        const P = [N.x + A.u[0] * t, N.z + A.u[1] * t], Q = [N.x + B.u[0] * t, N.z + B.u[1] * t];
+        let a0 = Math.atan2(P[1] - C[1], P[0] - C[0]), a1 = Math.atan2(Q[1] - C[1], Q[0] - C[0]);
+        let da = a1 - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+        const steps = Math.max(3, Math.ceil(Math.abs(da) * r / 4));
+        let prev = P;
+        for (let k = 1; k <= steps; k++) { const a = a0 + da * k / steps, p = [C[0] + Math.cos(a) * r, C[1] + Math.sin(a) * r]; this.paintLine('yellow', prev, p, 0.3); prev = p; }
+      }
     }
   }
   runwayMarkings(rw) {

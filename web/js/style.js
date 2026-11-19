@@ -8,17 +8,18 @@
 // ============================================================================
 import * as THREE from 'three';
 import { applyMap } from './assets.js';
+import { procTex } from './proctex.js';
 
 export const ROLES = {
   // Pavement and ground (tile = texture repeat size in metres)
   // layer = draw order of flat ground surfaces (depth bias, avoids flicker at long range)
-  'pavement.runway':   { color: 0x3a3a3c, rough: 0.92, map: 'tex_asphalt', gain: 2.1, layer: 4 },
-  'pavement.taxiway':  { color: 0x47474a, rough: 0.92, map: 'tex_asphalt', gain: 1.8, layer: 3 },
-  'pavement.apron':    { color: 0x9e998f, rough: 0.9, map: 'tex_concrete', tint: 0xe4eaee, layer: 2 },
-  'pavement.shoulder': { color: 0x8f8670, rough: 1.0, layer: 1 },
-  'ground.airfield':   { color: 0xcbbfa6, rough: 1.0 },
-  'road.asphalt':      { color: 0x525256, rough: 0.95, layer: 2 },
-  'road.parking':      { color: 0x5c5c5e, rough: 0.95, layer: 2 },
+  'pavement.runway':   { color: 0x545250, rough: 0.9, proc: 'asphalt', layer: 4 },
+  'pavement.taxiway':  { color: 0x575553, rough: 0.9, proc: 'asphalt', layer: 3 },
+  'pavement.apron':    { color: 0xaeafae, rough: 0.85, proc: 'concrete', layer: 2 },
+  'pavement.shoulder': { color: 0x838180, rough: 0.95, proc: 'asphalt', layer: 1 },
+  'ground.airfield':   { color: 0x6e8c52, rough: 1.0 },
+  'road.asphalt':      { color: 0x5a5856, rough: 0.95, proc: 'asphalt', layer: 2 },
+  'road.parking':      { color: 0x6a6d70, rough: 0.95, layer: 2 },
   'paint.white':       { color: 0xf2f2eb, rough: 0.7, layer: 6 },
   'paint.yellow':      { color: 0xf2bf26, rough: 0.7, layer: 6 },
   'paint.red':         { color: 0xbf1f1a, rough: 0.7, layer: 6 },
@@ -70,6 +71,7 @@ export function mat(role, tint) {
     if (r.emissive) { m.emissive = new THREE.Color(r.emissive); m.emissiveIntensity = r.emissiveIntensity || 1; }
     if (r.offset) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
     if (r.layer) { m.polygonOffset = true; m.polygonOffsetFactor = -r.layer; m.polygonOffsetUnits = -2 * r.layer; }
+    if (r.proc) { m.map = procTex(r.proc); m.color.multiplyScalar(1 / m.map.userData.mean); }   // procedural greyscale surface
     if (r.map) applyMap(m, r.map, { tint: r.tint, key: role }, () => { if (r.gain) m.color.multiplyScalar(r.gain); });   // gain: brighten a dark texture
   }
   m.name = role;

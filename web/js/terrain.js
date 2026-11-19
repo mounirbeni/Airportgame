@@ -55,6 +55,16 @@ export class Terrain {
     h += Math.exp(-(dx * dx + dz * dz)) * 750 * (0.5 + 0.5 * ridge);
     return lerp(-45, h, smooth(-2200, 250, this.coast(x, z)));
   }
+  /** 1 on and around an airfield, fading to 0 over 1.5 km (grass belt matching the airfield ground). */
+  nearAirport(x, z) {
+    let w = 0;
+    for (const f of this.flats) {
+      const l = f.a.toLocal(x, 0, z);
+      const m = 760, ddx = Math.max(f.b.x0 - m - l.x, l.x - f.b.x1 - m, 0), ddz = Math.max(f.b.z0 - m - l.z, l.z - f.b.z1 - m, 0);
+      w = Math.max(w, 1 - smooth(0, 1500, Math.sqrt(ddx * ddx + ddz * ddz)));
+    }
+    return w;
+  }
   heightAt(x, z) {
     let h = this.raw(x, z);
     for (const f of this.flats) {
@@ -72,6 +82,8 @@ export class Terrain {
     if (h > 700) c.lerp(new THREE.Color(0.55, 0.49, 0.45), Math.min((h - 700) / 700, 1));
     if (h > 1650 + n * 150) c.lerp(new THREE.Color(0.95, 0.94, 0.92), Math.min((h - 1650) / 250, 1));
     if (h < -1) c.setRGB(0.6, 0.54, 0.42);
+    const g = this.nearAirport(x, z);
+    if (g > 0) c.lerp(new THREE.Color(0x6e8c52), g * 0.92);
     return c;
   }
   build(scene, low) {

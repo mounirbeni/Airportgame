@@ -5,7 +5,7 @@ import { loadTex } from './assets.js';
 export function createRenderer(canvas) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
   r.outputColorSpace = THREE.SRGBColorSpace;
-  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 0.82;
   r.shadowMap.type = THREE.PCFSoftShadowMap;
   return r;
 }
@@ -13,12 +13,12 @@ export function createRenderer(canvas) {
 export function createEnvironment(scene) {
   const skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { top: { value: new THREE.Color(0x33547f) }, horizon: { value: new THREE.Color(0xfaa86b) }, ground: { value: new THREE.Color(0xd9996b) },
-      sunDir: { value: new THREE.Vector3(-0.97, 0.24, -0.17).normalize() } },
+    uniforms: { top: { value: new THREE.Color(0x4f86c6) }, horizon: { value: new THREE.Color(0xd6e4ee) }, ground: { value: new THREE.Color(0xb8c2b0) },
+      sunDir: { value: new THREE.Vector3(-0.45, 0.78, -0.43).normalize() } },
     vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w; }',
     fragmentShader: `uniform vec3 top; uniform vec3 horizon; uniform vec3 ground; uniform vec3 sunDir; varying vec3 vDir;
       void main(){ float h = vDir.y; vec3 c = h > 0.0 ? mix(horizon, top, pow(h, 0.55)) : mix(horizon, ground, min(-h * 4.0, 1.0));
-      float s = max(dot(normalize(vDir), sunDir), 0.0); c += vec3(1.0, 0.75, 0.45) * (pow(s, 600.0) * 3.0 + pow(s, 12.0) * 0.35);
+      float s = max(dot(normalize(vDir), sunDir), 0.0); c += vec3(1.0, 0.95, 0.85) * (pow(s, 900.0) * 2.0 + pow(s, 16.0) * 0.12);
       gl_FragColor = vec4(c, 1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
@@ -27,14 +27,6 @@ export function createEnvironment(scene) {
   const gradient = new THREE.Mesh(new THREE.SphereGeometry(40000, 32, 16), skyMat);
   gradient.frustumCulled = false;
   const sky = new THREE.Group(); sky.add(gradient); scene.add(sky);
-  // Painted 360° sunset panorama (sun in the west). Geometry is mirrored so
-  // the texture reads correctly from inside; u = 0.5 then faces west (-X).
-  loadTex('sky_sunset_pano', { wrap: false }).then(tex => {
-    if (!tex) return;
-    const g = new THREE.SphereGeometry(39000, 48, 24); g.scale(-1, 1, 1);
-    const pano = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex, fog: false, depthWrite: false, toneMapped: false }));
-    pano.frustumCulled = false; pano.renderOrder = -2; sky.add(pano); gradient.visible = false;
-  });
   // Distant High Atlas ridge on the southern horizon (follows the camera).
   const mountains = new THREE.Group(); scene.add(mountains);
   loadTex('atlas_mountains_strip', { repeat: [5, 1] }).then(tex => {
@@ -44,14 +36,14 @@ export function createEnvironment(scene) {
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.04, side: THREE.DoubleSide, fog: false, depthWrite: false, toneMapped: false }));
     m.position.y = 2000; m.frustumCulled = false; m.renderOrder = -1; mountains.add(m);
   });
-  scene.fog = new THREE.Fog(0xf2b585, 5000, 42000);
-  const hemi = new THREE.HemisphereLight(0xffd1a8, 0x7a5a40, 1.1); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffc68c, 2.4);
+  scene.fog = new THREE.Fog(0xcfdde8, 6000, 42000);
+  const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6f7a58, 1.0); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff4e2, 2.6);
   sun.shadow.mapSize.set(2048, 2048);
   const sc = sun.shadow.camera; sc.left = -130; sc.right = 130; sc.top = 130; sc.bottom = -130; sc.near = 10; sc.far = 1200;
   sun.shadow.bias = -0.0005;
   scene.add(sun); scene.add(sun.target);
-  return { sky, mountains, sun, hemi, sunDir: skyMat.uniforms.sunDir.value };
+  return { sky, mountains, sun, hemi, skyMat, sunDir: skyMat.uniforms.sunDir.value };
 }
 
 export function applyQuality(renderer, env, q) {
@@ -115,15 +107,11 @@ export function buildScenery(scene, airports, terrain, low) {
   crowns.forEach((m, i) => cm.setMatrixAt(i, m)); cm.castShadow = true; scene.add(cm);
 }
 
-/** Image-based lighting from the painted sky: reflections on glass, metal and copper. */
+/** Image-based lighting from the daylight sky gradient (soft reflections on glass and metal). */
 export function useSkyEnvironment(renderer, scene, env) {
-  loadTex('sky_sunset_pano', { wrap: false }).then(tex => {
-    if (!tex) return;
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = pmrem.fromEquirectangular(tex).texture;
-    tex.mapping = THREE.UVMapping;
-    pmrem.dispose();
-    env.hemi.intensity = 0.55;
-  });
+  const pmrem = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene();
+  envScene.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), env.skyMat));
+  scene.environment = pmrem.fromScene(envScene, 0.02).texture;
+  pmrem.dispose();
+  env.hemi.intensity = 0.7;
 }
