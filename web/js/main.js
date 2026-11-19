@@ -22,6 +22,7 @@ async function boot() {
   await Core.loadAll();
   await Acc.preload();          // signed-in player: newer cloud save replaces the local one
   St.load();
+  St.applyPerks();
   Acc.attach();
   const canvas = document.getElementById('view');
   const renderer = createRenderer(canvas);
@@ -139,6 +140,7 @@ async function boot() {
         if (closed) ui.toast(t('ty_toast_day', { d: closed.day, v: moneyShort(closed.revenue - closed.costs) }), closed.revenue >= closed.costs ? 'money' : 'bad');
       }
     } else sim.update(0, 0);
+    St.applyPerks();
     drainEvents();
     const fr = ui.selected && sim.rt.get(ui.selected.id);
     cam.update(dt, cam.follow && fr && fr.mesh.visible ? fr.mesh.position : null);

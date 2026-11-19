@@ -4,7 +4,7 @@
 import { t } from './core.js';
 import * as St from './state.js';
 
-const TK = 'atlas_air_token', UN = 'atlas_air_user';
+const TK = 'atlas_air_token', UN = 'atlas_air_user', PK = 'atlas_air_perks';
 const PUSH_DELAY = 8000;
 const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const put = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
@@ -24,7 +24,10 @@ async function api(path, { method = 'GET', body, timeout = 8000, keepalive = fal
   } catch (e) { return { status: 0, error: 'offline' }; }
   finally { clearTimeout(timer); }
 }
-function setSession(token, username) { Account.token = token; Account.username = username; put(TK, token); put(UN, username); }
+function setSession(token, username) { Account.token = token; Account.username = username; put(TK, token); put(UN, username); if (!token) setPerks({}); }
+/** Server-granted perks for this account (cached for offline play). */
+function setPerks(p) { p = p || {}; St.Perks.infiniteMoney = !!(Account.token && p.infinite_money); put(PK, Account.token ? JSON.stringify(p) : null); }
+try { if (Account.token) setPerks(JSON.parse(get(PK) || '{}')); } catch (e) { /* ignore */ }
 
 /** Before St.load(): bring a newer cloud save into local storage. */
 export async function preload() {
@@ -32,6 +35,7 @@ export async function preload() {
   const r = await api('/api/save', { timeout: 5000 });
   if (r.status === 401) { setSession(null, null); setStatus('off'); return; }
   if (r.status !== 200) { setStatus('offline'); return; }
+  setPerks(r.perks);
   const local = St.localSnapshot();
   if (r.data && r.data.version && (!local || (r.data.savedAt || 0) > (local.savedAt || 0))) St.writeSnapshot(r.data);
   Account.lastSync = Date.now(); setStatus('synced');
@@ -66,7 +70,7 @@ export const errorText = code => t(ERR[code] || 'acct_err_server');
 export async function signIn(action, username, password) {
   const r = await api('/api/auth', { method: 'POST', body: { action, username, password } });
   if (r.status !== 200 || !r.token) return { ok: false, error: r.error || 'server_error' };
-  setSession(r.token, r.username);
+  setSession(r.token, r.username); setPerks(r.perks);
   const s = await api('/api/save');
   if (s.status === 200 && s.data && s.data.version) { St.lockSaves(); St.writeSnapshot(s.data); return { ok: true, reload: true }; }
   St.save(); await push(St.localSnapshot());           // new account: keep the current progress

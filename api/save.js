@@ -9,7 +9,8 @@ export default guard(async (req, res) => {
   if (!p) return send(res, 401, { error: 'unauthorized' });
   if (req.method === 'GET') {
     const rows = await sql`SELECT data, updated_at FROM saves WHERE player_id = ${p.id}`;
-    return send(res, 200, rows[0] ? { data: rows[0].data, updated_at: rows[0].updated_at } : { data: null });
+    const perks = p.perks || {};
+    return send(res, 200, rows[0] ? { data: rows[0].data, updated_at: rows[0].updated_at, perks } : { data: null, perks });
   }
   if (req.method !== 'PUT' && req.method !== 'POST') return send(res, 405, { error: 'method_not_allowed' });
   const d = (await body(req)).data;
