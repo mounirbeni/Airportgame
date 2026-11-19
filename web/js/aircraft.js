@@ -3,14 +3,15 @@
 // swept wings with winglets, nacelles, T-tail turboprop variant, gear.
 // Forward is -Z, origin at the fuselage centre line, wheels touch y = -GEAR_H.
 import * as THREE from 'three';
+import { attachModel } from './models.js';
 
 export const GEAR_H = 3.15;
 const D2R = Math.PI / 180;
 const C = { ivory: '#f3ede0', teal: '#0f3f45', copper: '#b8743d', belly: '#c9c3b6', window: '#1c2830' };
 const SPECS = {
-  jet: { L: 36, R: 2.0, span: 17, sweep: 25, rootChord: 7.5, tipChord: 2.2, wingZ: 0.5, wingY: -1.1, engines: 'wing', tTail: false, rows: 26 },
-  jet_large: { L: 44, R: 2.05, span: 17.6, sweep: 26, rootChord: 8, tipChord: 2.2, wingZ: 1.5, wingY: -1.15, engines: 'wing', tTail: false, rows: 34 },
-  turboprop: { L: 27, R: 1.6, span: 13.5, sweep: 3, rootChord: 2.6, tipChord: 1.5, wingZ: -0.5, wingY: 1.35, engines: 'prop', tTail: true, rows: 18 },
+  jet: { L: 37.6, R: 2.0, span: 17.4, sweep: 25, rootChord: 7.5, tipChord: 2.2, wingZ: 0.5, wingY: -1.1, engines: 'wing', tTail: false, rows: 26 },
+  jet_large: { L: 44.5, R: 2.05, span: 17.4, sweep: 26, rootChord: 8, tipChord: 2.2, wingZ: 1.5, wingY: -1.15, engines: 'wing', tTail: false, rows: 34 },
+  turboprop: { L: 27.2, R: 1.6, span: 13.5, sweep: 3, rootChord: 2.6, tipChord: 1.5, wingZ: -0.5, wingY: 1.35, engines: 'prop', tTail: true, rows: 18 },
 };
 const liveryCache = {};
 
@@ -180,5 +181,9 @@ export function buildAircraftModel(kind = 'jet') {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(L * 0.62, 0.7, 6, 64), new THREE.MeshBasicMaterial({ color: 0xffc233, transparent: true, opacity: 0.9 }));
   ring.rotation.x = -Math.PI / 2; ring.position.y = -GEAR_H + 0.4; ring.visible = false; g.add(ring); g.userData.ring = ring;
   g.userData.inner = inner;
+  // Designer GLB (data/models.json slot "aircraft.<kind>") replaces the procedural model.
+  if (attachModel(inner, 'aircraft.' + kind, { groundY: -GEAR_H })) {
+    g.userData.gear = new THREE.Group(); g.userData.beacon = new THREE.Object3D(); g.userData.props = [];
+  }
   return g;
 }

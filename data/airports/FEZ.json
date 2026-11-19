@@ -1,0 +1,28 @@
+{
+  "code": "FEZ",
+  "identity": "Regional airport: single 3200 m runway 09/27 with a partial parallel taxiway, a compact terminal with stair-boarding stands (no jet bridges).",
+  "start_stands": 2,
+  "ops": { "departure": "09", "arrival": "09" },
+  "runways": [
+    { "id": "09/27", "ends": ["09", "27"], "x": 0, "z": 0, "length": 3200, "width": 45,
+      "taxiway": { "id": "A", "side": 1, "offset": 180, "from": 1600, "to": -300, "connectors": [1600, 650, -300] } }
+  ],
+  "terminals": [
+    { "id": "T1", "type": "linear", "style": "moroccan", "face": 420, "z": 300, "length": 260, "depth": 50, "h": 14, "stands": 5, "spacing": 52, "side": -1, "contact": false }
+  ],
+  "taxilines": [
+    { "id": "L1", "type": "taxilane", "pts": [[180, 120], [336, 120]] },
+    { "id": "L2", "type": "taxilane", "pts": [[180, 480], [336, 480]] }
+  ],
+  "buildings": [
+    { "type": "tower", "x": 470, "z": 30, "h": 36 },
+    { "type": "fire_station", "x": 300, "z": -150, "rot": 0 },
+    { "type": "fuel_farm", "x": 330, "z": 800, "tanks": 3 }
+  ],
+  "roads": [
+    { "id": "curb", "pts": [[480, 120], [480, 480]], "width": 14 },
+    { "id": "access", "pts": [[480, 480], [600, 600], [1100, 600]], "width": 12 }
+  ],
+  "parking": [{ "x": 570, "z": 300, "w": 110, "d": 300 }],
+  "service_roads": [[[455, 140], [455, 460]]]
+}

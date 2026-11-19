@@ -1,0 +1,31 @@
+{
+  "code": "RAK",
+  "identity": "Leisure gateway: single 3100 m runway 10/28, full parallel taxiway with a rapid exit, a long linear terminal with 10 contact gates and a large car park.",
+  "start_stands": 2,
+  "ops": { "departure": "10", "arrival": "10" },
+  "runways": [
+    { "id": "10/28", "ends": ["10", "28"], "x": 0, "z": 0, "length": 3100, "width": 45,
+      "taxiway": { "id": "A", "side": 1, "offset": 190, "connectors": [1550, 700, 0, -700, -1550],
+        "rapid_exits": [{ "for": "10", "z": 350, "angle": 30 }] } }
+  ],
+  "terminals": [
+    { "id": "T1", "type": "linear", "style": "moroccan", "face": 480, "z": -50, "length": 640, "depth": 70, "h": 18, "stands": 10, "spacing": 58, "side": -1 }
+  ],
+  "taxilines": [
+    { "id": "L1", "type": "taxilane", "pts": [[190, -320], [396, -320]] },
+    { "id": "L2", "type": "taxilane", "pts": [[190, 220], [396, 220]] }
+  ],
+  "buildings": [
+    { "type": "tower", "x": 560, "z": -470, "h": 48 },
+    { "type": "fire_station", "x": 300, "z": 640, "rot": 0 },
+    { "type": "hangar", "x": 330, "z": -760, "rot": -90, "w": 80, "d": 70 },
+    { "type": "fuel_farm", "x": 330, "z": 920, "tanks": 4 },
+    { "type": "admin", "x": 640, "z": 380, "w": 70, "d": 40, "h": 18 }
+  ],
+  "roads": [
+    { "id": "curb", "pts": [[560, -420], [560, 320]], "width": 16 },
+    { "id": "access", "pts": [[560, 320], [700, 450], [1200, 450]], "width": 14 }
+  ],
+  "parking": [{ "x": 680, "z": -50, "w": 150, "d": 520 }],
+  "service_roads": [[[530, -400], [530, 300]]]
+}

@@ -18,9 +18,12 @@ copyDir('data', 'data');
 copyDir('localization', 'localization');
 copy('web/manifest.webmanifest', 'manifest.webmanifest');
 copy('node_modules/three/build/three.module.js', 'vendor/three.module.js');
+copy('node_modules/three/examples/jsm/loaders/GLTFLoader.js', 'vendor/addons/loaders/GLTFLoader.js');
+copy('node_modules/three/examples/jsm/utils/BufferGeometryUtils.js', 'vendor/addons/utils/BufferGeometryUtils.js');
 
 let html = fs.readFileSync(path.join(ROOT, 'web/index.html'), 'utf8');
 html = html.replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/three@[\d.]+\/build\/three\.module\.js/, './vendor/three.module.js');
+html = html.replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/three@[\d.]+\/examples\/jsm\//, './vendor/addons/');
 html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="atlas-pwa" content="1">');
 fs.writeFileSync(path.join(DIST, 'index.html'), html);
 

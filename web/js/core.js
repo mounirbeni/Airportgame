@@ -1,6 +1,9 @@
 // Data loading, localization (JSON shared with the Godot project), number
 // formatting and the airport frame with its gates and taxi route network.
 
+import { buildLayout } from './infra/layout.js';
+import { loadModelSlots } from './models.js';
+
 let ROOT = '';
 async function getJSON(name) {
   for (const base of [ROOT, '', '../']) {
@@ -19,10 +22,16 @@ export const Loc = { current: 'ar', listeners: [] };
 export async function loadAll() {
   const world = await getJSON('data/world.json');
   DB.ty = await getJSON('data/tycoon.json');
+  await loadModelSlots(getJSON);
   LANG.ar = await getJSON('localization/ar.json');
   LANG.en = await getJSON('localization/en.json');
   DB.home = world.home_airport;
-  for (const a of world.airports) DB.airports[a.code] = makeAirport(a);
+  for (const a of world.airports) {
+    const ap = makeAirport(a);
+    if (a.layout) ap.layout = buildLayout(await getJSON(a.layout));
+    ap.signText = t(a.name_key);
+    DB.airports[a.code] = ap;
+  }
   for (const t of DB.ty.aircraft_types) DB.types[t.id] = t;
   for (const d of DB.ty.destinations) DB.dests[d.code] = d;
 }
@@ -47,42 +56,21 @@ export function moneyShort(v) {
   return t('money_fmt', { v: s + n });
 }
 
-// --- Airport frame (same convention as scripts/data/airport_def.gd) ---------
-// Local frame: runway along Z from -L/2..+L/2, operations towards local -Z,
-// apron/terminal on the +X side.
-export const TAXIWAY_X = 150, APRON_X = 250, TERMINAL_X = 345, HOLD_X = 75;
-export const STAND_X = 312, LANE_X = 245;
-export const STAND_Z = [-125, -75, -25, 25, 75, 125];
-
+// --- Airport frame ----------------------------------------------------------
+// Each airport has a local frame (metres): origin at `center`, rotated by
+// `yaw_deg`; runways run along local Z. Infrastructure lives in ap.layout
+// (see web/js/infra/layout.js and data/airports/<CODE>.json).
 function makeAirport(d) {
   const yaw = d.yaw_deg * Math.PI / 180, c = Math.cos(yaw), s = Math.sin(yaw);
-  const [cx, cy, cz] = d.center, hl = d.runway_length / 2, connZ = hl - 40;
+  const [cx, cy, cz] = d.center;
   const ap = {
-    ...d, yaw, hl, cx, cz, connZ,
+    ...d, yaw, cx, cz,
     toWorld: (x, y, z) => ({ x: cx + x * c + z * s, y: cy + y, z: cz - x * s + z * c }),
     toLocal: (x, y, z) => { const dx = x - cx, dz = z - cz; return { x: dx * c - dz * s, y: y - cy, z: dx * s + dz * c }; },
-    dir: { x: -s, z: -c },
-    threshold() { return ap.toWorld(0, 0, hl); },
-    gatePose() { return { pos: ap.toWorld(APRON_X + 20, 0, -80), yaw: yaw + Math.PI }; },
-    taxiLocal() { return [[APRON_X + 20, 380], [TAXIWAY_X, 520], [TAXIWAY_X, connZ - 80], [TAXIWAY_X - 25, connZ], [HOLD_X + 12, connZ]]; },
-    // --- automatic ground routes (local [x, z] points) ---
-    standLocal(i) { return [STAND_X, STAND_Z[i]]; },
-    /** Reverse push from the stand onto the apron lane (aircraft ends facing +Z). */
-    pushbackRoute(i) { const z = STAND_Z[i]; return [[STAND_X, z], [282, z - 4], [258, z - 18], [LANE_X, z - 40]]; },
-    taxiOutRoute(i) {
-      const z = STAND_Z[i];
-      return [[LANE_X, z - 40], [LANE_X, z], [LANE_X, 250], [228, 285], [185, 310], [TAXIWAY_X, 335],
-        [TAXIWAY_X, connZ - 90], [TAXIWAY_X - 6, connZ - 30], [TAXIWAY_X - 40, connZ], [HOLD_X + 10, connZ]];
-    },
-    lineupRoute() { return [[HOLD_X + 10, connZ], [45, connZ], [16, connZ - 22], [3, connZ - 60], [0, connZ - 100]]; },
-    /** Rapid exit at mid-runway, down the taxiway and back to stand i. */
-    taxiInRoute(i) {
-      const z = STAND_Z[i];
-      return [[0, 60], [0, 28], [12, 6], [45, 0], [HOLD_X + 20, 0], [TAXIWAY_X - 25, 0], [TAXIWAY_X, -25], [TAXIWAY_X, -280],
-        [163, -322], [198, -318], [228, -290], [LANE_X, -255], [LANE_X, z - 55], [262, z - 20], [288, z - 3], [STAND_X, z]];
-    },
-    holdPoint() { return ap.toWorld(HOLD_X + 10, 0, connZ); },
-    approachFix(dist, alt) { const th = ap.threshold(); return { x: th.x - ap.dir.x * dist, y: alt, z: th.z - ap.dir.z * dist }; },
+    /** Local direction [dx, dz] -> world direction {x, z}. */
+    dirWorld: (dx, dz) => ({ x: dx * c + dz * s, z: -dx * s + dz * c }),
+    /** Aircraft yaw (world) for a local heading vector. */
+    yawOf: (dx, dz) => yaw + Math.atan2(-dx, -dz),
   };
   return ap;
 }

@@ -191,5 +191,8 @@
 	"ty_city_oud": "Oujda",
 	"ty_ac_p70": "Atlas P70 Turboprop",
 	"ty_ac_t2": "Atlas T2 Twinjet",
-	"ty_ac_t3": "Atlas T3 Long-body"
+	"ty_ac_t3": "Atlas T3 Long-body",
+	"apt_tng": "Tangier (TNG)",
+	"apt_aga": "Agadir (AGA)",
+	"apt_oud": "Oujda (OUD)"
 }

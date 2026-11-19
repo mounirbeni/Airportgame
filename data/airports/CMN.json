@@ -1,0 +1,41 @@
+{
+  "code": "CMN",
+  "identity": "International hub: two parallel 3720 m runways with segregated operations (17L departures, 17R arrivals), a central terminal with two piers between the runways, cargo apron to the south.",
+  "start_stands": 2,
+  "ops": { "departure": "17L", "arrival": "17R" },
+  "runways": [
+    { "id": "17L/35R", "ends": ["17L", "35R"], "x": -700, "z": 0, "length": 3720, "width": 45,
+      "taxiway": { "id": "A", "side": 1, "offset": 190, "connectors": [1860, 900, 0, -900, -1860] } },
+    { "id": "17R/35L", "ends": ["17R", "35L"], "x": 700, "z": -300, "length": 3720, "width": 45,
+      "taxiway": { "id": "B", "side": -1, "offset": 190, "connectors": [1860, -1860],
+        "rapid_exits": [{ "for": "17R", "z": 360, "angle": 30 }, { "for": "17R", "z": -240, "angle": 30 }] } }
+  ],
+  "terminals": [
+    { "id": "T1", "type": "pier", "style": "moroccan", "x": 0, "z": 800, "dir": -1,
+      "main": { "w": 560, "d": 90, "h": 24 }, "pier_w": 36, "pier_len": 520, "pier_h": 12,
+      "stands_per_side": 6, "spacing": 60, "piers": [{ "x": -160 }, { "x": 160 }] },
+    { "id": "CARGO", "type": "remote", "x": 300, "z": -500, "stands": 5, "spacing": 55, "nose": 1 }
+  ],
+  "taxilines": [
+    { "id": "C", "type": "taxiway", "pts": [[-510, 190], [510, 190]] },
+    { "id": "D", "type": "taxiway", "pts": [[510, -330], [241, -330]] }
+  ],
+  "buildings": [
+    { "type": "tower", "x": -390, "z": 760, "h": 62 },
+    { "type": "fire_station", "x": -400, "z": -260, "rot": 90 },
+    { "type": "cargo", "x": 400, "z": -500, "w": 60, "d": 300, "h": 18 },
+    { "type": "hangar", "x": -330, "z": -650, "rot": -90, "w": 90, "d": 75 },
+    { "type": "hangar", "x": -330, "z": -780, "rot": -90, "w": 90, "d": 75 },
+    { "type": "fuel_farm", "x": 380, "z": -1150, "tanks": 6 },
+    { "type": "parking_garage", "x": 0, "z": 980, "w": 300, "d": 90, "floors": 5 },
+    { "type": "radar", "x": 0, "z": -1500 },
+    { "type": "admin", "x": -330, "z": 960, "w": 80, "d": 40, "h": 30 }
+  ],
+  "roads": [
+    { "id": "curb", "pts": [[-420, 880], [420, 880]], "width": 16 },
+    { "id": "access", "pts": [[420, 880], [480, 1050], [480, 1600]], "width": 14 },
+    { "id": "ring", "pts": [[-420, 880], [-480, 1050], [-480, 1600]], "width": 14 }
+  ],
+  "parking": [{ "x": -250, "z": 1080, "w": 220, "d": 100 }, { "x": 250, "z": 1080, "w": 220, "d": 100 }],
+  "service_roads": [[[-300, 860], [300, 860], [300, 760]], [[-300, 860], [-300, 760]]]
+}

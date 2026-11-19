@@ -13,6 +13,10 @@ import { TycoonCamera } from './camera.js';
 import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery, useSkyEnvironment } from './world.js';
 import { setAnisotropy } from './assets.js';
 
+// Time model: aircraft move at real speeds x MOVE_SCALE; the clock runs at
+// GAME_MIN_PER_SEC game minutes per real second (at 1x).
+const MOVE_SCALE = 2, GAME_MIN_PER_SEC = 0.25;
+
 async function boot() {
   await Core.loadAll();
   St.load();
@@ -31,7 +35,9 @@ async function boot() {
   const home = DB.airports[DB.home];
   const sim = new Sim(scene, home);
   const ui = new UI(sim);
-  const centre = home.toWorld(190, 0, 0);
+  const ap0 = home.layout.aprons[0], centre = home.toWorld((ap0.x0 + ap0.x1) / 2, 0, (ap0.z0 + ap0.z1) / 2);
+  // Gates the player can own are limited by the home airport's stands.
+  DB.ty.gates.max = Math.min(DB.ty.gates.max, home.layout.stands.length);
   const cam = new TycoonCamera(canvas, { x: centre.x, z: centre.z, yaw: home.yaw - Math.PI / 2 + 0.7 });
   cam.dist = 620; cam.pitch = 0.55;
 
@@ -124,8 +130,8 @@ async function boot() {
       const steps = Math.ceil(speed * dt / (1 / 30));
       for (let i = 0; i < steps; i++) {
         const dtS = speed * dt / steps;
-        sim.update(dtS, dtS);
-        const closed = St.tickClock(dtS);
+        sim.update(dtS * MOVE_SCALE, dtS * GAME_MIN_PER_SEC);
+        const closed = St.tickClock(dtS * GAME_MIN_PER_SEC);
         if (closed) ui.toast(t('ty_toast_day', { d: closed.day, v: moneyShort(closed.revenue - closed.costs) }), closed.revenue >= closed.costs ? 'money' : 'bad');
       }
     } else sim.update(0, 0);
@@ -138,6 +144,7 @@ async function boot() {
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
+    for (const n of Object.values(nodes)) n.update(dt);
     renderer.render(scene, cam.cam);
     requestAnimationFrame(frame);
   }
@@ -149,7 +156,7 @@ async function boot() {
   requestAnimationFrame(frame);
 
   // Hooks for automated checks (headless browser tests).
-  window.__atlas = { S, St, sim, ui, cam, select, order: a => sim.order(a), step: (secs) => { const n = Math.round(secs * 30); for (let i = 0; i < n; i++) { sim.update(1 / 30, 1 / 30); St.tickClock(1 / 30); } drainEvents(); } };
+  window.__atlas = { S, St, sim, ui, cam, select, airports: DB.airports, nodes, order: a => sim.order(a), step: (secs) => { const n = Math.round(secs * 30); for (let i = 0; i < n; i++) { sim.update(MOVE_SCALE / 30, GAME_MIN_PER_SEC / 30); St.tickClock(GAME_MIN_PER_SEC / 30); } drainEvents(); } };
 }
 
 // Installed web app: register the offline service worker (only in the built PWA).

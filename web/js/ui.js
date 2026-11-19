@@ -39,7 +39,7 @@ export class UI {
     $('lang').textContent = t('ui_lang_toggle'); $('overview').textContent = t('ty_act_overview');
     $('tipText').textContent = t('ty_tip');
     const sp = $('speed'); sp.innerHTML = '';
-    for (const v of [0, 1, 2, 4]) sp.append(btn(v === 0 ? 'II' : v + '×', () => this.fire('speed', v), S.settings.speed === v ? 'on' : ''));
+    for (const v of [0, 1, 2, 4, 8]) sp.append(btn(v === 0 ? 'II' : v + '×', () => this.fire('speed', v), S.settings.speed === v ? 'on' : ''));
     this.renderTabs(); this.lastSig = ''; this.refresh(true);
   }
   showTip() { $('tip').classList.remove('hidden'); }
@@ -105,7 +105,7 @@ export class UI {
       const c = el('div', 'card' + (NEEDS_ORDER[a.state] ? ' attn' : ''));
       const head = el('div', 'row'); head.append(el('span', 't', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)), el('span', 'spacer'),
         el('span', 'dim', a.route ? 'CMN ⇄ ' + a.route : t('ty_none')));
-      c.append(head, el('div', NEEDS_ORDER[a.state] ? 'cop' : 'dim', statusText(a, this.sim)));
+      c.append(head, el('div', NEEDS_ORDER[a.state] ? 'cop' : 'dim', statusText(a)));
       if (a.state === 'turn') { const bar = el('div', 'bar'), f = el('i'); f.style.width = Math.round((a.progress || 0) * 100) + '%'; bar.append(f); c.append(bar); }
       const ob = this.orderButton(a); if (ob) c.append(ob);
       c.addEventListener('click', () => this.fire('select', a));
@@ -125,7 +125,7 @@ export class UI {
       const r2 = el('div', 'row'); r2.append(el('span', 'dim', t('ty_route')), sel);
       const parked = ['turn', 'ready', 'idle'].includes(a.state);
       r2.append(el('span', 'spacer'), btn(t('ty_sell', { v: moneyShort(sellPrice(a)) }), () => this.fire('sell', a), '', parked && S.fleet.length > 1));
-      c.append(row, el('div', 'dim', statusText(a, this.sim)), r2); body.append(c);
+      c.append(row, el('div', 'dim', statusText(a)), r2); body.append(c);
     }
     for (const ty of DB.ty.aircraft_types) {
       const c = el('div', 'card'), why = canBuyAircraft(ty.id);
@@ -187,7 +187,7 @@ export class UI {
     box.dataset.sig = sig; box.classList.remove('hidden'); box.innerHTML = '';
     const head = el('div', 'row'); head.append(el('span', 't cop', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)), el('span', 'spacer'),
       btn('×', () => this.fire('select', null)));
-    box.append(head, el('div', 'dim', a.route ? `CMN ⇄ ${t(DB.dests[a.route].name_key)}` : t('ty_why_route')), el('div', '', statusText(a, this.sim)));
+    box.append(head, el('div', 'dim', a.route ? `CMN ⇄ ${t(DB.dests[a.route].name_key)}` : t('ty_why_route')), el('div', '', statusText(a)));
     if (a.state === 'turn') { const bar = el('div', 'bar'), f = el('i'); f.style.width = Math.round((a.progress || 0) * 100) + '%'; bar.append(f); box.append(bar); }
     const ob = this.orderButton(a, true); if (ob) box.append(ob);
   }

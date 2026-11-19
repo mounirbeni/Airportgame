@@ -1,6 +1,5 @@
 // Renderer, sunset sky, lights, scenery, chase camera and procedural audio.
 import * as THREE from 'three';
-import { TERMINAL_X } from './core.js';
 import { loadTex } from './assets.js';
 
 export function createRenderer(canvas) {
@@ -87,12 +86,19 @@ export function buildScenery(scene, airports, terrain, low) {
   city(-3800, -9500, 3200, 700, 0xf0ede0, 10, 34);
   city(1600, 18200, 2600, 520, 0xc76b4d, 6, 16);
   city(14500, -9800, 2200, 380, 0xdbc299, 6, 18);
+  city(5200, -21800, 1800, 320, 0xf2efe6, 6, 18);
+  city(-11500, 18800, 2200, 360, 0xe8dcc4, 6, 16);
+  city(29800, -9600, 1600, 260, 0xd9c3a0, 6, 14);
   const trunks = [], crowns = [];
-  for (const ap of airports) for (let i = 0; i < 90 * dens; i++) {
-    const lz = (rnd() * 2 - 1) * ap.hl, lx = rnd() < 0.4 ? -(120 + rnd() * 280) : TERMINAL_X + 255 + rnd() * 170;
-    const p = ap.toWorld(lx, 0, lz), gy = terrain.heightAt(p.x, p.z), h = 8 + rnd() * 6;
-    trunks.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h / 2, p.z), new THREE.Quaternion(), new THREE.Vector3(1, h, 1)));
-    crowns.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h, p.z), new THREE.Quaternion().setFromAxisAngle(up, rnd() * 6.28), new THREE.Vector3(1, 1, 1)));
+  // Trees along each airport's landside roads.
+  for (const ap of airports) for (const r of (ap.layout ? ap.layout.roads : [])) for (let i = 0; i < r.pts.length - 1; i++) {
+    const a = r.pts[i], b = r.pts[i + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]), dx = (b[0] - a[0]) / len, dz = (b[1] - a[1]) / len;
+    for (let t = 15; t < len - 10; t += 36 / dens) for (const s of [-1, 1]) {
+      const off = (r.width || 12) / 2 + 6, p = ap.toWorld(a[0] + dx * t - dz * s * off, 0, a[1] + dz * t + dx * s * off);
+      const gy = terrain.heightAt(p.x, p.z), h = 8 + rnd() * 6;
+      trunks.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h / 2, p.z), new THREE.Quaternion(), new THREE.Vector3(1, h, 1)));
+      crowns.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, gy + h, p.z), new THREE.Quaternion().setFromAxisAngle(up, rnd() * 6.28), new THREE.Vector3(1, 1, 1)));
+    }
   }
   const tm = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.25, 0.4, 1, 5), new THREE.MeshLambertMaterial({ color: 0x73543a }), trunks.length);
   trunks.forEach((m, i) => tm.setMatrixAt(i, m)); scene.add(tm);

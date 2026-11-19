@@ -41,7 +41,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 export class Terrain {
   constructor(airports) {
     this.base = makeSimplex(1977); this.detail = makeSimplex(4242); this.ridge = makeSimplex(9001);
-    this.flats = airports.map(a => ({ a, hz: a.hl + 900 }));
+    this.flats = airports.map(a => ({ a, b: a.layout ? a.layout.bounds : { x0: -1000, x1: 1000, z0: -1800, z1: 1800 } }));
     this.size = 52000; this.cx = 6000; this.cz = 3000;
   }
   coast(x, z) { return x - (-9000 + 0.45 * (-z) + this.base(z * 0.5 * 0.00022, 0.022) * 1500); }
@@ -59,8 +59,8 @@ export class Terrain {
     let h = this.raw(x, z);
     for (const f of this.flats) {
       const l = f.a.toLocal(x, 0, z);
-      const ddx = Math.max(Math.abs(l.x - 150) - 1100, 0), ddz = Math.max(Math.abs(l.z) - f.hz, 0);
-      h = lerp(0, h, smooth(0, 1500, Math.sqrt(ddx * ddx + ddz * ddz)));
+      const m = 650, ddx = Math.max(f.b.x0 - m - l.x, l.x - f.b.x1 - m, 0), ddz = Math.max(f.b.z0 - m - l.z, l.z - f.b.z1 - m, 0);
+      h = lerp(-0.3, h, smooth(0, 1500, Math.sqrt(ddx * ddx + ddz * ddz)));   // airport ground sits just under the airfield layer
     }
     return h;
   }
