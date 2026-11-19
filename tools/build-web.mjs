@@ -43,6 +43,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && url.pathname.startsWith('/api/')) return;   // accounts / cloud saves: always network
   if (url.origin === location.origin) {
     // App shell: cache first, fall back to network; navigations fall back to index.
     e.respondWith(caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req).catch(() => req.mode === 'navigate' ? caches.match('./') : Response.error())));

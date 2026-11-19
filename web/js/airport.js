@@ -20,6 +20,18 @@ export function textSprite(text, { size = 64, color = '#faf3e1', outline = '#0f3
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })); sp.scale.set(width / size, 2, 1); return sp;
 }
 
+function edgeMask(fx, fz) {
+  const W = 256, cv = document.createElement('canvas'); cv.width = cv.height = W;
+  const g = cv.getContext('2d'), img = g.createImageData(W, W), sm = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+    const u = (i + 0.5) / W, v = (j + 0.5) / W;
+    const a = sm(Math.min(u, 1 - u) / fx) * sm(Math.min(v, 1 - v) / fz), k = (j * W + i) * 4;
+    img.data[k] = img.data[k + 1] = img.data[k + 2] = Math.round(a * 255); img.data[k + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return new THREE.CanvasTexture(cv);
+}
+
 export class Airport {
   constructor(def, scene) {
     this.def = def; this.L = def.layout;
@@ -60,6 +72,7 @@ export class Airport {
     const bulb = new THREE.SphereGeometry(0.8, 6, 4);
     for (const key in this.lights) {
       const list = this.lights[key], im = new THREE.InstancedMesh(bulb, mat('light.' + key), list.length);
+      (this.lightMeshes ||= []).push(im);
       list.forEach(([x, y, z], i) => { m4.makeTranslation(x, y, z); im.setMatrixAt(i, m4); });
       this.group.add(im);
     }
@@ -68,9 +81,14 @@ export class Airport {
 
   // --- ground & pavement ---------------------------------------------------------------------
   buildGround() {
-    const b = this.L.bounds, m = 180, w = b.x1 - b.x0 + 2 * m, d = b.z1 - b.z0 + 2 * m;
-    const geo = tileUV(new THREE.PlaneGeometry(w, d), w / 40, d / 40);
-    const g = new THREE.Mesh(geo, mat('ground.airfield')); g.rotation.x = -Math.PI / 2;
+    const b = this.L.bounds, m = 420, w = b.x1 - b.x0 + 2 * m, d = b.z1 - b.z0 + 2 * m;
+    const geo = new THREE.PlaneGeometry(w, d);
+    geo.setAttribute('uv1', geo.attributes.uv.clone());          // 0..1 for the soft edge mask
+    tileUV(geo, w / 120, d / 120);
+    // Soft edges: the airfield fades into the surrounding terrain (no hard rectangle).
+    const material = mat('ground.airfield');
+    if (!material.alphaMap) { material.alphaMap = edgeMask(0.14, 0.1); material.alphaMap.channel = 1; material.transparent = true; }
+    const g = new THREE.Mesh(geo, material); g.rotation.x = -Math.PI / 2; g.renderOrder = -1;
     g.position.set((b.x0 + b.x1) / 2, Y.airfield, (b.z0 + b.z1) / 2); g.receiveShadow = true; this.group.add(g);
   }
   buildRunways() {
@@ -249,4 +267,6 @@ export class Airport {
   }
 
   update(dt) { for (const h of this.animated) h.rotation.y += dt * 1.2; }
+  /** Level of detail: small ground lights only render when the camera is close enough to resolve them. */
+  lod(viewDist) { const on = viewDist < 2200; for (const im of this.lightMeshes || []) if (im.visible !== on) im.visible = on; }
 }

@@ -38,9 +38,18 @@ export function save() {
       return { id: a.id, type: a.type, flightNo: a.flightNo, route: a.route, stand: a.stand, state: stable,
         progress: a.progress || 0, timer: stable === 'enroute' ? Math.max(a.timer || 0, 5) : 0, legOut: stable === 'enroute' ? false : a.legOut };
     });
-    localStorage.setItem(KEY, JSON.stringify({ version: VERSION, ...S, fleet }));
-  } catch (e) { /* storage unavailable: keep playing in memory */ }
+    const data = { version: VERSION, ...S, fleet, savedAt: Date.now() };
+    S.savedAt = data.savedAt;
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable: keep playing in memory */ }
+    for (const fn of saveListeners) fn(data);
+  } catch (e) { console.warn('save failed', e); }
 }
+/** Called with every save snapshot (used by the cloud sync). */
+export const saveListeners = [];
+/** Raw local snapshot (or null). */
+export function localSnapshot() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+/** Replace the local snapshot (cloud save downloaded before load()). */
+export function writeSnapshot(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); return true; } catch (e) { return false; } }
 
 export function load() {
   let d = null;

@@ -12,6 +12,7 @@ import { UI } from './ui.js';
 import { TycoonCamera } from './camera.js';
 import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery, useSkyEnvironment } from './world.js';
 import { setAnisotropy } from './assets.js';
+import * as Acc from './account.js';
 
 // Time model: aircraft move at real speeds x MOVE_SCALE; the clock runs at
 // GAME_MIN_PER_SEC game minutes per real second (at 1x).
@@ -19,7 +20,9 @@ const MOVE_SCALE = 2, GAME_MIN_PER_SEC = 0.25;
 
 async function boot() {
   await Core.loadAll();
+  await Acc.preload();          // signed-in player: newer cloud save replaces the local one
   St.load();
+  Acc.attach();
   const canvas = document.getElementById('view');
   const renderer = createRenderer(canvas);
   setAnisotropy(renderer);
@@ -35,6 +38,7 @@ async function boot() {
   const home = DB.airports[DB.home];
   const sim = new Sim(scene, home);
   const ui = new UI(sim);
+  const acctUI = Acc.mountAccountUI();
   const ap0 = home.layout.aprons[0], centre = home.toWorld((ap0.x0 + ap0.x1) / 2, 0, (ap0.z0 + ap0.z1) / 2);
   // Gates the player can own are limited by the home airport's stands.
   DB.ty.gates.max = Math.min(DB.ty.gates.max, home.layout.stands.length);
@@ -107,7 +111,7 @@ async function boot() {
   ui.on('autoAtc', () => { S.autoAtc = !S.autoAtc; St.save(); ui.refresh(true); });
   ui.on('quality', () => { S.settings.quality = S.settings.quality === 'low' ? 'high' : 'low'; applyQuality(renderer, env, S.settings.quality); St.save(); ui.refresh(true); });
   ui.on('newGame', () => { for (const a of S.fleet) sim.removeAircraft(a.id); St.resetGame(); select(null); ui.texts(); });
-  Loc.listeners.push(() => ui.texts());
+  Loc.listeners.push(() => { ui.texts(); acctUI.texts(); });
 
   // --- simulation events -> feedback ---------------------------------------------------
   function drainEvents() {
@@ -144,7 +148,7 @@ async function boot() {
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
-    for (const n of Object.values(nodes)) n.update(dt);
+    for (const n of Object.values(nodes)) { n.update(dt); n.lod(cam.dist); }
     renderer.render(scene, cam.cam);
     requestAnimationFrame(frame);
   }

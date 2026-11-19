@@ -11,16 +11,17 @@ import { applyMap } from './assets.js';
 
 export const ROLES = {
   // Pavement and ground (tile = texture repeat size in metres)
-  'pavement.runway':   { color: 0x3a3a3c, rough: 0.92, map: 'tex_asphalt', tint: 0xc4c4c4 },
-  'pavement.taxiway':  { color: 0x47474a, rough: 0.92, map: 'tex_asphalt' },
-  'pavement.apron':    { color: 0x9e998f, rough: 0.9, map: 'tex_concrete' },
-  'pavement.shoulder': { color: 0x7a7060, rough: 1.0 },
-  'ground.airfield':   { color: 0xb3a98c, rough: 1.0 },
-  'road.asphalt':      { color: 0x3a3a3c, rough: 0.95 },
-  'road.parking':      { color: 0x4a4a4c, rough: 0.95 },
-  'paint.white':       { color: 0xf2f2eb, rough: 0.7 },
-  'paint.yellow':      { color: 0xf2bf26, rough: 0.7 },
-  'paint.red':         { color: 0xbf1f1a, rough: 0.7 },
+  // layer = draw order of flat ground surfaces (depth bias, avoids flicker at long range)
+  'pavement.runway':   { color: 0x3a3a3c, rough: 0.92, map: 'tex_asphalt', gain: 2.1, layer: 4 },
+  'pavement.taxiway':  { color: 0x47474a, rough: 0.92, map: 'tex_asphalt', gain: 1.8, layer: 3 },
+  'pavement.apron':    { color: 0x9e998f, rough: 0.9, map: 'tex_concrete', tint: 0xe4eaee, layer: 2 },
+  'pavement.shoulder': { color: 0x8f8670, rough: 1.0, layer: 1 },
+  'ground.airfield':   { color: 0xcbbfa6, rough: 1.0 },
+  'road.asphalt':      { color: 0x525256, rough: 0.95, layer: 2 },
+  'road.parking':      { color: 0x5c5c5e, rough: 0.95, layer: 2 },
+  'paint.white':       { color: 0xf2f2eb, rough: 0.7, layer: 6 },
+  'paint.yellow':      { color: 0xf2bf26, rough: 0.7, layer: 6 },
+  'paint.red':         { color: 0xbf1f1a, rough: 0.7, layer: 6 },
   // Buildings
   'building.wall':        { color: 0xc9967a, rough: 0.92 },          // tinted per airport (terminal_color)
   'building.wall.modern': { color: 0xd9d6cf, rough: 0.8 },
@@ -65,7 +66,8 @@ export function mat(role, tint) {
       envMapIntensity: r.env ?? 1, side: r.double ? THREE.DoubleSide : THREE.FrontSide });
     if (r.emissive) { m.emissive = new THREE.Color(r.emissive); m.emissiveIntensity = r.emissiveIntensity || 1; }
     if (r.offset) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
-    if (r.map) applyMap(m, r.map, { tint: r.tint, key: role });
+    if (r.layer) { m.polygonOffset = true; m.polygonOffsetFactor = -r.layer; m.polygonOffsetUnits = -2 * r.layer; }
+    if (r.map) applyMap(m, r.map, { tint: r.tint, key: role }, () => { if (r.gain) m.color.multiplyScalar(r.gain); });   // gain: brighten a dark texture
   }
   m.name = role;
   cache.set(key, m);

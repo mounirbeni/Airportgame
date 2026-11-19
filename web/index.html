@@ -19,7 +19,7 @@
 :root {
   --ink: #faf3e1; --dim: #cfc6b4; --teal: #0f3f45; --teal2: #1e5c61; --copper: #e08c4c;
   --good: #73e6b3; --bad: #ff7559; --bg: rgba(8, 36, 40, 0.9); --card: rgba(250, 243, 225, 0.07); --line: rgba(250,243,225,.12);
-  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px); --vfix: 0px; --safe-b: calc(env(safe-area-inset-bottom, 0px) - var(--vfix));
   --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: rgba(8, 36, 40, 0.92); } }
@@ -27,7 +27,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #c98b5e; color: var(--ink);
   font-family: "Noto Kufi Arabic", system-ui, sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
-#view { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100lvh; display: block; }
+#view { position: fixed; top: 0; left: 0; width: 100vw; height: calc(100vh + var(--vfix)); height: calc(100lvh + var(--vfix)); display: block; }
 :root { --top-h: 58px; }
 .hidden { display: none !important; }
 button { font: inherit; color: var(--ink); background: var(--teal2); border: 0; border-radius: 10px; padding: 8px 12px; min-height: 42px; font-size: 14px; cursor: pointer; }
@@ -75,6 +75,13 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
 .toast.money { color: var(--good); }
 #tip { position: fixed; bottom: calc(12px + var(--safe-b)); left: 50%; transform: translateX(-50%); width: min(560px, 70vw); background: var(--bg); border-radius: 14px; padding: 10px 14px; font-size: 14px; display: flex; gap: 10px; align-items: center; }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #0f3f45; font-size: 22px; z-index: 10; }
+#acct.on { background: var(--teal); outline: 1px solid var(--good); }
+#acctDlg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+#acctDlg.hidden { display: none; }
+#acctDlg .box { background: var(--bg); border-radius: 16px; padding: 14px 16px; width: min(380px, 100%); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+#acctDlg .box .t { font-weight: 700; font-size: 16px; } #acctDlg .row { gap: 8px; } #acctDlg .row button { flex: 1; }
+#acctDlg input { font: inherit; font-size: 16px; color: var(--ink); background: rgba(250,243,225,.08); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+#acctDlg .spacer { flex: 1; }
 @media (max-width: 760px), (max-height: 480px) {
   #top .title { display: none; } .chip { font-size: 12px; padding: 4px 8px; } #top { gap: 5px; }
   #side { width: min(330px, 48vw); }
@@ -123,6 +130,20 @@ button .ic { margin-inline-end: 6px; }
 </head>
 <body>
 <canvas id="view"></canvas>
+<script>
+// iOS home-screen app with a translucent status bar: the layout viewport ends
+// short of the screen bottom by the status-bar height, leaving an empty band.
+// Measure the gap and stretch the canvas / move bottom UI down into it.
+(function () {
+  if (navigator.standalone !== true) return;
+  function fix() {
+    var portrait = innerHeight > innerWidth, full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    var gap = Math.round(full - innerHeight);
+    document.documentElement.style.setProperty('--vfix', (gap > 0 && gap < 120 ? gap : 0) + 'px');
+  }
+  fix(); addEventListener('resize', fix); addEventListener('orientationchange', function () { setTimeout(fix, 300); });
+})();
+</script>
 <div id="labels"></div>
 <div id="top">
   <div class="title"></div>
@@ -131,6 +152,7 @@ button .ic { margin-inline-end: 6px; }
   <div class="chip" id="clock"></div>
   <div class="row" id="speed"></div>
   <div class="spacer"></div>
+  <button id="acct"></button>
   <button id="overview"></button>
   <button id="lang"></button>
 </div>
@@ -141,6 +163,7 @@ button .ic { margin-inline-end: 6px; }
 </div>
 <div id="sel" class="hidden"></div>
 <div id="toasts"></div>
+<div id="acctDlg" class="hidden"></div>
 <div id="tip" class="hidden"><span id="tipText"></span><button id="tipClose">OK</button></div>
 <div id="loading"><img src="assets/ui/airline_logo.webp" alt="Atlas Air" onerror="this.remove()"><span>…</span></div>
 <script type="module" src="js/main.js"></script>
