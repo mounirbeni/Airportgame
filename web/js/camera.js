@@ -16,7 +16,7 @@ export class TycoonCamera {
     dom.addEventListener('wheel', e => { e.preventDefault(); this.zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
     dom.addEventListener('contextmenu', e => e.preventDefault());
   }
-  zoom(f) { this.dist = Math.min(Math.max(this.dist * f, 45), 70000); }
+  zoom(f) { this.dist = Math.min(Math.max(this.dist * f, 45), 110000); }
   focus(p, dist) { this.target.set(p.x, 0, p.z); if (dist) this.dist = dist; }
   down(e) {
     this.dom.setPointerCapture(e.pointerId);

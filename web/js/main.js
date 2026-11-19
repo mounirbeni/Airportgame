@@ -102,14 +102,14 @@ async function boot() {
   ui.on('speed', v => { S.settings.speed = v; ui.texts(); St.save(); });
   ui.on('lang', () => { S.settings.lang = Loc.current === 'ar' ? 'en' : 'ar'; Core.setLang(S.settings.lang); St.save(); });
   ui.on('overview', () => { select(null); cam.focus(centre, 900); cam.pitch = 0.55; });
-  // Whole network, north up: frame every airport.
+  // Whole network on the geographic map (north up): frame every airport.
   ui.on('map', () => {
     select(null);
-    const ps = Object.values(DB.airports).map(a => a.toWorld(0, 0, 0));
-    const x0 = Math.min(...ps.map(p => p.x)), x1 = Math.max(...ps.map(p => p.x)), z0 = Math.min(...ps.map(p => p.z)), z1 = Math.max(...ps.map(p => p.z));
-    const asp = cam.cam.aspect || 1, span = Math.max((z1 - z0) * 1.45, (x1 - x0) * 1.45 / asp);
-    cam.focus({ x: (x0 + x1) / 2, z: (z0 + z1) / 2 }, span / (2 * Math.tan(cam.cam.fov * Math.PI / 360)));
-    cam.yaw = 0; cam.pitch = 1.35;
+    const ks = Object.values(flightMap.km), v = cam.cam.view, W = canvas.clientWidth || innerWidth, H = canvas.clientHeight || innerHeight;
+    const freeW = W - 2 * Math.abs(v && v.enabled ? v.offsetX : 0), freeH = H - 2 * Math.abs(v && v.enabled ? v.offsetY : 0);
+    flightMap.W = W; flightMap.H = H;
+    const f = flightMap.frame(cam, Math.min(...ks.map(k => k[0])), Math.min(...ks.map(k => k[1])), Math.max(...ks.map(k => k[0])), Math.max(...ks.map(k => k[1])), freeW, freeH);
+    cam.focus({ x: f.x, z: f.z }, f.dist); cam.yaw = 0; cam.pitch = 1.2;
   });
   ui.on('assign', (a, code) => { a.route = code; if (!code && a.state === 'ready') a.state = 'idle'; St.save(); ui.refresh(true); });
   ui.on('sell', a => {
@@ -162,7 +162,8 @@ async function boot() {
     env.mountains.position.set(cam.cam.position.x, -300, cam.cam.position.z);
     env.mountains.visible = cam.dist < 9000;                                   // horizon strip only near the ground
     scene.fog.near = Math.max(6000, cam.dist * 0.9); scene.fog.far = Math.max(42000, cam.dist * 3);
-    flightMap.draw(cam.cam, cam.dist, ui.selected); ui.mapMode = flightMap.alpha > 0.5;
+    if (flightMap.far > 0.5) cam.yaw += (Math.round(cam.yaw / (2 * Math.PI)) * 2 * Math.PI - cam.yaw) * Math.min(1, dt * 6);   // geographic map: north up
+    flightMap.draw(cam, ui.selected); ui.mapMode = flightMap.alpha > 0.5;
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }

@@ -15,7 +15,7 @@ async function getJSON(name) {
   throw new Error('Cannot load ' + name);
 }
 
-export const DB = { airports: {}, home: 'CMN', ty: null, types: {}, dests: {} };
+export const DB = { airports: {}, home: 'CMN', ty: null, types: {}, dests: {}, mapOutline: [] };
 const LANG = { ar: {}, en: {} };
 export const Loc = { current: 'ar', listeners: [] };
 
@@ -23,6 +23,7 @@ export async function loadAll() {
   const world = await getJSON('data/world.json');
   DB.ty = await getJSON('data/tycoon.json');
   await loadModelSlots(getJSON);
+  DB.mapOutline = (await getJSON('data/maps/morocco.json')).outline;
   LANG.ar = await getJSON('localization/ar.json');
   LANG.en = await getJSON('localization/en.json');
   DB.home = world.home_airport;

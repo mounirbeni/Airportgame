@@ -18,7 +18,11 @@
 			"has_hangar": true,
 			"terminal_color": "#b5583a",
 			"city": "casablanca",
-			"layout": "data/airports/CMN.json"
+			"layout": "data/airports/CMN.json",
+			"lonlat": [
+				-7.5898,
+				33.3675
+			]
 		},
 		{
 			"code": "RAK",
@@ -36,7 +40,11 @@
 			"has_hangar": false,
 			"terminal_color": "#c0623f",
 			"city": "marrakech",
-			"layout": "data/airports/RAK.json"
+			"layout": "data/airports/RAK.json",
+			"lonlat": [
+				-8.0363,
+				31.6069
+			]
 		},
 		{
 			"code": "FEZ",
@@ -54,7 +62,11 @@
 			"has_hangar": false,
 			"terminal_color": "#a8603f",
 			"city": "fes",
-			"layout": "data/airports/FEZ.json"
+			"layout": "data/airports/FEZ.json",
+			"lonlat": [
+				-4.978,
+				33.9273
+			]
 		},
 		{
 			"code": "TNG",
@@ -72,7 +84,11 @@
 			"has_hangar": false,
 			"terminal_color": "#8f8f8a",
 			"city": "tng",
-			"layout": "data/airports/TNG.json"
+			"layout": "data/airports/TNG.json",
+			"lonlat": [
+				-5.9168,
+				35.7269
+			]
 		},
 		{
 			"code": "AGA",
@@ -90,7 +106,11 @@
 			"has_hangar": false,
 			"terminal_color": "#c47a4f",
 			"city": "aga",
-			"layout": "data/airports/AGA.json"
+			"layout": "data/airports/AGA.json",
+			"lonlat": [
+				-9.4132,
+				30.325
+			]
 		},
 		{
 			"code": "OUD",
@@ -108,7 +128,11 @@
 			"has_hangar": false,
 			"terminal_color": "#a86a48",
 			"city": "oud",
-			"layout": "data/airports/OUD.json"
+			"layout": "data/airports/OUD.json",
+			"lonlat": [
+				-1.924,
+				34.7872
+			]
 		}
 	],
 	"contracts": [
