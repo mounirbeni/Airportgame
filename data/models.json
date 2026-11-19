@@ -198,91 +198,91 @@
       }
     },
     "RAK.terminal_main": {
-      "file": null,
+      "file": "assets/models/RAK_terminal_main.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "FEZ.terminal_main": {
-      "file": null,
+      "file": "assets/models/FEZ_terminal_main.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "TNG.terminal_main": {
-      "file": null,
+      "file": "assets/models/TNG_terminal_main.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "AGA.terminal_main": {
-      "file": null,
+      "file": "assets/models/AGA_terminal_main.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "OUD.terminal_main": {
-      "file": null,
+      "file": "assets/models/OUD_terminal_main.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "TNG.pier": {
-      "file": null,
+      "file": "assets/models/TNG_pier.glb",
       "fit": {
         "axis": "z",
         "size": "auto"
       }
     },
     "TNG.parking_garage": {
-      "file": null,
+      "file": "assets/models/TNG_parking_garage.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "RAK.admin": {
-      "file": null,
+      "file": "assets/models/RAK_admin.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "AGA.admin": {
-      "file": null,
+      "file": "assets/models/AGA_admin.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "building.tower_medium": {
-      "file": null,
+      "file": "assets/models/tower_medium.glb",
       "fit": {
         "axis": "y",
         "size": "auto"
       }
     },
     "building.tower_small": {
-      "file": null,
+      "file": "assets/models/tower_small.glb",
       "fit": {
         "axis": "y",
         "size": "auto"
       }
     },
     "building.fuel_farm_4": {
-      "file": null,
+      "file": "assets/models/fuel_farm_4.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "building.fuel_farm_2": {
-      "file": null,
+      "file": "assets/models/fuel_farm_2.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
