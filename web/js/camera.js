@@ -56,6 +56,9 @@ export class TycoonCamera {
     const h = Math.cos(this.pitch) * this.dist;
     this.cam.position.set(this.target.x + Math.sin(this.yaw) * h, this.target.y + Math.sin(this.pitch) * this.dist, this.target.z + Math.cos(this.yaw) * h);
     this.cam.lookAt(this.target);
+    // Depth precision: push the near plane out when zoomed out (avoids z-fighting at km range).
+    const near = Math.min(Math.max(this.dist * 0.008, 0.5), 30);
+    if (Math.abs(near - this.cam.near) > this.cam.near * 0.1) { this.cam.near = near; this.cam.updateProjectionMatrix(); }
   }
   resize() { this.cam.aspect = innerWidth / innerHeight; this.cam.updateProjectionMatrix(); }
 }
