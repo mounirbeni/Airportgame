@@ -59,6 +59,21 @@ export class FlightMap {
     const dist = kmTall * (this.H / freeH) / (VIS * KM_PER_M);
     return { x: hw.x + ((x0 + x1) / 2 - hk[0]) / KM_PER_M, z: hw.z - ((y0 + y1) / 2 - hk[1]) / KM_PER_M, dist };
   }
+  /** Smooth any remaining discontinuity (e.g. leaving the holding fix for the approach): glide over 2 s. */
+  glide(a, p) {
+    this.disp ||= new Map();
+    const now = S.day * 1440 + S.gameMin, d = this.disp.get(a.id);        // game minutes: works at every game speed
+    if (!d || now - d.seen > 3 || now < d.seen) { this.disp.set(a.id, { p: p.p, seen: now, from: null }); return p; }
+    if (!d.from && Math.hypot(p.p[0] - d.p[0], p.p[1] - d.p[1]) > 8) { d.from = d.p; d.t0 = now; }
+    let out = p.p;
+    if (d.from) {
+      const k = Math.min((now - d.t0) / 1.5, 1), e = k * k * (3 - 2 * k);
+      out = [d.from[0] + (p.p[0] - d.from[0]) * e, d.from[1] + (p.p[1] - d.from[1]) * e];
+      if (k >= 1) d.from = null;
+    }
+    d.p = out; d.seen = now;
+    return { ...p, p: out };
+  }
   /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg, k, outstation, local}. */
   /** Map point of a world position near the home airport (aircraft visible in 3D). */
   localKm(x, z) { const H = this.km[DB.home], hw = this.homeWorld(); return [H[0] + (x - hw.x) * LOCAL_KM_PER_M, H[1] - (z - hw.z) * LOCAL_KM_PER_M]; }
@@ -87,27 +102,30 @@ export class FlightMap {
         else if (pv && pv.state === 'go_around' && pv.p) this.legs.set(a.id, { route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true });
         else this.legs.set(a.id, { route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
       }
-      this.prev.set(a.id, { state: a.state, legOut: a.legOut, p: this.prev.get(a.id) && this.prev.get(a.id).p });
+      const L2 = this.legs.get(a.id);
+      if (L2 && !a.legOut && pv && pv.state === 'enroute' && pv.legOut === false && pv.timer !== undefined && a.timer > pv.timer + 0.01 && a.timer <= 1.0001) L2.held = true;   // landing slot refused (the sim resets the timer to 1 min): holding
+      this.prev.set(a.id, { state: a.state, legOut: a.legOut, timer: a.timer, p: this.prev.get(a.id) && this.prev.get(a.id).p });
     }
     for (const id of [...this.legs.keys()]) if (!S.fleet.some(a => a.id === id)) { this.legs.delete(id); this.prev.delete(id); }
   }
   /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg: [from, to], k, outstation, local, L (the leg)}. */
   farPos(a) {
     const home = DB.home, r = this.sim.rt.get(a.id);
-    if (r && r.mesh.visible) {
-      const y = r.yaw || 0, leg = OUT_STATES.includes(a.state) ? [home, a.route] : [a.route, home];
-      return { p: this.localKm(r.mesh.position.x, r.mesh.position.z), d: [-Math.sin(y), Math.cos(y)], air: r.alt > 5, leg, k: 0, local: true };
-    }
+    // In the airport area (taxi, takeoff, approach, landing; visible in 3D): not on the country map.
+    // A flight appears when it leaves the airport area and disappears when it reaches it.
+    if (r && r.mesh.visible) return null;
     if (a.state !== 'enroute' || !a.route || !this.km[a.route]) return null;
     const L = this.legs && this.legs.get(a.id), fm = flightMinutes(a.route, a.type);
-    if (!a.legOut && a.timer > fm && !(L && L.circuit)) {               // turning round at the outstation
-      return { p: this.km[a.route], d: [0, 1], air: false, leg: [a.route, home], k: 0, outstation: true };
-    }
+    if (!a.legOut && a.timer > fm && !(L && L.circuit)) return null;   // landed at the outstation: off the map until it departs again
     if (!L) return null;
     const k = Math.min(Math.max(1 - a.timer / L.dur, 0), 1);
-    if (!a.legOut && a.timer <= 1.0001 && (k > 0.95 || L.circuit)) {                       // waiting for a landing slot: holding pattern at the entry
-      const ang = performance.now() / 4000 + a.id * 1.3, R = 7;
-      return { p: [L.to[0] + Math.cos(ang) * R, L.to[1] + Math.sin(ang) * R], d: [-Math.sin(ang), Math.cos(ang)], air: true, leg: [a.route, home], k: 1, L, holding: true };
+    if (!a.legOut && L.held) {                       // waiting for a landing slot: holding pattern at the entry
+      const back = arc(L.from, L.to, 0.97, L.bulge).p, bx = back[0] - L.to[0], by = back[1] - L.to[1], bn = Math.hypot(bx, by) || 1;
+      const stack = S.fleet.filter(o => o.route === a.route && o.state === 'enroute' && !o.legOut && this.legs.get(o.id) && this.legs.get(o.id).held).findIndex(o => o === a);
+      const dist = 10 + 9 * Math.max(stack, 0), c = [L.to[0] + bx / bn * dist, L.to[1] + by / bn * dist];   // holding fix on its own inbound route
+      const seed = [...String(a.id)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 997, 7);
+      const ang = (S.day * 1440 + S.gameMin) / 0.7 + seed, R = 4;            // one circuit every ~4.4 game minutes
+      return { p: [c[0] + Math.cos(ang) * R, c[1] + Math.sin(ang) * R], d: [-Math.sin(ang), Math.cos(ang)], air: true, leg: [a.route, home], k: 1, L, holding: true };
     }
     const q = arc(L.from, L.to, k, L.bulge);
     return { p: q.p, d: q.d, air: true, leg: a.legOut ? [home, a.route] : [a.route, home], k, L };
@@ -218,7 +236,7 @@ export class FlightMap {
 
     // Aircraft (positions once, used for trails, icons and picking).
     const list = [];
-    if (withIcons) for (const a of S.fleet) { const p = this.farPos(a); if (p) list.push({ a, p }); }
+    if (withIcons) for (const a of S.fleet) { const p = this.farPos(a); if (p) list.push({ a, p: this.glide(a, p) }); }
     const legPath = (L, k0, k1) => {
       g.beginPath();
       for (let i = 0; i <= 30; i++) { const [x, y] = P(arc(L.from, L.to, k0 + (k1 - k0) * i / 30, L.bulge).p); i ? g.lineTo(x, y) : g.moveTo(x, y); }
