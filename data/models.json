@@ -37,14 +37,14 @@
       }
     },
     "building.hangar": {
-      "file": null,
+      "file": "assets/models/CMN_hangar.glb",
       "fit": {
         "axis": "x",
         "size": "auto"
       }
     },
     "building.fire_station": {
-      "file": null,
+      "file": "assets/models/CMN_fire_station.glb",
       "fit": {
         "axis": "z",
         "size": 44
@@ -192,6 +192,111 @@
     },
     "CMN.admin_long": {
       "file": "assets/models/CMN_admin_long.glb",
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "RAK.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "FEZ.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "TNG.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "AGA.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "OUD.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "TNG.pier": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "TNG.parking_garage": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "RAK.admin": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "AGA.admin": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "building.tower_medium": {
+      "file": null,
+      "fit": {
+        "axis": "y",
+        "size": "auto"
+      }
+    },
+    "building.tower_small": {
+      "file": null,
+      "fit": {
+        "axis": "y",
+        "size": "auto"
+      }
+    },
+    "building.fuel_farm_4": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "building.fuel_farm_2": {
+      "file": null,
+      "fit": {
+        "axis": "x",
+        "size": "auto"
+      }
+    },
+    "TNG.tower": {
+      "file": "assets/models/CMN_tower.glb",
+      "fit": {
+        "axis": "y",
+        "size": "auto"
+      }
+    },
+    "FEZ.fuel_farm": {
+      "file": "assets/models/CMN_fuel_farm.glb",
       "fit": {
         "axis": "x",
         "size": "auto"

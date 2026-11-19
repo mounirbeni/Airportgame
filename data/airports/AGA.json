@@ -1,32 +1,192 @@
 {
-  "code": "AGA",
-  "identity": "Holiday airport: single 3200 m runway 09/27 operated towards 27, linear terminal with 8 contact gates plus a remote charter apron with 6 stands.",
-  "start_stands": 2,
-  "ops": { "departure": "27", "arrival": "27" },
-  "runways": [
-    { "id": "09/27", "ends": ["09", "27"], "x": 0, "z": 0, "length": 3200, "width": 45,
-      "taxiway": { "id": "A", "side": 1, "offset": 190, "connectors": [1600, 500, -500, -1600],
-        "rapid_exits": [{ "for": "27", "z": -250, "angle": 30 }] } }
-  ],
-  "terminals": [
-    { "id": "T1", "type": "linear", "style": "moroccan", "face": 470, "z": 250, "length": 520, "depth": 60, "h": 16, "stands": 8, "spacing": 58, "side": -1 },
-    { "id": "CHARTER", "type": "remote", "x": 330, "z": -520, "stands": 6, "spacing": 55, "nose": 1 }
-  ],
-  "taxilines": [
-    { "id": "L1", "type": "taxilane", "pts": [[190, -20], [386, -20]] },
-    { "id": "L2", "type": "taxilane", "pts": [[190, 520], [386, 520]] },
-    { "id": "L3", "type": "taxilane", "pts": [[190, -310], [271, -310]] }
-  ],
-  "buildings": [
-    { "type": "tower", "x": 540, "z": -80, "h": 45 },
-    { "type": "fire_station", "x": 300, "z": 760, "rot": 0 },
-    { "type": "fuel_farm", "x": 330, "z": -960, "tanks": 4 },
-    { "type": "admin", "x": 600, "z": 640, "w": 60, "d": 36, "h": 16 }
-  ],
-  "roads": [
-    { "id": "curb", "pts": [[540, 0], [540, 520]], "width": 16 },
-    { "id": "access", "pts": [[540, 520], [700, 640], [1300, 640]], "width": 14 }
-  ],
-  "parking": [{ "x": 660, "z": 250, "w": 140, "d": 420 }],
-  "service_roads": [[[515, 20], [515, 500]]]
+ "code": "AGA",
+ "identity": "Holiday airport: single 3200 m runway 09/27 operated towards 27, linear terminal with 8 contact gates plus a remote charter apron with 6 stands.",
+ "start_stands": 2,
+ "ops": {
+  "departure": "27",
+  "arrival": "27"
+ },
+ "runways": [
+  {
+   "id": "09/27",
+   "ends": [
+    "09",
+    "27"
+   ],
+   "x": 0,
+   "z": 0,
+   "length": 3200,
+   "width": 45,
+   "taxiway": {
+    "id": "A",
+    "side": 1,
+    "offset": 190,
+    "connectors": [
+     1600,
+     500,
+     -500,
+     -1600
+    ],
+    "rapid_exits": [
+     {
+      "for": "27",
+      "z": -250,
+      "angle": 30
+     }
+    ]
+   }
+  }
+ ],
+ "terminals": [
+  {
+   "id": "T1",
+   "type": "linear",
+   "style": "moroccan",
+   "face": 470,
+   "z": 250,
+   "length": 520,
+   "depth": 60,
+   "h": 16,
+   "stands": 8,
+   "spacing": 58,
+   "side": -1
+  },
+  {
+   "id": "CHARTER",
+   "type": "remote",
+   "x": 330,
+   "z": -520,
+   "stands": 6,
+   "spacing": 55,
+   "nose": 1
+  }
+ ],
+ "taxilines": [
+  {
+   "id": "L1",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     -20
+    ],
+    [
+     386,
+     -20
+    ]
+   ]
+  },
+  {
+   "id": "L2",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     520
+    ],
+    [
+     386,
+     520
+    ]
+   ]
+  },
+  {
+   "id": "L3",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     -310
+    ],
+    [
+     271,
+     -310
+    ]
+   ]
+  }
+ ],
+ "buildings": [
+  {
+   "type": "tower",
+   "x": 540,
+   "z": -80,
+   "h": 46,
+   "model": "building.tower_medium"
+  },
+  {
+   "type": "fire_station",
+   "x": 300,
+   "z": 760,
+   "rot": 0
+  },
+  {
+   "type": "fuel_farm",
+   "x": 330,
+   "z": -960,
+   "tanks": 4,
+   "model": "building.fuel_farm_4"
+  },
+  {
+   "type": "admin",
+   "x": 600,
+   "z": 640,
+   "w": 60,
+   "d": 36,
+   "h": 16
+  }
+ ],
+ "roads": [
+  {
+   "id": "curb",
+   "pts": [
+    [
+     540,
+     0
+    ],
+    [
+     540,
+     520
+    ]
+   ],
+   "width": 16
+  },
+  {
+   "id": "access",
+   "pts": [
+    [
+     540,
+     520
+    ],
+    [
+     700,
+     640
+    ],
+    [
+     1300,
+     640
+    ]
+   ],
+   "width": 14
+  }
+ ],
+ "parking": [
+  {
+   "x": 660,
+   "z": 250,
+   "w": 140,
+   "d": 420
+  }
+ ],
+ "service_roads": [
+  [
+   [
+    515,
+    20
+   ],
+   [
+    515,
+    500
+   ]
+  ]
+ ]
 }

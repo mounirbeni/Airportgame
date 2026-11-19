@@ -1,32 +1,177 @@
 {
-  "code": "TNG",
-  "identity": "Northern gateway: single 3500 m runway operated towards 28 (westerly), full parallel taxiway with two rapid exits, modern glass terminal with one pier.",
-  "start_stands": 2,
-  "ops": { "departure": "28", "arrival": "28" },
-  "runways": [
-    { "id": "10/28", "ends": ["10", "28"], "x": 0, "z": 0, "length": 3500, "width": 45,
-      "taxiway": { "id": "A", "side": 1, "offset": 200, "connectors": [1750, 600, -600, -1750],
-        "rapid_exits": [{ "for": "28", "z": -350, "angle": 30 }, { "for": "28", "z": 250, "angle": 30 }] } }
-  ],
-  "terminals": [
-    { "id": "T1", "type": "pier", "style": "modern", "x": 450, "z": 900, "dir": -1,
-      "main": { "w": 320, "d": 70, "h": 20 }, "pier_w": 32, "pier_len": 450, "pier_h": 11,
-      "stands_per_side": 4, "spacing": 60, "piers": [{ "x": 450 }] }
-  ],
-  "taxilines": [
-    { "id": "C", "type": "taxiway", "pts": [[200, 360], [600, 360]] }
-  ],
-  "buildings": [
-    { "type": "tower", "x": 250, "z": 1000, "h": 55 },
-    { "type": "fire_station", "x": 330, "z": -200, "rot": 0 },
-    { "type": "hangar", "x": 360, "z": -560, "rot": -90, "w": 80, "d": 70 },
-    { "type": "fuel_farm", "x": 360, "z": -1100, "tanks": 4 },
-    { "type": "parking_garage", "x": 450, "z": 1060, "w": 220, "d": 70, "floors": 4 }
-  ],
-  "roads": [
-    { "id": "curb", "pts": [[260, 965], [640, 965]], "width": 16 },
-    { "id": "access", "pts": [[640, 965], [760, 1100], [760, 1700]], "width": 14 }
-  ],
-  "parking": [{ "x": 700, "z": 800, "w": 110, "d": 220 }],
-  "service_roads": [[[300, 940], [600, 940]]]
+ "code": "TNG",
+ "identity": "Northern gateway: single 3500 m runway operated towards 28 (westerly), full parallel taxiway with two rapid exits, modern glass terminal with one pier.",
+ "start_stands": 2,
+ "ops": {
+  "departure": "28",
+  "arrival": "28"
+ },
+ "runways": [
+  {
+   "id": "10/28",
+   "ends": [
+    "10",
+    "28"
+   ],
+   "x": 0,
+   "z": 0,
+   "length": 3500,
+   "width": 45,
+   "taxiway": {
+    "id": "A",
+    "side": 1,
+    "offset": 200,
+    "connectors": [
+     1750,
+     600,
+     -600,
+     -1750
+    ],
+    "rapid_exits": [
+     {
+      "for": "28",
+      "z": -350,
+      "angle": 30
+     },
+     {
+      "for": "28",
+      "z": 250,
+      "angle": 30
+     }
+    ]
+   }
+  }
+ ],
+ "terminals": [
+  {
+   "id": "T1",
+   "type": "pier",
+   "style": "modern",
+   "x": 450,
+   "z": 900,
+   "dir": -1,
+   "main": {
+    "w": 320,
+    "d": 70,
+    "h": 20
+   },
+   "pier_w": 32,
+   "pier_len": 450,
+   "pier_h": 11,
+   "stands_per_side": 4,
+   "spacing": 60,
+   "piers": [
+    {
+     "x": 450
+    }
+   ]
+  }
+ ],
+ "taxilines": [
+  {
+   "id": "C",
+   "type": "taxiway",
+   "pts": [
+    [
+     200,
+     360
+    ],
+    [
+     600,
+     360
+    ]
+   ]
+  }
+ ],
+ "buildings": [
+  {
+   "type": "tower",
+   "x": 250,
+   "z": 1000,
+   "h": 62
+  },
+  {
+   "type": "fire_station",
+   "x": 330,
+   "z": -200,
+   "rot": 0
+  },
+  {
+   "type": "hangar",
+   "x": 360,
+   "z": -560,
+   "rot": -90,
+   "w": 84,
+   "d": 75
+  },
+  {
+   "type": "fuel_farm",
+   "x": 360,
+   "z": -1100,
+   "tanks": 4,
+   "model": "building.fuel_farm_4"
+  },
+  {
+   "type": "parking_garage",
+   "x": 450,
+   "z": 1060,
+   "w": 220,
+   "d": 70,
+   "floors": 4
+  }
+ ],
+ "roads": [
+  {
+   "id": "curb",
+   "pts": [
+    [
+     260,
+     965
+    ],
+    [
+     640,
+     965
+    ]
+   ],
+   "width": 16
+  },
+  {
+   "id": "access",
+   "pts": [
+    [
+     640,
+     965
+    ],
+    [
+     760,
+     1100
+    ],
+    [
+     760,
+     1700
+    ]
+   ],
+   "width": 14
+  }
+ ],
+ "parking": [
+  {
+   "x": 700,
+   "z": 800,
+   "w": 110,
+   "d": 220
+  }
+ ],
+ "service_roads": [
+  [
+   [
+    300,
+    940
+   ],
+   [
+    600,
+    940
+   ]
+  ]
+ ]
 }

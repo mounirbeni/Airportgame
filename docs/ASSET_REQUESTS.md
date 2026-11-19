@@ -166,6 +166,76 @@
 
 ---
 
-## 7. باقي المطارات (بعد CMN)
+## 7. باقي المطارات — الطلب الثاني
 
-مخططاتها جاهزة في `data/airports/`. أرسل لك أمرًا مماثلًا لكل مطار حين ننتهي من CMN.
+**ما وصل من الطلب الأول ويُستعمل كما هو في كل المطارات، لا تصنعه من جديد:**
+
+| الملف | أين يُستعمل أيضًا |
+|---|---|
+| `jet_bridge.glb` | كل الجسور (RAK 10، TNG 8، AGA 8) |
+| `CMN_hangar.glb` | حظيرة RAK وحظيرة TNG (وحّدتُ قياسهما على 75 × 84 ليطابق الملف بالضبط) |
+| `CMN_fire_station.glb` | مطافئ المطارات الخمسة (نفس القياس 26 × 44) |
+| `CMN_tower.glb` | برج TNG (رفعتُ ارتفاعه إلى 72 م كليًا ليطابق الملف بالضبط) |
+| `CMN_fuel_farm.glb` | خزانات FEZ (3 خزانات، نفس القياس) |
+| الطائرات والمركبات وخامات الأرضيات | كل المطارات |
+
+**المخططات (لكل مطار ملفان في `docs/reference/`):**
+- `<code>_master_plan.png`: المطار كاملًا، 1 بكسل = 2 م.
+- `<code>_terminal_detail.png`: المبنى والمواقف، 1 بكسل = 0.5 م.
+
+الخط الأحمر = الواجهة / الأبواب، والبرتقالي = الجسور.
+
+**الطابع:** المطارات الأربعة RAK وAGA وFEZ وOUD **مغربي حديث**: جدران بلون التراب (لون كل مطار أدناه)، أقواس، شرائط زليج، تفاصيل نحاسية. أما TNG فطابعه **حديث بالزجاج** مثل CMN. القواعد العامة في القسم 0 تنطبق على كل شيء.
+
+### 7.1 مباني الركاب
+
+| الرمز | الملف | المنفذ | القياس (م): X (عمق) × Z (طول) × Y | اللون | البوابات على الواجهة −X |
+|---|---|---|---|---|---|
+| R1 | `RAK_terminal_main.glb` | `RAK.terminal_main` | **70 × 640 × 18** | `#c0623f` أحمر مراكشي | **10 فتحات جسور**، مراكزها على Z = −261، −203، −145، −87، −29، 29، 87، 145، 203، 261 |
+| A1 | `AGA_terminal_main.glb` | `AGA.terminal_main` | **60 × 520 × 16** | `#c47a4f` | **8 فتحات جسور** على Z = −203، −145، −87، −29، 29، 87، 145، 203 |
+| F1 | `FEZ_terminal_main.glb` | `FEZ.terminal_main` | **50 × 260 × 14** | `#a8603f` | بلا جسور: **5 أبواب صعود أرضية** (الركاب يمشون إلى سلّم الطائرة) على Z = −104، −52، 0، 52، 104 |
+| O1 | `OUD_terminal_main.glb` | `OUD.terminal_main` | **44 × 180 × 12** | `#a86a48` | بلا جسور: **3 أبواب صعود أرضية** على Z = −52، 0، 52 |
+| T1 | `TNG_terminal_main.glb` | `TNG.terminal_main` | **70 × 320 × 20** | زجاج حديث | الذراع T2 يلتصق بالواجهة −X عند **Z = 0** |
+| T2 | `TNG_pier.glb` | `TNG.pier` | **32 × 450 × 11** | زجاج حديث | في كل جانب طويل (±X) **4 فتحات جسور**: أولها على بُعد **45 م** من الطرف +Z (الملتصق بـ T1)، ثم كل **60 م** |
+
+- **فتحات الجسور:**
+  - ارتفاع أرضيتها **3.4 م**.
+  - الجسر `jet_bridge.glb` يلتصق بالواجهة عند مركز كل فتحة، فلا تجعل أي شيء بارزًا أكثر من 1 م أمام الواجهة.
+- **الواجهة الخلفية +X:** تطلّ على طريق السيارات، وفيها المداخل ومظلّة للرصيف.
+
+> **Prompt (R1، وغيّر القياسات واللون وعدد البوابات لـ A1 / F1 / O1):** Game-ready low-poly 3D model of a contemporary Moroccan airport passenger terminal, exactly 640 m long (Z axis), 70 m deep (X axis), 18 m tall. Earth-red rendered walls (#c0623f), rows of horseshoe arches with deep shaded loggias, zellige tile bands, copper trim and a central domed hall with a copper lantern. Airside facade facing −X with 10 jet-bridge door openings (floor at 3.4 m) centred at z = −261, −203, −145, −87, −29, 29, 87, 145, 203, 261 m. Landside facade (+X) with arched entrances and a canopy over the curb. PBR materials, origin at the centre of the footprint on the ground, Y up, no ground plane, no background, no aircraft.
+
+> **Prompt (F1 / O1, بلا جسور):** Same style, [50 × 260 × 14 m | 44 × 180 × 12 m], airside facade (−X) with [5 | 3] ground-level glazed boarding gates under arched porticoes at z = [−104, −52, 0, 52, 104 | −52, 0, 52] m, no jet bridges.
+
+> **Prompt (T1 / T2):** Game-ready low-poly 3D model of a modern glass airport terminal, 320 m long (Z), 70 m deep (X), 20 m tall, silver curved metal roof, full-height blue-green glazing, airside facade facing −X with one pier connection at z = 0 / and a matching concourse pier 32 m wide (X), 450 m long (Z), 11 m tall, continuous glazing, 4 jet-bridge openings per long side (first 45 m from the +Z end, then every 60 m), +Z end connects flush to the terminal. PBR, origin at footprint centre on the ground, Y up, no ground.
+
+### 7.2 مبانٍ أخرى
+
+| الرمز | الملف | المنفذ | القياس (م) | ملاحظات |
+|---|---|---|---|---|
+| W1 | `tower_medium.glb` | `building.tower_medium` | **الارتفاع الكلي 56** مع الهوائي، قاعدة ≈ 12 × 12، كابينة زجاجية قطرها ≈ 16 على ارتفاع ≈ 40 | مغربي حديث: جذع بلون التراب، شريط زليج، إطار نحاسي للكابينة. لمطاري **RAK وAGA** |
+| W2 | `tower_small.glb` | `building.tower_small` | **الارتفاع الكلي 44** مع الهوائي، قاعدة ≈ 10 × 10، كابينة قطرها ≈ 13 على ارتفاع ≈ 30 | نفس الطابع. لمطاري **FEZ وOUD** |
+| D1 | `RAK_admin.glb` | `RAK.admin` | **70 × 40 × 18** (الطول على X) | مبنى إدارة مغربي، المدخل على −Z |
+| D2 | `AGA_admin.glb` | `AGA.admin` | **60 × 36 × 16** (الطول على X) | مبنى إدارة مغربي ساحلي، المدخل على −Z |
+| G1 | `TNG_parking_garage.glb` | `TNG.parking_garage` | **220 × 70 × 14** (الطول على X): 4 طوابق كل طابق 3.2 م + سياج السطح | حديث، منحدرات داخلية، **بلا سيارات** (اللعبة تضعها) |
+| U4 | `fuel_farm_4.glb` | `building.fuel_farm_4` | **62 × 62**: 4 خزانات (قطر 20، ارتفاع 14) على شبكة 2 × 2 بتباعد 26 م، وجدار حماية 1.6 م | لمطارات **RAK وTNG وAGA**. نفس طابع `CMN_fuel_farm.glb` |
+| U2 | `fuel_farm_2.glb` | `building.fuel_farm_2` | **62 × 36**: خزانان على خط واحد بتباعد 26 م على X، وجدار حماية 1.6 م | لمطار **OUD** |
+
+> **Prompt (W1 / W2):** Game-ready 3D model of a Moroccan-style airport control tower, total height [56 | 44] m including antenna mast, slender earth-coloured rendered shaft with a zellige band, faceted glass control cab ≈[16 | 13] m in diameter at ≈[40 | 30] m height with copper trim, PBR, origin at base centre, Y up.
+
+### 7.3 تحسين خامة العشب (كل المطارات)
+
+| الملف | المطلوب |
+|---|---|
+| `tex_airfield_grass.png` (نسخة 2) | نفس الاسم والمقاس: 2048²، تغطي 260 × 260 م. الفرق: **بلا بقع فاتحة أو غامقة كبيرة**؛ تدرّج ناعم وتفاصيل صغيرة فقط، حتى لا يظهر التكرار كمربعات من بعيد |
+
+> Prompt: Seamless tileable top-down texture of a well-kept airfield grass, 2048 × 2048, covering 260 × 260 m, uniform medium green with only fine small-scale variation (no large light or dark patches, no stripes), flat even lighting, no shadows, no perspective.
+
+### 7.4 التسليم
+
+| ما ترسله | أين أضعه | ما أفعله |
+|---|---|---|
+| المجسمات `.glb` بالأسماء أعلاه | `web/assets/models/` | المنافذ كلها موجودة وموصولة في `data/models.json`؛ أكتب اسم الملف في منفذه فقط |
+| الخامة `.png` | `web/assets/tex/` | أحوّلها إلى WebP بـ `tools/import_art.py` |
+
+**المجموع:** 6 مبانٍ ركاب + برجان + مبنيا إدارة + مرآب + مزرعتا وقود = **13 مجسمًا**، وخامة عشب واحدة.

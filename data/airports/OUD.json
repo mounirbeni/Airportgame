@@ -1,28 +1,145 @@
 {
-  "code": "OUD",
-  "identity": "Eastern regional airport: diagonal 3000 m runway 06/24, partial parallel taxiway, small terminal with three stair-boarding stands.",
-  "start_stands": 2,
-  "ops": { "departure": "06", "arrival": "06" },
-  "runways": [
-    { "id": "06/24", "ends": ["06", "24"], "x": 0, "z": 0, "length": 3000, "width": 45,
-      "taxiway": { "id": "A", "side": 1, "offset": 180, "from": 1500, "to": -200, "connectors": [1500, 500, -200] } }
-  ],
-  "terminals": [
-    { "id": "T1", "type": "linear", "style": "moroccan", "face": 400, "z": 250, "length": 180, "depth": 44, "h": 12, "stands": 3, "spacing": 52, "side": -1, "contact": false }
-  ],
-  "taxilines": [
-    { "id": "L1", "type": "taxilane", "pts": [[180, 150], [316, 150]] },
-    { "id": "L2", "type": "taxilane", "pts": [[180, 360], [316, 360]] }
-  ],
-  "buildings": [
-    { "type": "tower", "x": 450, "z": 60, "h": 32 },
-    { "type": "fire_station", "x": 300, "z": -60, "rot": 0 },
-    { "type": "fuel_farm", "x": 300, "z": 700, "tanks": 2 }
-  ],
-  "roads": [
-    { "id": "curb", "pts": [[460, 140], [460, 360]], "width": 14 },
-    { "id": "access", "pts": [[460, 360], [560, 480], [1000, 480]], "width": 12 }
-  ],
-  "parking": [{ "x": 540, "z": 250, "w": 90, "d": 200 }],
-  "service_roads": []
+ "code": "OUD",
+ "identity": "Eastern regional airport: diagonal 3000 m runway 06/24, partial parallel taxiway, small terminal with three stair-boarding stands.",
+ "start_stands": 2,
+ "ops": {
+  "departure": "06",
+  "arrival": "06"
+ },
+ "runways": [
+  {
+   "id": "06/24",
+   "ends": [
+    "06",
+    "24"
+   ],
+   "x": 0,
+   "z": 0,
+   "length": 3000,
+   "width": 45,
+   "taxiway": {
+    "id": "A",
+    "side": 1,
+    "offset": 180,
+    "from": 1500,
+    "to": -200,
+    "connectors": [
+     1500,
+     500,
+     -200
+    ]
+   }
+  }
+ ],
+ "terminals": [
+  {
+   "id": "T1",
+   "type": "linear",
+   "style": "moroccan",
+   "face": 400,
+   "z": 250,
+   "length": 180,
+   "depth": 44,
+   "h": 12,
+   "stands": 3,
+   "spacing": 52,
+   "side": -1,
+   "contact": false
+  }
+ ],
+ "taxilines": [
+  {
+   "id": "L1",
+   "type": "taxilane",
+   "pts": [
+    [
+     180,
+     150
+    ],
+    [
+     316,
+     150
+    ]
+   ]
+  },
+  {
+   "id": "L2",
+   "type": "taxilane",
+   "pts": [
+    [
+     180,
+     360
+    ],
+    [
+     316,
+     360
+    ]
+   ]
+  }
+ ],
+ "buildings": [
+  {
+   "type": "tower",
+   "x": 450,
+   "z": 60,
+   "h": 34,
+   "model": "building.tower_small"
+  },
+  {
+   "type": "fire_station",
+   "x": 300,
+   "z": -60,
+   "rot": 0
+  },
+  {
+   "type": "fuel_farm",
+   "x": 300,
+   "z": 700,
+   "tanks": 2,
+   "model": "building.fuel_farm_2"
+  }
+ ],
+ "roads": [
+  {
+   "id": "curb",
+   "pts": [
+    [
+     460,
+     140
+    ],
+    [
+     460,
+     360
+    ]
+   ],
+   "width": 14
+  },
+  {
+   "id": "access",
+   "pts": [
+    [
+     460,
+     360
+    ],
+    [
+     560,
+     480
+    ],
+    [
+     1000,
+     480
+    ]
+   ],
+   "width": 12
+  }
+ ],
+ "parking": [
+  {
+   "x": 540,
+   "z": 250,
+   "w": 90,
+   "d": 200
+  }
+ ],
+ "service_roads": []
 }
