@@ -7,7 +7,7 @@
 //    3D position near the airport), with flown trail and remaining path.
 import * as THREE from 'three';
 import { DB, t } from './core.js';
-import { S, flightMinutes } from './state.js';
+import { S } from './state.js';
 import { Geo, toKm, CITIES, SEAS } from './geo.js';
 import { FINAL_DIST } from './sim.js';
 
@@ -46,19 +46,20 @@ export class FlightMap {
     this.cv.width = Math.round(w * dpr); this.cv.height = Math.round(h * dpr);
     this.cv.style.width = w + 'px'; this.cv.style.height = h + 'px'; this.dpr = dpr;
   }
-  homeWorld() { return DB.airports[DB.home].toWorld(0, 0, 0); }
+  /** World centre of an airport (the player's tower by default: the map pans and zooms around it). */
+  homeWorld(code = S.tower) { return DB.airports[code].toWorld(0, 0, 0); }
 
   // --- far map: camera <-> map kilometres ------------------------------------------------------
   /** Map view from the camera: centre (km) and scale (px per km). Panning/zooming the camera moves the map. */
   view(cam3) {
-    const hw = this.homeWorld(), hk = this.km[DB.home];
+    const hw = this.homeWorld(), hk = this.km[S.tower];
     const v = cam3.cam.view, ox = v && v.enabled ? v.offsetX : 0, oy = v && v.enabled ? v.offsetY : 0;
     return { cx: hk[0] + (cam3.target.x - hw.x) * KM_PER_M, cy: hk[1] - (cam3.target.z - hw.z) * KM_PER_M,
       s: this.H / (VIS * cam3.dist * KM_PER_M), sx: this.W / 2 - ox, sy: this.H / 2 - oy };
   }
   /** Camera target and distance that show the map rectangle [x0, y0, x1, y1] (km). */
   frame(cam3, x0, y0, x1, y1, freeW, freeH) {
-    const hw = this.homeWorld(), hk = this.km[DB.home];
+    const hw = this.homeWorld(), hk = this.km[S.tower];
     const kmTall = Math.max(y1 - y0, (x1 - x0) * freeH / freeW) * 1.25;
     const dist = kmTall * (this.H / freeH) / (VIS * KM_PER_M);
     return { x: hw.x + ((x0 + x1) / 2 - hk[0]) / KM_PER_M, z: hw.z - ((y0 + y1) / 2 - hk[1]) / KM_PER_M, dist };
@@ -80,12 +81,13 @@ export class FlightMap {
   }
   /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg, k, outstation, local}. */
   /** Map point of a world position near the home airport (aircraft visible in 3D). */
-  localKm(x, z) { const H = this.km[DB.home], hw = this.homeWorld(); return [H[0] + (x - hw.x) * LOCAL_KM_PER_M, H[1] - (z - hw.z) * LOCAL_KM_PER_M]; }
+  localKm(x, z, code) { const H = this.km[code], hw = this.homeWorld(code); return [H[0] + (x - hw.x) * LOCAL_KM_PER_M, H[1] - (z - hw.z) * LOCAL_KM_PER_M]; }
   /** Map point where arrivals start their final approach (where the 3D approach begins). */
-  approachEntry() {
-    const sim = this.sim, [tx, tz] = sim.arr.threshold, d = sim.arr.dir, w = sim.ap.toWorld(tx - d[0] * FINAL_DIST, 0, tz - d[1] * FINAL_DIST);
-    return this.localKm(w.x, w.z);
+  approachEntry(code) {
+    const sim = this.sim.sims[code], [tx, tz] = sim.arr.threshold, d = sim.arr.dir, w = sim.ap.toWorld(tx - d[0] * FINAL_DIST, 0, tz - d[1] * FINAL_DIST);
+    return this.localKm(w.x, w.z, code);
   }
+
   /**
    * Continuous flight legs. Every time an aircraft leaves the 3D view (takeoff, go-around) or turns
    * round at the outstation, the leg it starts is recorded: from the exact point where it was, to the
@@ -97,14 +99,14 @@ export class FlightMap {
     this.legs ||= new Map(); this.prev ||= new Map();
     for (const a of S.fleet) {
       const pv = this.prev.get(a.id), r = this.sim.rt.get(a.id);
-      if (r && r.mesh.visible) { this.prev.set(a.id, { state: a.state, legOut: a.legOut, p: this.localKm(r.mesh.position.x, r.mesh.position.z) }); continue; }
-      if (a.state !== 'enroute' || !a.route || !this.km[a.route]) { this.prev.set(a.id, { state: a.state, legOut: a.legOut }); continue; }
-      const fm = flightMinutes(a.route, a.type), leg = this.legs.get(a.id);
-      const fresh = !leg || leg.route !== a.route || leg.out !== a.legOut;
+      if (r && r.mesh.visible) { this.prev.set(a.id, { state: a.state, legOut: a.legOut, p: this.localKm(r.mesh.position.x, r.mesh.position.z, a.loc) }); continue; }
+      if (a.state !== 'enroute' || !this.km[a.loc] || !this.km[a.from]) { this.prev.set(a.id, { state: a.state, legOut: a.legOut }); continue; }
+      const leg = this.legs.get(a.id);
+      const fresh = !leg || leg.dest !== a.loc || leg.out !== a.legOut;
       if (fresh || (pv && pv.state !== 'enroute')) {
-        if (a.legOut) this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: true, from: pv && pv.p ? pv.p : this.km[DB.home], to: this.km[a.route], dur: Math.max(a.timer, 1), bulge: ARC });
-        else if (pv && pv.state === 'go_around' && pv.p) { const now0 = S.day * 1440 + S.gameMin; this.legs.set(a.id, { t0: now0, route: a.route, out: false, from: pv.p, to: this.approachEntry(), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true, held: a.timer > 10, heldAt: now0 }); }
-        else this.legs.set(a.id, { t0: S.day * 1440 + S.gameMin, route: a.route, out: false, from: this.km[a.route], to: this.approachEntry(), dur: fm, bulge: -ARC });
+        const now0 = S.day * 1440 + S.gameMin;
+        if (pv && pv.state === 'go_around' && pv.p) this.legs.set(a.id, { t0: now0, dest: a.loc, out: a.legOut, from: pv.p, to: this.approachEntry(a.loc), dur: Math.max(a.timer, 1), bulge: 0.35, circuit: true, held: a.timer > 10, heldAt: now0 });
+        else this.legs.set(a.id, { t0: now0, dest: a.loc, out: a.legOut, from: pv && pv.p ? pv.p : this.km[a.from], to: this.approachEntry(a.loc), dur: Math.max(a.timer, 1), bulge: a.legOut ? ARC : -ARC });
       }
       const L2 = this.legs.get(a.id);
       if (L2 && !a.legOut && pv && pv.state === 'enroute' && pv.legOut === false && pv.timer !== undefined && a.timer > pv.timer + 0.01 && a.timer <= 1.0001 && !L2.held) { L2.held = true; L2.heldAt = S.day * 1440 + S.gameMin; }   // landing slot refused (the sim resets the timer to 1 min): holding
@@ -128,7 +130,7 @@ export class FlightMap {
       let p = this.farPos(a); if (!p) { this.off.delete(a.id); continue; }
       // lanes: flights on the same leg (route + direction) get their own parallel lane
       if (p.L && !p.holding) {
-        const same = S.fleet.filter(o => o.state === 'enroute' && o.route === a.route && o.legOut === a.legOut && this.legs.get(o.id) && !this.legs.get(o.id).held)
+        const same = S.fleet.filter(o => o.state === 'enroute' && o.loc === a.loc && o.from === a.from && this.legs.get(o.id) && !this.legs.get(o.id).held)
           .sort((u, v) => (this.legs.get(u.id).t0 ?? 0) - (this.legs.get(v.id).t0 ?? 0));
         const lane = same.indexOf(a);
         if (lane > 0) {
@@ -171,41 +173,42 @@ export class FlightMap {
    * until it is cleared, so waiting aircraft never sit on top of each other.
    */
   assignHoldSlots() {
-    const H = this.km[DB.home], held = [];
+    const held = [];
     for (const a of S.fleet) { const L = this.legs.get(a.id); if (L && L.held && a.state === 'enroute' && !a.legOut) held.push({ a, L }); else if (L) L.slot = undefined; }
-    const used = new Set(held.filter(h => h.L.slot !== undefined).map(h => h.L.slot));
+    const used = new Set(held.filter(h => h.L.slot !== undefined).map(h => h.L.dest + ':' + h.L.slot));
     for (const { L } of held.sort((u, v) => u.L.heldAt - v.L.heldAt)) {
       if (L.slot !== undefined) continue;
+      const H = this.km[L.dest];
       const want = Math.atan2(L.from[1] - H[1], L.from[0] - H[0]);
       let best = -1, bd = Infinity;
       for (let i = 0; i < HOLD_SLOTS; i++) {
-        if (used.has(i)) continue;
+        if (used.has(L.dest + ':' + i)) continue;
         const ang = i * 2 * Math.PI / HOLD_SLOTS, d = Math.abs(Math.atan2(Math.sin(ang - want), Math.cos(ang - want)));
         if (d < bd) { bd = d; best = i; }
       }
       if (best < 0) best = held.indexOf(held.find(h => h.L === L)) % HOLD_SLOTS;   // more than 12 waiting: share
-      L.slot = best; used.add(best);
+      L.slot = best; used.add(L.dest + ':' + best);
     }
   }
   /** Aircraft position on the far map: {p: [x, y] km, d: heading, air, leg: [from, to], k, outstation, local, L (the leg)}. */
   farPos(a) {
-    const home = DB.home, r = this.sim.rt.get(a.id);
+    const r = this.sim.rt.get(a.id);
     // In the airport area (taxi, takeoff, approach, landing; visible in 3D): not on the country map.
     // A flight appears when it leaves the airport area and disappears when it reaches it.
     if (r && r.mesh.visible) return null;
-    if (a.state !== 'enroute' || !a.route || !this.km[a.route]) return null;
-    const L = this.legs && this.legs.get(a.id), fm = flightMinutes(a.route, a.type);
-    if (!a.legOut && a.timer > fm && !(L && L.circuit)) return null;   // landed at the outstation: off the map until it departs again
+    if (a.state !== 'enroute' || !this.km[a.loc]) return null;
+    const L = this.legs && this.legs.get(a.id);
     if (!L) return null;
+    const leg = [a.from, a.loc];
     const k = Math.min(Math.max(1 - a.timer / L.dur, 0), 1);
-    if (!a.legOut && L.held) {                       // waiting for a landing slot: holding pattern at the entry
-      const H = this.km[home], sa = (L.slot || 0) * 2 * Math.PI / HOLD_SLOTS, c = [H[0] + Math.cos(sa) * HOLD_R, H[1] + Math.sin(sa) * HOLD_R];   // its own slot
+    if (L.held) {                                    // waiting for a landing slot: holding pattern at its own slot
+      const H = this.km[L.dest], sa = (L.slot || 0) * 2 * Math.PI / HOLD_SLOTS, c = [H[0] + Math.cos(sa) * HOLD_R, H[1] + Math.sin(sa) * HOLD_R];   // its own slot
       const seed = [...String(a.id)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 997, 7);
       const ang = (S.day * 1440 + S.gameMin) / 0.7 + seed, R = 3;            // one circuit every ~4.4 game minutes
-      return { p: [c[0] + Math.cos(ang) * R, c[1] + Math.sin(ang) * R], d: [-Math.sin(ang), Math.cos(ang)], air: true, leg: [a.route, home], k: 1, L, holding: true };
+      return { p: [c[0] + Math.cos(ang) * R, c[1] + Math.sin(ang) * R], d: [-Math.sin(ang), Math.cos(ang)], air: true, leg, k: 1, L, holding: true };
     }
     const q = arc(L.from, L.to, k, L.bulge);
-    return { p: q.p, d: q.d, air: true, leg: a.legOut ? [home, a.route] : [a.route, home], k, L };
+    return { p: q.p, d: q.d, air: true, leg, k, L };
   }
 
   draw(cam3, selected) {
@@ -234,12 +237,13 @@ export class FlightMap {
     return { x: (this.v.x + 1) / 2 * this.W, y: (1 - this.v.y) / 2 * this.H, ok: this.v.z < 1 };
   }
   drawNear(cam, selected, withIcons = true) {
-    const g = this.g, home = DB.home, hw = this.homeWorld(), hk = this.km[home];
-    // Routes leave the home airport in their real bearing (taken from the geographic map).
+    const g = this.g, home = S.tower, hw = this.homeWorld(), hk = this.km[home];
+    // Open routes leave the player's airport in their real bearing (taken from the geographic map).
     g.lineCap = 'round';
-    for (const d of Object.values(DB.dests)) {
-      if (!this.km[d.code]) continue;
-      const open = !!S.routes[d.code], b = [this.km[d.code][0] - hk[0], this.km[d.code][1] - hk[1]], n = Math.hypot(...b);
+    for (const ap of Object.values(DB.airports)) {
+      if (ap.code === home) continue;
+      const key = [home, ap.code].sort().join('-'); if (!S.routes[key]) continue;
+      const open = true, b = [this.km[ap.code][0] - hk[0], this.km[ap.code][1] - hk[1]], n = Math.hypot(...b);
       const A = this.project3(hw.x, hw.z, cam), B = this.project3(hw.x + b[0] / n * 80000, hw.z - b[1] / n * 80000, cam);
       if (!A.ok || !B.ok) continue;
       g.setLineDash(open ? [] : [4, 6]); g.lineWidth = 1; g.strokeStyle = open ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)';
@@ -254,7 +258,7 @@ export class FlightMap {
       const r = this.sim.rt.get(a.id); if (!r || !r.mesh.visible) continue;
       const p = r.mesh.position, y = r.yaw || 0, q = this.project3(p.x, p.z, cam), q2 = this.project3(p.x - Math.sin(y) * 50, p.z - Math.cos(y) * 50, cam);
       if (!q.ok) continue;
-      const leg = OUT_STATES.includes(a.state) ? [home, a.route] : [a.route, home];
+      const leg = OUT_STATES.includes(a.state) ? [a.loc, a.loc === a.base ? a.route : a.base] : [a.from, a.loc];
       planes.push({ a, x: q.x, y: q.y, ang: Math.atan2(q2.x - q.x, -(q2.y - q.y)), air: r.alt > 5, sub: leg[0] + '→' + leg[1] });
     }
     this.icons(planes, selected, []);
@@ -262,7 +266,7 @@ export class FlightMap {
 
   // --- far layer: the geographic map --------------------------------------------------------------------
   drawFar(cam3, selected, withIcons = true) {
-    const g = this.g, V = this.view(cam3), home = DB.home, sc = this.scale;
+    const g = this.g, V = this.view(cam3), home = S.tower, sc = this.scale;
     const P = ([x, y]) => [V.sx + (x - V.cx) * V.s, V.sy - (y - V.cy) * V.s];
     const poly = (pts, fill, stroke, lw) => {
       g.beginPath(); pts.forEach((p, i) => { const [x, y] = P(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath();
@@ -302,13 +306,10 @@ export class FlightMap {
       g.stroke();
     };
     g.lineCap = 'round';
-    const HK = this.km[home];
-    for (const d of Object.values(DB.dests)) {
-      if (!this.km[d.code]) continue;
-      const open = !!S.routes[d.code];
-      g.setLineDash(open ? [] : [4, 6]); g.lineWidth = 1; g.strokeStyle = open ? C.route : C.routeOff;
-      path(HK, this.km[d.code], 0, 1);
-    }
+    g.setLineDash([]); g.lineWidth = 1; g.strokeStyle = C.route;
+    for (const key of Object.keys(S.routes)) { const [x, y] = key.split('-'); if (this.km[x] && this.km[y]) path(this.km[x], this.km[y], 0, 1); }
+    g.setLineDash([4, 6]); g.strokeStyle = C.routeOff;
+    for (const ap of Object.values(DB.airports)) if (ap.code !== home && !S.routes[[home, ap.code].sort().join('-')]) path(this.km[home], this.km[ap.code], 0, 1);
     g.setLineDash([]);
 
     // Aircraft (positions once, used for trails, icons and picking).
@@ -336,7 +337,7 @@ export class FlightMap {
     const apRects = [];
     for (const ap of Object.values(DB.airports)) {
       const [x, y] = P(this.km[ap.code]), isHome = ap.code === home;
-      apRects.push(this.airportMark(x, y, ap.code, isHome, isHome || !!S.routes[ap.code], 'light'));
+      apRects.push(this.airportMark(x, y, ap.code, isHome, isHome || Object.keys(S.routes).some(k => k.split('-').includes(ap.code)), 'light'));
     }
 
     // Aircraft icons; aircraft on the ground are grouped per airport.
@@ -348,11 +349,14 @@ export class FlightMap {
     }
     const ringPx = HOLD_R * V.s, holdingNow = list.filter(({ a, p }) => p.holding && a !== selected);
     if (ringPx < 60 && holdingNow.length) {
-      const keep = new Set(holdingNow.map(h => h.a));
+      const keep = new Set(holdingNow.map(h => h.a)), byAirport = {};
       for (let i = planes.length - 1; i >= 0; i--) if (keep.has(planes[i].a)) planes.splice(i, 1);
-      const [x, y] = P(this.km[home]), txt = '✈ ' + holdingNow.length + ' ' + t('ty_map_holding_short');
-      g.font = '700 12px system-ui, sans-serif'; const w = g.measureText(txt).width + 12, bx = x - w - 14 * sc, by = y - 10;
-      this.badge(bx, by, txt); apRects.push([bx, by, w, 20]);                   // labels keep clear of the badge
+      for (const h of holdingNow) byAirport[h.a.loc] = (byAirport[h.a.loc] || 0) + 1;
+      for (const [code, n] of Object.entries(byAirport)) {                      // one badge per airport
+        const [x, y] = P(this.km[code]), txt = '✈ ' + n + ' ' + t('ty_map_holding_short');
+        g.font = '700 12px system-ui, sans-serif'; const w = g.measureText(txt).width + 12, bx = x - w - 14 * sc, by = y - 10;
+        this.badge(bx, by, txt); apRects.push([bx, by, w, 20]);                 // labels keep clear of the badge
+      }
     }
     this.icons(planes, selected, apRects);
     for (const [code, l] of Object.entries(ground)) { const [x, y] = P(this.km[code]); this.badge(x + 12 * sc, y - 26 * sc, '✈ ' + l.length); }

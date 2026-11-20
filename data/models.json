@@ -301,6 +301,69 @@
         "axis": "x",
         "size": "auto"
       }
+    },
+    "RBA.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "NDR.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "AHU.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "TTU.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "ESU.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "OZZ.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "ERH.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "EUN.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
+    },
+    "VIL.terminal_main": {
+      "file": null,
+      "fit": {
+        "axis": "z",
+        "size": "auto"
+      }
     }
   }
 }

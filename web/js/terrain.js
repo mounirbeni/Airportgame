@@ -42,14 +42,18 @@ export class Terrain {
   constructor(airports) {
     this.base = makeSimplex(1977); this.detail = makeSimplex(4242); this.ridge = makeSimplex(9001);
     this.flats = airports.map(a => ({ a, b: a.layout ? a.layout.bounds : { x0: -1000, x1: 1000, z0: -1800, z1: 1800 } }));
-    this.size = 90000; this.cx = 6000; this.cz = 3000;
+    this.size = 116000; this.cx = -6000; this.cz = 16000;   // all airports, Tangier to Dakhla
   }
-  coast(x, z) { return x - (-9000 + 0.45 * (-z) + this.base(z * 0.5 * 0.00022, 0.022) * 1500); }
+  /** Signed distance-like value to the Atlantic coast (positive inland). The coast bends south-west past Agadir, towards Laayoune and Dakhla. */
+  coast(x, z) {
+    const line = z <= 20000 ? -9000 - 0.45 * z : -18000 - 0.905 * (z - 20000);
+    return x - (line + this.base(z * 0.5 * 0.00022, 0.022) * 1500);
+  }
   raw(x, z) {
     let h = 22 + fbm(this.base, x, z, 0.00022, 3) * 32 + fbm(this.detail, x, z, 0.0011, 2) * 7;
     h = Math.max(h, 3);
     const ridge = (fbm(this.ridge, x, z, 0.00035, 4, true) + 1) * 0.5;
-    const atlas = smooth(16500, 27500, z);
+    const atlas = smooth(16500, 24000, z) * (1 - smooth(29000, 36000, z));   // High Atlas band, then the flat Sahara
     h += atlas * (250 + 2100 * atlas) * (0.45 + 0.55 * ridge);
     const dx = (x - 20000) / 7000, dz = (z + 2500) / 6000;
     h += Math.exp(-(dx * dx + dz * dz)) * 750 * (0.5 + 0.5 * ridge);
@@ -87,7 +91,7 @@ export class Terrain {
     return c;
   }
   build(scene, low) {
-    const n = low ? 150 : 240, step = this.size / n, x0 = this.cx - this.size / 2, z0 = this.cz - this.size / 2;
+    const n = low ? 180 : 300, step = this.size / n, x0 = this.cx - this.size / 2, z0 = this.cz - this.size / 2;
     const pos = new Float32Array((n + 1) * (n + 1) * 3), col = new Float32Array(pos.length), idx = [];
     let k = 0;
     for (let iz = 0; iz <= n; iz++) for (let ix = 0; ix <= n; ix++) {

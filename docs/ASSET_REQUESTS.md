@@ -239,3 +239,36 @@
 | الخامة `.png` | `web/assets/tex/` | أحوّلها إلى WebP بـ `tools/import_art.py` |
 
 **المجموع:** 6 مبانٍ ركاب + برجان + مبنيا إدارة + مرآب + مزرعتا وقود = **13 مجسمًا**، وخامة عشب واحدة.
+
+## 8. المطارات الجديدة — الطلب الثالث (9 مطارات)
+
+المطارات التي أُضيفت قابلة للتحكم من البرج، وتعمل الآن بمبانٍ إجرائية مؤقتة. المطلوب مبنى ركاب واحد لكل مطار. أما البرج والمطافئ والوقود فتستعمل الملفات التي وصلت سابقًا كما هي: `tower_small.glb` و`CMN_fire_station.glb` و`fuel_farm_2.glb`.
+
+**القواعد:**
+- القسم 0 كاملًا.
+- المحاور: **Z = طول المبنى** و**X = العمق**.
+- الواجهة الجوية (البوابات) على **−X**، وجهة الطريق على **+X**.
+- الأصل (pivot) في مركز القاعدة على الأرض، وY للأعلى.
+- مراكز البوابات مقيسة من مركز المبنى على Z.
+- الطابع **مغربي حديث** بلون كل مطار، مثل RAK/FEZ/OUD.
+
+| الرمز | الملف | المنفذ | القياس (م): X × Z × Y | اللون | البوابات على −X |
+|---|---|---|---|---|---|
+| B1 | `RBA_terminal_main.glb` | `RBA.terminal_main` | **60 × 418 × 16** | `#b8664a` | **6 فتحات جسور** (أرضية 3.4 م) على Z = −145، −87، −29، 29، 87، 145 |
+| N1 | `NDR_terminal_main.glb` | `NDR.terminal_main` | **44 × 278 × 12** | `#a9674a` | **4 أبواب صعود أرضية** على Z = −78، −26، 26، 78 |
+| H1 | `AHU_terminal_main.glb` | `AHU.terminal_main` | **44 × 226 × 12** | `#a7654b` | **3 أبواب أرضية** على Z = −52، 0، 52 |
+| E1 | `TTU_terminal_main.glb` | `TTU.terminal_main` | **44 × 226 × 12** | `#ad6a4c` | 3 أبواب على Z = −52، 0، 52 |
+| S1 | `ESU_terminal_main.glb` | `ESU.terminal_main` | **44 × 226 × 12** | `#b47456` | 3 أبواب على Z = −52، 0، 52 |
+| Z1 | `OZZ_terminal_main.glb` | `OZZ.terminal_main` | **44 × 226 × 12** | `#b0684a` | 3 أبواب على Z = −52، 0، 52 (طابع قصبة صحراوية) |
+| H2 | `ERH_terminal_main.glb` | `ERH.terminal_main` | **44 × 226 × 12** | `#a8613f` | 3 أبواب على Z = −52، 0، 52 (طابع قصبة صحراوية) |
+| L1 | `EUN_terminal_main.glb` | `EUN.terminal_main` | **44 × 278 × 12** | `#b06a48` | 4 أبواب على Z = −78، −26، 26، 78 |
+| V1 | `VIL_terminal_main.glb` | `VIL.terminal_main` | **44 × 278 × 12** | `#b77250` | 4 أبواب على Z = −78، −26، 26، 78 |
+
+> **Prompt (B1):** Game-ready low-poly 3D model of a contemporary Moroccan airport passenger terminal, exactly 418 m long (Z), 60 m deep (X), 16 m tall, earth-coloured rendered walls (#b8664a), horseshoe arches, zellige bands, copper trim. Airside facade facing −X with 6 jet-bridge door openings (floor at 3.4 m) centred at z = −145, −87, −29, 29, 87, 145 m. Landside (+X) arched entrances and curb canopy. PBR, origin at footprint centre on the ground, Y up, no ground plane, no aircraft.
+
+> **Prompt (N1 … V1):** Same style, [44 × 278 × 12 m | 44 × 226 × 12 m], colour [code colour above], airside facade (−X) with [4 | 3] ground-level glazed boarding gates under arched porticoes at z = [−78, −26, 26, 78 | −52, 0, 52] m, no jet bridges. For OZZ and ERH: kasbah-style crenellated towers at the corners.
+
+**التسليم:**
+- ضع الملفات في `web/assets/models/`.
+- المنافذ التسعة موجودة في `data/models.json` (`"file": null`)، وأكتب فيها اسم الملف فقط.
+- **المجموع: 9 مجسمات.**

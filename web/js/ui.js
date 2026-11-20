@@ -2,7 +2,7 @@
 // selected-aircraft card, labels over aircraft and toasts.
 import * as THREE from 'three';
 import { DB, t, money, moneyShort, Loc } from './core.js';
-import { S, Perks, typeOf, flightMinutes, expectedLoad, legEconomics, canBuyAircraft, sellPrice, dailyCosts, clockText } from './state.js';
+import { S, Perks, typeOf, routeMinutes, expectedLoad, routeEconomics, pairInfo, pairKey, routesFrom, gatesAt, maxGates, canBuyAircraft, sellPrice, dailyCosts, clockText } from './state.js';
 import { NEEDS_ORDER, statusText } from './sim.js';
 
 const $ = id => document.getElementById(id);
@@ -26,6 +26,8 @@ export class UI {
     $('lang').addEventListener('click', () => this.fire('lang'));
     $('overview').addEventListener('click', () => this.fire('overview'));
     $('mapBtn').addEventListener('click', () => this.fire('map'));
+    $('towerSel').addEventListener('change', e => this.fire('tower', e.target.value));
+    $('towerSel').addEventListener('pointerdown', e => e.stopPropagation());
     $('tabBody').addEventListener('pointerdown', e => e.stopPropagation());
     // Keep panels below the real top-bar height (it wraps on narrow screens).
     const setTop = () => document.documentElement.style.setProperty('--top-h', Math.ceil($('top').getBoundingClientRect().bottom) + 'px');
@@ -39,6 +41,10 @@ export class UI {
     $('top').querySelector('.title').textContent = t('app_title');
     $('lang').textContent = t('ui_lang_toggle'); $('overview').textContent = t('ty_act_overview'); $('mapBtn').textContent = t('ty_act_map');
     $('tipText').textContent = t('ty_tip');
+    const ts = $('towerSel'); ts.innerHTML = '';                       // the airport whose tower the player is in
+    for (const ap of Object.values(DB.airports).sort((x, y) => t(x.name_key).localeCompare(t(y.name_key))))
+      ts.append(new Option(t('ty_tower_at', { c: t(ap.name_key) }), ap.code, false, ap.code === S.tower));
+    ts.value = S.tower;
     const sp = $('speed'); sp.innerHTML = '';
     for (const v of [0, 1, 2, 4, 8]) sp.append(btn(v === 0 ? 'II' : v + '×', () => this.fire('speed', v), S.settings.speed === v ? 'on' : ''));
     this.renderTabs(); this.lastSig = ''; this.refresh(true);
@@ -66,10 +72,10 @@ export class UI {
   /** Rebuilds the active tab only when something visible changed. */
   refresh(force = false) {
     this.top();
-    const waiting = S.fleet.filter(a => NEEDS_ORDER[a.state]).length;
+    const waiting = S.fleet.filter(a => NEEDS_ORDER[a.state] && a.loc === S.tower).length;
     const badge = $('tabs').querySelector('.badge'); if (badge) { badge.textContent = waiting; badge.style.display = waiting ? '' : 'none'; }
     const sig = this.tab + '|' + Loc.current + '|' + S.fleet.map(a => a.id + a.state + a.route + (a.state === 'turn' ? Math.floor((a.progress || 0) * 10) : '') + (NEEDS_ORDER[a.state] ? this.sim.blockReason(a) : '')).join(',') +
-      '|' + Math.round(S.money / 1000) + '|' + S.gates + S.autoAtc + JSON.stringify(S.routes) + Math.round(S.rep);
+      '|' + Math.round(S.money / 1000) + '|' + JSON.stringify(S.gates) + S.autoAtc + S.tower + JSON.stringify(S.routes) + Math.round(S.rep);
     if (force || sig !== this.lastSig) { this.lastSig = sig; this.renderTab(); }
     this.renderSel();
   }
@@ -100,12 +106,14 @@ export class UI {
     b.prepend(ic(why ? 'warning' : ACTION_ICON[a.state]));
     return b;
   }
+  routeText(a) { return a.route ? `${a.base} ⇄ ${a.route}` : t('ty_none'); }
   tower(body) {
-    const list = [...S.fleet].sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state));
+    if (this.sim.auto(S.tower) && !S.autoAtc) body.append(el('div', 'dim', t('ty_auto_here')));
+    const list = S.fleet.filter(a => a.loc === S.tower).sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state));
     for (const a of list) {
       const c = el('div', 'card' + (NEEDS_ORDER[a.state] ? ' attn' : ''));
       const head = el('div', 'row'); head.append(el('span', 't', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)), el('span', 'spacer'),
-        el('span', 'dim', a.route ? 'CMN ⇄ ' + a.route : t('ty_none')));
+        el('span', 'dim', this.routeText(a)));
       c.append(head, el('div', NEEDS_ORDER[a.state] ? 'cop' : 'dim', statusText(a)));
       if (a.state === 'turn') { const bar = el('div', 'bar'), f = el('i'); f.style.width = Math.round((a.progress || 0) * 100) + '%'; bar.append(f); c.append(bar); }
       const ob = this.orderButton(a); if (ob) c.append(ob);
@@ -114,12 +122,13 @@ export class UI {
     }
   }
   fleet(body) {
-    body.append(el('div', 'dim', t('ty_fleet_count', { n: S.fleet.length, g: S.gates })));
-    for (const a of S.fleet) {
+    const here = S.fleet.filter(a => a.base === S.tower);
+    body.append(el('div', 'dim', t('ty_fleet_count', { n: here.length, g: gatesAt(S.tower) })));
+    for (const a of here) {
       const c = el('div', 'card'), row = el('div', 'row');
       row.append(hero('ac_' + a.type, 'thumb'), el('span', 't', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)));
       const sel = el('select'); sel.append(new Option(t('ty_none'), ''));
-      for (const code of Object.keys(S.routes)) sel.append(new Option(t(DB.dests[code].name_key), code, false, a.route === code));
+      for (const r of routesFrom(a.base)) sel.append(new Option(t(DB.airports[r.other].name_key), r.other, false, a.route === r.other));
       sel.value = a.route || '';
       sel.addEventListener('change', () => this.fire('assign', a, sel.value || null));
       sel.addEventListener('pointerdown', e => e.stopPropagation());
@@ -128,8 +137,9 @@ export class UI {
       r2.append(el('span', 'spacer'), btn(t('ty_sell', { v: moneyShort(sellPrice(a)) }), () => this.fire('sell', a), '', parked && S.fleet.length > 1));
       c.append(row, el('div', 'dim', statusText(a)), r2); body.append(c);
     }
+    body.append(el('div', 't', t('ty_buy_at', { c: t(DB.airports[S.tower].name_key) })));
     for (const ty of DB.ty.aircraft_types) {
-      const c = el('div', 'card'), why = canBuyAircraft(ty.id);
+      const c = el('div', 'card'), why = canBuyAircraft(ty.id, S.tower);
       c.append(hero('ac_' + ty.id, 'hero ac'), el('div', 't cop', t(ty.name_key)),
         el('div', 'dim', `${t('ty_seats', { n: ty.seats })} · ${t('ty_kmh', { n: ty.speed_kmh })}`),
         btn(why === 'need_gate' ? t('ty_need_gate') : why === 'need_rep' ? t('ty_need_rep', { n: ty.rep_required }) : t('ty_buy', { v: moneyShort(ty.price) }),
@@ -138,34 +148,38 @@ export class UI {
     }
   }
   routes(body) {
-    for (const d of DB.ty.destinations) {
-      const c = el('div', 'card'), r = S.routes[d.code];
-      const head = el('div', 'row'); head.append(el('span', 't', t(d.name_key)), el('span', 'dim', `CMN ⇄ ${d.code} · ${t('ty_km', { n: d.km })}`));
-      c.append(hero('card_' + d.code.toLowerCase()), head);
-      if (!r) { c.append(btn(t('ty_open_route', { v: moneyShort(d.unlock_price) }), () => this.fire('openRoute', d.code), 'primary', S.money >= d.unlock_price)); body.append(c); continue; }
+    const from = S.tower;
+    body.append(el('div', 't', t('ty_routes_from', { c: t(DB.airports[from].name_key) })));
+    const others = Object.values(DB.airports).filter(ap => ap.code !== from).map(ap => ({ ap, d: pairInfo(from, ap.code) }))
+      .sort((x, y) => (!!S.routes[y.d.key] - !!S.routes[x.d.key]) || x.d.km - y.d.km);
+    for (const { ap, d } of others) {
+      const c = el('div', 'card'), r = S.routes[d.key];
+      const head = el('div', 'row'); head.append(el('span', 't', t(ap.name_key)), el('span', 'dim', `${from} ⇄ ${ap.code} · ${t('ty_km', { n: d.km })}`));
+      c.append(hero('card_' + ap.code.toLowerCase()), head);
+      if (!r) { c.append(btn(t('ty_open_route', { v: moneyShort(d.unlock_price) }), () => this.fire('openRoute', ap.code), 'primary', S.money >= d.unlock_price)); body.append(c); continue; }
       const info = el('div', 'dim'), slider = el('input'); slider.type = 'range'; slider.min = Math.round(d.base_price * 0.6); slider.max = Math.round(d.base_price * 1.6); slider.step = 10; slider.value = r.price;
       const label = el('div', '');
       const upd = () => {
-        const e = legEconomics(d.code, 't2');
+        const e = routeEconomics(from, ap.code, 't2');
         label.textContent = t('ty_price', { v: money(r.price) });
-        info.textContent = `${t('ty_load', { v: Math.round(expectedLoad(d.code, 't2', r.price) * 100) })} · ${t('ty_profit_leg', { v: moneyShort(e.profit) })} · ${t('ty_minutes', { n: flightMinutes(d.code, 't2') })} (T2)`;
+        info.textContent = `${t('ty_load', { v: Math.round(expectedLoad(from, ap.code, 't2', r.price) * 100) })} · ${t('ty_profit_leg', { v: moneyShort(e.profit) })} · ${t('ty_minutes', { n: routeMinutes(from, ap.code, 't2') })} (T2)`;
       };
       slider.addEventListener('input', () => { r.price = +slider.value; upd(); });
       slider.addEventListener('change', () => this.fire('priceChanged'));
       slider.addEventListener('pointerdown', e => e.stopPropagation());
       upd(); c.append(label, slider, info);
-      const users = S.fleet.filter(a => a.route === d.code).map(a => a.flightNo).join(' · ');
+      const users = S.fleet.filter(a => pairKey(a.base, a.route || '') === d.key).map(a => a.flightNo).join(' · ');
       c.append(el('div', 'dim', users || t('ty_none')));
       body.append(c);
     }
   }
   airport(body) {
     const g = DB.ty.gates;
-    const home = el('div', 'card'); home.append(hero('card_cmn'), el('div', 't', t('apt_cmn')));
+    const home = el('div', 'card'); home.append(hero('card_' + S.tower.toLowerCase()), el('div', 't', t(DB.airports[S.tower].name_key)));
     body.append(home);
-    const gtitle = el('div', 'row t'); gtitle.append(ic('gate'), el('span', '', t('ty_gates', { n: S.gates, m: g.max })));
+    const gtitle = el('div', 'row t'); gtitle.append(ic('gate'), el('span', '', t('ty_gates', { n: gatesAt(S.tower), m: maxGates(S.tower) })));
     const gc = el('div', 'card'); gc.append(gtitle,
-      btn(t('ty_buy_gate', { v: moneyShort(g.price) }), () => this.fire('buyGate'), 'primary', S.gates < g.max && S.money >= g.price));
+      btn(t('ty_buy_gate', { v: moneyShort(g.price) }), () => this.fire('buyGate'), 'primary', gatesAt(S.tower) < maxGates(S.tower) && S.money >= g.price));
     const atitle = el('div', 'row t'); atitle.append(ic('controller'), el('span', '', t('ty_auto_atc')));
     const ac = el('div', 'card'); ac.append(atitle, el('div', 'dim', t('ty_auto_atc_desc', { v: moneyShort(DB.ty.auto_atc.price_per_day) })),
       btn(S.autoAtc ? t('ty_dismiss') : t('ty_hire'), () => this.fire('autoAtc'), S.autoAtc ? '' : 'primary'));
@@ -188,7 +202,7 @@ export class UI {
     box.dataset.sig = sig; box.classList.remove('hidden'); box.innerHTML = '';
     const head = el('div', 'row'); head.append(el('span', 't cop', a.flightNo), el('span', 'dim', t(typeOf(a).name_key)), el('span', 'spacer'),
       btn('×', () => this.fire('select', null)));
-    box.append(head, el('div', 'dim', a.route ? `CMN ⇄ ${t(DB.dests[a.route].name_key)}` : t('ty_why_route')), el('div', '', statusText(a)));
+    box.append(head, el('div', 'dim', a.route ? `${t(DB.airports[a.base].name_key)} ⇄ ${t(DB.airports[a.route].name_key)}` : t('ty_why_route')), el('div', '', statusText(a)));
     if (a.state === 'turn') { const bar = el('div', 'bar'), f = el('i'); f.style.width = Math.round((a.progress || 0) * 100) + '%'; bar.append(f); box.append(bar); }
     const ob = this.orderButton(a, true); if (ob) box.append(ob);
   }

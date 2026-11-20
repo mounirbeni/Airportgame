@@ -1,0 +1,143 @@
+{
+ "code": "VIL",
+ "identity": "Regional airport: single 3000 m runway 03/21, full parallel taxiway, linear terminal with 4 stair-boarding stands.",
+ "start_stands": 2,
+ "ops": {
+  "departure": "03",
+  "arrival": "03"
+ },
+ "runways": [
+  {
+   "id": "03/21",
+   "ends": [
+    "03",
+    "21"
+   ],
+   "x": 0,
+   "z": 0,
+   "length": 3000,
+   "width": 45,
+   "taxiway": {
+    "id": "A",
+    "side": 1,
+    "offset": 190,
+    "connectors": [
+     1500,
+     -150,
+     -1500
+    ]
+   }
+  }
+ ],
+ "terminals": [
+  {
+   "id": "T1",
+   "type": "linear",
+   "style": "moroccan",
+   "face": 410,
+   "z": -225,
+   "length": 278,
+   "depth": 44,
+   "h": 12,
+   "stands": 4,
+   "spacing": 52,
+   "side": -1,
+   "contact": false
+  }
+ ],
+ "taxilines": [
+  {
+   "id": "L1",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     -343
+    ],
+    [
+     326,
+     -343
+    ]
+   ]
+  },
+  {
+   "id": "L2",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     -107
+    ],
+    [
+     326,
+     -107
+    ]
+   ]
+  }
+ ],
+ "buildings": [
+  {
+   "type": "tower",
+   "x": 470,
+   "z": -454,
+   "h": 34,
+   "model": "building.tower_small"
+  },
+  {
+   "type": "fire_station",
+   "x": 320,
+   "z": -624,
+   "rot": 0
+  },
+  {
+   "type": "fuel_farm",
+   "x": 330,
+   "z": 244,
+   "tanks": 2,
+   "model": "building.fuel_farm_2"
+  }
+ ],
+ "roads": [
+  {
+   "id": "curb",
+   "pts": [
+    [
+     474,
+     -364
+    ],
+    [
+     474,
+     -86
+    ]
+   ],
+   "width": 14
+  },
+  {
+   "id": "access",
+   "pts": [
+    [
+     474,
+     -86
+    ],
+    [
+     574,
+     34
+    ],
+    [
+     1014,
+     34
+    ]
+   ],
+   "width": 12
+  }
+ ],
+ "parking": [
+  {
+   "x": 544,
+   "z": -225,
+   "w": 90,
+   "d": 258
+  }
+ ],
+ "service_roads": []
+}

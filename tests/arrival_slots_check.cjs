@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto('http://localhost:8765/web/'); await p.waitForFunction(() => window.__atlas, null, { timeout: 60000 });
   const r = await p.evaluate(() => {
-    const A = window.__atlas, M = A.flightMap; A.S.money = 1e10; A.S.gates = 12; A.S.autoAtc = true;
+    const A = window.__atlas, M = A.flightMap; A.S.money = 1e10; A.S.gates = { CMN: 12 }; A.S.autoAtc = true;
     for (const c of ['TNG', 'AGA', 'OUD']) A.St.openRoute(c);
     const t0 = A.S.fleet[0].type; for (let i = 0; i < 10; i++) A.St.buyAircraft(i % 3 === 1 ? 'p70' : t0);
     const rt = ['RAK', 'FEZ', 'TNG', 'AGA', 'OUD', 'FEZ', 'TNG', 'OUD']; A.S.fleet.forEach((a, i) => a.route = rt[i % rt.length]);

@@ -1,0 +1,143 @@
+{
+ "code": "OZZ",
+ "identity": "Regional airport: single 3000 m runway 12/30, full parallel taxiway, linear terminal with 3 stair-boarding stands.",
+ "start_stands": 2,
+ "ops": {
+  "departure": "12",
+  "arrival": "12"
+ },
+ "runways": [
+  {
+   "id": "12/30",
+   "ends": [
+    "12",
+    "30"
+   ],
+   "x": 0,
+   "z": 0,
+   "length": 3000,
+   "width": 45,
+   "taxiway": {
+    "id": "A",
+    "side": 1,
+    "offset": 190,
+    "connectors": [
+     1500,
+     -150,
+     -1500
+    ]
+   }
+  }
+ ],
+ "terminals": [
+  {
+   "id": "T1",
+   "type": "linear",
+   "style": "moroccan",
+   "face": 410,
+   "z": -225,
+   "length": 226,
+   "depth": 44,
+   "h": 12,
+   "stands": 3,
+   "spacing": 52,
+   "side": -1,
+   "contact": false
+  }
+ ],
+ "taxilines": [
+  {
+   "id": "L1",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     -317
+    ],
+    [
+     326,
+     -317
+    ]
+   ]
+  },
+  {
+   "id": "L2",
+   "type": "taxilane",
+   "pts": [
+    [
+     190,
+     -133
+    ],
+    [
+     326,
+     -133
+    ]
+   ]
+  }
+ ],
+ "buildings": [
+  {
+   "type": "tower",
+   "x": 470,
+   "z": -428,
+   "h": 34,
+   "model": "building.tower_small"
+  },
+  {
+   "type": "fire_station",
+   "x": 320,
+   "z": -598,
+   "rot": 0
+  },
+  {
+   "type": "fuel_farm",
+   "x": 330,
+   "z": 218,
+   "tanks": 2,
+   "model": "building.fuel_farm_2"
+  }
+ ],
+ "roads": [
+  {
+   "id": "curb",
+   "pts": [
+    [
+     474,
+     -338
+    ],
+    [
+     474,
+     -112
+    ]
+   ],
+   "width": 14
+  },
+  {
+   "id": "access",
+   "pts": [
+    [
+     474,
+     -112
+    ],
+    [
+     574,
+     8
+    ],
+    [
+     1014,
+     8
+    ]
+   ],
+   "width": 12
+  }
+ ],
+ "parking": [
+  {
+   "x": 544,
+   "z": -225,
+   "w": 90,
+   "d": 206
+  }
+ ],
+ "service_roads": []
+}

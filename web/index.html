@@ -98,6 +98,7 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
   #top .spacer { display: none; }
   #speed { order: 5; } #overview { order: 6; margin-inline-start: auto; } #lang { order: 7; }
   #mapBtn { order: 6; }
+  #towerSel { order: 6; min-height: 34px; max-width: 46vw; padding: 4px 8px; font-size: 13px; border-radius: 10px; border: 1px solid rgba(255,255,255,.25); background: #1f5f66; color: #fff; font-family: inherit; }
   #speed button, #mapBtn, #overview, #lang { min-height: 34px; padding: 4px 10px; font-size: 13px; }
   #sideToggle { display: none !important; }
   #side, #side.collapsed { display: flex; top: auto; inset-inline: calc(8px + var(--safe-l)) calc(8px + var(--safe-r)); width: auto;
@@ -156,6 +157,7 @@ button .ic { margin-inline-end: 6px; }
   <div class="row" id="speed"></div>
   <div class="spacer"></div>
   <button id="acct"></button>
+  <select id="towerSel" aria-label="tower"></select>
   <button id="mapBtn"></button>
   <button id="overview"></button>
   <button id="lang"></button>

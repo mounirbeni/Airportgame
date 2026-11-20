@@ -7,7 +7,7 @@ import * as St from './state.js';
 import { S } from './state.js';
 import { Terrain } from './terrain.js';
 import { Airport } from './airport.js';
-import { Sim } from './sim.js';
+import { Ops } from './sim.js';
 import { UI } from './ui.js';
 import { TycoonCamera } from './camera.js';
 import { createRenderer, createEnvironment, applyQuality, updateSun, buildScenery, useSkyEnvironment } from './world.js';
@@ -37,15 +37,15 @@ async function boot() {
   const nodes = {};
   for (const ap of airports) nodes[ap.code] = new Airport(ap, scene);
   buildScenery(scene, airports, terrain, low);
-  const home = DB.airports[DB.home];
-  const sim = new Sim(scene, home);
+  if (!DB.airports[S.tower]) S.tower = DB.home;
+  const sim = new Ops(scene, airports);          // every airport operates; the player's tower is S.tower
   const ui = new UI(sim);
   const flightMap = new FlightMap(document.getElementById('map'), sim);
   const acctUI = Acc.mountAccountUI();
-  const ap0 = home.layout.aprons[0], centre = home.toWorld((ap0.x0 + ap0.x1) / 2, 0, (ap0.z0 + ap0.z1) / 2);
-  // Gates the player can own are limited by the home airport's stands.
-  DB.ty.gates.max = Math.min(DB.ty.gates.max, home.layout.stands.length);
-  const cam = new TycoonCamera(canvas, { x: centre.x, z: centre.z, yaw: home.yaw - Math.PI / 2 + 0.7 });
+  /** Apron centre of an airport (where the overview camera looks). */
+  const centreOf = code => { const ap = DB.airports[code], a0 = ap.layout.aprons[0]; return ap.toWorld((a0.x0 + a0.x1) / 2, 0, (a0.z0 + a0.z1) / 2); };
+  const tower0 = DB.airports[S.tower], c0 = centreOf(S.tower);
+  const cam = new TycoonCamera(canvas, { x: c0.x, z: c0.z, yaw: tower0.yaw - Math.PI / 2 + 0.7 });
   cam.dist = 620; cam.pitch = 0.55;
 
   function resize() {
@@ -101,7 +101,13 @@ async function boot() {
   ui.on('order', a => { if (sim.order(a)) { ui.refresh(true); St.save(); } });
   ui.on('speed', v => { S.settings.speed = v; ui.texts(); St.save(); });
   ui.on('lang', () => { S.settings.lang = Loc.current === 'ar' ? 'en' : 'ar'; Core.setLang(S.settings.lang); St.save(); });
-  ui.on('overview', () => { select(null); cam.focus(centre, 900); cam.pitch = 0.55; });
+  ui.on('overview', () => { select(null); cam.focus(centreOf(S.tower), 900); cam.pitch = 0.55; });
+  // Move to another airport's tower: it becomes the one the player controls (the others run automatically).
+  ui.on('tower', code => {
+    if (!DB.airports[code]) return;
+    S.tower = code; select(null); const c = centreOf(code), ap = DB.airports[code];
+    cam.focus(c, 900); cam.pitch = 0.55; cam.yaw = ap.yaw - Math.PI / 2 + 0.7; St.save(); ui.texts();
+  });
   // Whole network on the geographic map (north up): frame every airport.
   ui.on('map', () => {
     select(null);
@@ -118,9 +124,9 @@ async function boot() {
     if (ui.selected === a) select(null);
     St.save(); ui.refresh(true);
   });
-  ui.on('buy', id => { const a = St.buyAircraft(id); if (a) { ui.toast(t('ty_toast_delivered', { f: a.flightNo })); select(a); } ui.refresh(true); });
-  ui.on('buyGate', () => { St.buyGate(); ui.refresh(true); });
-  ui.on('openRoute', code => { St.openRoute(code); ui.refresh(true); });
+  ui.on('buy', id => { const a = St.buyAircraft(id, S.tower); if (a) { ui.toast(t('ty_toast_delivered', { f: a.flightNo })); select(a); } ui.refresh(true); });
+  ui.on('buyGate', () => { St.buyGate(S.tower); ui.refresh(true); });
+  ui.on('openRoute', code => { St.openRoute(S.tower, code); ui.refresh(true); });
   ui.on('priceChanged', () => { St.save(); ui.refresh(true); });
   ui.on('autoAtc', () => { S.autoAtc = !S.autoAtc; St.save(); ui.refresh(true); });
   ui.on('quality', () => { S.settings.quality = S.settings.quality === 'low' ? 'high' : 'low'; applyQuality(renderer, env, S.settings.quality); St.save(); ui.refresh(true); });
@@ -130,11 +136,12 @@ async function boot() {
   // --- simulation events -> feedback ---------------------------------------------------
   function drainEvents() {
     for (const e of sim.events.splice(0)) {
-      const city = e.a.route ? t(DB.dests[e.a.route].name_key) : '';
-      if (e.type === 'departed') { ui.toast(t('ty_toast_departed', { f: e.a.flightNo, c: city })); ui.toast(t('ty_toast_rev', { f: e.a.flightNo, v: moneyShort(e.profit) }), 'money'); }
-      else if (e.type === 'landed') { ui.toast(t('ty_toast_landed', { f: e.a.flightNo })); ui.toast(t('ty_toast_rev', { f: e.a.flightNo, v: moneyShort(e.profit) }), 'money'); }
+      if (e.at !== S.tower && e.type !== 'departed') continue;          // news from the player's own airport (and every departure's revenue)
+      const city = e.to ? t('ty_city_' + e.to.toLowerCase()) : '';
+      if (e.type === 'departed') { if (e.at === S.tower) ui.toast(t('ty_toast_departed', { f: e.a.flightNo, c: city })); ui.toast(t('ty_toast_rev', { f: e.a.flightNo, v: moneyShort(e.profit) }), 'money'); }
+      else if (e.type === 'landed') ui.toast(t('ty_toast_landed', { f: e.a.flightNo }));
       else if (e.type === 'go_around') ui.toast(t('ty_toast_go_around', { f: e.a.flightNo }), 'bad');
-      else if (e.type === 'waiting' && !S.autoAtc) ui.toast(`${e.a.flightNo} · ${t('ty_waiting')}`);
+      else if (e.type === 'waiting' && !sim.auto(e.at)) ui.toast(`${e.a.flightNo} · ${t('ty_waiting')}`);
     }
   }
 
@@ -167,7 +174,11 @@ async function boot() {
     ui.labels(cam.cam);
     uiTimer += dt; if (uiTimer > 0.25) { uiTimer = 0; ui.refresh(); updateViewCenter(); }
     saveTimer += dt; if (saveTimer > 15) { saveTimer = 0; St.save(); }
-    for (const n of Object.values(nodes)) { n.update(dt); n.lod(cam.dist); }
+    for (const n of Object.values(nodes)) {
+      const c = n.group.position, d = Math.hypot(c.x - cam.target.x, c.z - cam.target.z), on = flightMap.far < 0.99 && d < 9000 + cam.dist * 1.6;
+      if (n.group.visible !== on) n.group.visible = on;
+      if (on) { n.update(dt); n.lod(cam.dist); }
+    }
     renderer.render(scene, cam.cam);
     requestAnimationFrame(frame);
   }
